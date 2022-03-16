@@ -1,0 +1,53 @@
+{
+  "name": "uhi67/umvc",
+  "description": "UMVC simple PHP framework",
+  "type": "project",
+  "homepage": "https://umvc.uhisoft.hu/",
+  "minimum-stability": "stable",
+  "prefer-stable": true,
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "uhi67",
+      "email": "uherkovich.peter@gmail.com"
+    }
+  ],
+  "require": {
+    "php": ">=7.2",
+    "ext-iconv": "*",
+    "ext-intl": "*",
+    "ext-json": "*",
+    "ext-mbstring": "*",
+    "ext-mysqli": "*",
+    "ext-openssl": "*",
+    "ext-pdo_sqlite": "*",
+    "ext-pdo": "*",
+    "ext-simplexml": "*",
+    "psr/log": "^1.1",
+    "simplesamlphp/simplesamlphp": "1.19.3",
+    "symfony/http-foundation": "*"
+  },
+  "require-dev": {
+    "codeception/codeception": "^4.0",
+    "codeception/module-asserts": "^1.3",
+    "php-webdriver/webdriver": "^1.0.1",
+    "codeception/module-filesystem": "^1.0",
+    "codeception/lib-innerbrowser": "^1.0",
+    "codeception/module-rest": "*"
+  },
+  "scripts": {
+  },
+  "autoload": {
+    "psr-4": {
+      "uhi67\\umvc\\commands\\": "commands",
+      "uhi67\\umvc\\models\\": "models",
+      "uhi67\\umvc\\": "lib",
+      "Helper\\": "lib/testhelper"
+    }
+  },
+  "config": {
+    "allow-plugins": {
+      "simplesamlphp/composer-module-installer": true
+    }
+  }
+}

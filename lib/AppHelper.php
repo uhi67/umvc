@@ -1,0 +1,354 @@
+<?php
+namespace uhi67\umvc;
+
+use Exception;
+use Symfony\Component\HttpFoundation\Response;
+
+/**
+ * Class for various static helper functions for the framework and the application
+ *
+ * @package UMVC Simple Application Framework
+ */
+class AppHelper {
+
+    /**
+     * Function to generate random string.
+     */
+    public static function randomString($n) {
+
+        $generated_string = "";
+
+        $domain = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
+
+        $len = strlen($domain);
+
+        // Loop to create random string
+        for($i = 0; $i < $n; $i++) {
+            // Generate a random index to pick characters
+            $index = rand(0, $len - 1);
+
+            // Concatenating the character
+            // in resultant string
+            $generated_string = $generated_string . $domain[$index];
+        }
+
+        return $generated_string;
+    }
+
+    /**
+     *
+     */
+    public static function getSecureRandomToken() {
+        return bin2hex(openssl_random_pseudo_bytes(16));
+    }
+
+    /**
+     *
+     */
+    public static function clean_input($data) {
+        $data = trim($data);
+        $data = stripslashes($data);
+        return htmlspecialchars($data);
+    }
+
+    /**
+     * to prevent xss
+     */
+    public static function xss_clean($string) {
+        return htmlspecialchars($string, ENT_QUOTES);
+    }
+
+    /**
+     * Truncates a string at the first occurrence of a breakpoint string after a
+     * minimum number of bytes (see strlen()). If the operation succeeds, the
+     * truncated string padded with padding characters is returned, otherwise
+     * the input string is returned as is with the particularity that null gets
+     * truncated to the empty string.
+     *
+     * @see strlen()
+     *
+     * @param string $string The string to truncate.
+     * @param int $threshold The minimum number of bytes in string after which
+     *                       truncating can occur.
+     * @param string $break The breakpoint string for truncating.
+     * @param string $pad The padding string.
+     * @return string|string
+     */
+    public static function truncate($string, $threshold, $break='.', $pad='...') {
+        if($string === null) return '';
+
+        $stringLen = strlen($string);
+        if($stringLen > $threshold) {
+            if(false !== ($breakpoint = strpos($string, $break, $threshold))) {
+                if($breakpoint < $stringLen - 1) {
+                    $string = substr($string, 0, $breakpoint) . $pad;
+                }
+            }
+        }
+        return $string;
+    }
+
+    /**
+     * Returns a date formatted.
+     *
+     * @param string $str The date to format.
+     * @param string $fmt The format expected for the date.
+     * @return string
+     */
+    public static function format_date($str, $fmt) {
+        $date = ($str === null) ? false : date_create($str); // we set false because that's what date_create() returns on failure
+        return ($date === false) ? '' : date_format($date, $fmt);
+    }
+
+    /**
+     * Displays an Exception on CLI or HTML output.
+     *
+     * @param Exception $e
+     * @param int|null $responseStatus -- HTTP response status, default is 500=HTTP_INTERNAL_SERVER_ERROR
+     */
+    static function showException($e, $responseStatus=null) {
+        $responseStatus = $responseStatus ?: HTTP::HTTP_INTERNAL_SERVER_ERROR;
+        $title = Response::$statusTexts[$responseStatus] ?? 'Internal application error';
+
+        if(php_sapi_name() == "cli") {
+
+            $msg = "[$responseStatus] $title: ".$e->getMessage();
+            $details = sprintf(" in file '%s' at line '%d'", $e->getFile(), $e->getLine());
+            echo Ansi::color($msg, 'light red'),$details,"\n";
+            if(ENV_DEV) {
+                $trace = explode("\n", $e->getTraceAsString());
+                $baseurl = dirname(__DIR__);
+                foreach($trace as $line) {
+                    $basepos = strpos($line, $baseurl);
+                    $color = ($basepos > 1 && $basepos < 5) ? 'brown' : 'red';
+                    echo Ansi::color($line, $color), "\n";
+                }
+
+                while($e = $e->getPrevious()) {
+                    echo Ansi::color("\n\n".html_entity_decode($e->getMessage()), 'light purple')."\n";
+                    $trace = explode("\n", $e->getTraceAsString());
+                    foreach($trace as $line) {
+                        $basepos = strpos($line, $baseurl);
+                        $color = ($basepos > 1 && $basepos < 5) ? 'brown' : 'red';
+                        echo Ansi::color($line, $color), "\n";
+                    }
+                }
+            }
+            return;
+        }
+        if(!headers_sent()) http_response_code($responseStatus);
+        echo '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">';
+        echo '<html lang="hu">';
+        echo "<head><title>$title - UMVC</title>";
+        echo '<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">';
+        echo '</head><body>';
+        echo "<h1>$responseStatus $title</h1>";
+        echo '<p>Oops, the page cannot be displayed :-(</p>';
+        $details = sprintf(" in file '%s' at line '%d'", $e->getFile(), $e->getLine());
+        echo '<div><b>'.htmlspecialchars($e->getMessage()).'</b>'.(ENV_DEV ? $details : '').'</div>';
+
+        if(ENV_DEV) {
+            $basePath = dirname(__DIR__,4);
+            echo '<pre>';
+            echo preg_replace(
+                [
+                    '~'.str_replace(['\\', '~'], ['\\\\', '\~'], $basePath).'~',
+                    '/^(#\\d+ [^(]+)(\\\\vendor\\\\uhi67\\\\umvc\\\\[^(]+)(.*)$/m',
+                    '/^(#\\d+ [^(]+)(\\\\views\\\\[^(]+)(.*)$/m',
+                    '/^(#\\d+ [^(]+)(\\\\controllers\\\\[^(]+)(.*)$/m',
+                    '/^(#\\d+ [^(]+)(\\\\models\\\\[^(]+)(.*)$/m',
+                    '/^(#\\d+ [^(]+)(\\\\lib\\\\[^(]+)(.*)$/m',
+                ],
+                [
+                    '...',
+                    '<span style="color:gray">$1$2$3</span>',
+                    '<span style="color:gray">$1</span><span style="color:maroon">$2</span>$3',
+                    '<span style="color:gray">$1</span><span style="color:blue">$2</span>$3',
+                    '<span style="color:gray">$1</span><span style="color:darkgreen">$2</span>$3',
+                    '<span style="color:gray">$1</span><span style="color:saddlebrown">$2</span>$3',
+                ],
+                htmlspecialchars($e->getTraceAsString())
+            );
+            while ($e = $e->getPrevious()) {
+                echo "\n\n".htmlspecialchars($e->getMessage())."\n";
+                echo htmlspecialchars($e->getTraceAsString());
+            }
+            echo '</pre>';
+        }
+        if(ENV_DEV) {
+            echo AppHelper::debug();
+        }
+        echo '</body>';
+    }
+
+    public static function debug() {
+        $content = '';
+        if(ENV_DEV) {
+            $content = '<div class="debug container dismissable">';
+            if(isset($_SESSION)) {
+                $content .= '<h3>SESSION</h3><table class="table">';
+                foreach($_SESSION as $key => $value) {
+                    $content .= "<tr><th>$key</th><td>" . print_r($value, true) . "</td></tr>";
+                }
+                $content .= '</table>';
+            }
+            if(isset($_POST) && $_SERVER['REQUEST_METHOD'] === 'POST') {
+                $content .= '<h3>POST</h3><table class="table">';
+                foreach($_POST as $key => $value) {
+                    $content .= "<tr><th>$key</th><td>" . print_r($value, true) . "</td></tr>";
+                }
+                $content .= '</table>';
+            }
+            $content .= '</div>';
+        }
+        return $content;
+    }
+
+    /**
+     * Camelizes a string.
+     *
+     * All world will begin with uppercase character.
+     * World delimiters are: ' ', '_', '-', '.', '\'
+     *
+     * @return string|null The camelized string
+     */
+    public static function camelize($id): ?string {
+        if(is_null($id)) return null;
+        return strtr(ucwords(strtr($id, ['_' => ' ', '.' => '_ ', '\\' => '_ ', '-' => ' '])), [' ' => '']);
+    }
+
+    /**
+     * Converts a string to human-readable form, e.g. for an auto-generated field label
+     *
+     * Redundant '_id' or 'Id' postfix will be eliminated.
+     *
+     * @return string|null The camelized string
+     */
+    public static function humanize($id): ?string {
+        if(is_null($id)) return null;
+        return static::mb_ucwords(preg_replace('~[_.-]~', ' ', preg_replace('/_id$/', '', static::underscore(static::camelize($id)))));
+    }
+
+    /**
+     * Converts a (camelized) string to underscore format.
+     * Existing underscore ($separator) will be converted to '.'.
+     * Replaces all non-name character to _.
+     *
+     * The result string should be appropriate for a filename or a Model attribute name (using _)
+     *
+     * Example: 'MyClass' --> 'my_class'
+     * But: 'MyClass_id' --> 'my_class.id'
+     *
+     * If you want to keep existing separators, call camelize first.
+     *
+     * @param string|null $id -- an identifier in CamelCase
+     * @param string $separator -- the separator character to be used between words, default is '_'
+     * @return string|null The underscored string, e.g camel_case
+     */
+    public static function underscore(?string $id, string $separator='_'): ?string {
+        if(is_null($id)) return null;
+        $id = preg_replace('/[^A-Za-z\d.'.$separator.']+/', $separator, $id);
+        $id = preg_replace(['/([A-Z]+)([A-Z][a-z\d])/', '/([a-z\d])([A-Z])/'], ['\\1'.$separator.'\\2', '\\1'.$separator.'\\2'], $id);
+        return strtolower($id);
+    }
+
+    /**
+     * unicode-safe capitalize first letter of all words
+     *
+     * @param string $string
+     * @return string
+     */
+    public static function mb_ucwords($string) {
+        $string = (string) $string;
+        if (empty($string)) return $string;
+
+        $parts = preg_split('/\s+/u', $string, -1, PREG_SPLIT_NO_EMPTY);
+        foreach ($parts as &$value) {
+            $value = static::mb_ucfirst($value);
+        }
+        return implode(' ', $parts);
+    }
+
+    /**
+     * unicode-safecapitalize the fist letter
+     *
+     * @param string $string the string to be proceeded
+     * @return string
+     */
+    public static function mb_ucfirst($string) {
+        return mb_strtoupper(mb_substr($string, 0, 1)) . mb_substr($string, 1, null);
+    }
+
+    /**
+     * Returns substring before delimiter
+     *
+     * @param string $s -- string
+     * @param string $d -- delimiter
+     * @param bool $full -- returns full string if pattern not found
+     * @return string -- substring to delimiter or empty string if not found
+     */
+    static function substring_before($s, $d, $full=false) {
+        $p = strpos($s, $d);
+        if($full && $p===false) return $s;
+        return substr($s, 0, $p);
+    }
+
+    /**
+     * Returns substring after delimiter
+     *
+     * @param string $s -- string
+     * @param string $d -- delimiter
+     * @param bool $full -- returns full string if pattern not found
+     *
+     * @return string -- substring to delimiter or empty string if not found
+     * @throws Exception -- if delimiter is empty
+     */
+    static function substring_after($s, $d, $full=false) {
+        if(empty($s)) throw new Exception('Empty needle');
+        $p = strpos($s, $d);
+        if($p===false) return $full ? $s : '';
+        return substr($s, $p+strlen($d));
+    }
+
+    /**
+     * Generates a valid XML name-id based on given string
+     *
+     * Replaces invalid characters to valid ones. Replaces accented letters to ASCII letters.
+     *
+     * - Element names must start with a letter or underscore
+     * - Element names can contain letters, digits, underscores, and the specified enabled characters
+     * - Element names cannot contain spaces
+     *
+     * @param string $str
+     * @param string $def -- replace invalid characters to, default is '_'. A single character only
+     * @param string $ena -- more enabled characters, e.g. '-' (specify - last, escape ] chars.)
+     * @param int $maxlen -- maximum length or 0 if no limit. Default is 64.
+     *
+     * @return string -- the correct output, or empty if input was empty or null
+     */
+    public static function toNameID($str, $def='_', $ena='.-', $maxlen=64) {
+        if($str=='') return $str;
+        #if(strtolower(substr($str,0,3))=='xml') $str = '_'.$str; // xml prefix is valid!
+        if($maxlen>0 && strlen($str)>$maxlen) $str = substr($str, 0, $maxlen);
+        if(($p = strpos($ena, '-')) < strlen($ena)-1) $ena = substr($ena,0,$p).substr($ena,$p+1).'-';
+
+        // If the string is already in nameID format, return itself
+        if(preg_match("~^[A-Za-z_][\w_$ena]*$~", $str)) return $str;
+        if($def===null) $def='_';
+        if($ena===null) $ena='';
+
+        // Remove diacritics
+        $str = iconv('UTF-8','ASCII//TRANSLIT',$str);
+
+        // Filter enabled characters
+        if(strlen($ena)>0) $ena = mb_ereg_replace('(.)', '\\\\1', $ena);
+
+        // Filter the string
+        $str = mb_ereg_replace('[^A-Za-z0-9'.$def.$ena.']', $def, $str);
+
+        // Prepend a _ if first character is not alfa
+        if(!preg_match("~^[A-Za-z_]~", $str)) $str = '_'.$str;
+
+        return $str;
+    }
+}

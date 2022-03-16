@@ -1,0 +1,11 @@
+RewriteEngine On
+RewriteBase /
+
+DirectoryIndex index.php
+
+#not a valid file
+RewriteCond %{REQUEST_FILENAME} !-f
+#not a valid directory
+RewriteCond %{REQUEST_FILENAME} !-d
+
+RewriteRule . index.php [L]

@@ -1,0 +1,7 @@
+actor: UnitTester
+modules:
+    enabled:
+        - Asserts
+        - \Helper\Unit
+        - \Helper\AppTestHelper:
+            configFile: 'tests/_data/test-config.php'
