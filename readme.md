@@ -2,7 +2,7 @@ UMVC framework
 ==============
 
 Version 0.1 -- 2022-03-16
-A simple web-application framework implementig model-view-controller (MVC) architectural pattern.
+A simple web-application framework implementing model-view-controller (MVC) architectural pattern.
 
 Key features
 ------------
@@ -11,6 +11,7 @@ Key features
 - easy-to-use Model classes
 - simple URL-path to Controller/method translation with automatic parameter passing
 - database migration support
+- user login via SAML (Using this feature needs `composer require "simplesamlphp/simplesamlphp:^1.19.2"`)
 
 ### Modules
 

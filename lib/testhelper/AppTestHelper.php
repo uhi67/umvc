@@ -1,4 +1,4 @@
-<?php /** @noinspection PhpIllegalPsrClassPathInspection */
+<?php
 
 namespace Helper;
 

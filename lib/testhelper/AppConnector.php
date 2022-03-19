@@ -1,4 +1,4 @@
-<?php /** @noinspection PhpIllegalPsrClassPathInspection */
+<?php
 
 /**
  * The Helper namespace contains classes needed to connect the application framework to the codecept functional test.
