@@ -182,7 +182,7 @@ class AppTestHelper extends Framework {
 	 * @return Crawler
 	 * @throws Exception
 	 */
-	protected function clientRequest($method, $uri, array $parameters = [], array $files = [], array $server = [], $content = null, $changeHistory = true)
+	protected function clientRequest($method, $uri, array $parameters = [], array $files = [], array $server = [], ?string $content = null, $changeHistory = true): Crawler
 	{
 		if (is_array($uri)) {
 			$uri = $this->app->createUrl($uri);
