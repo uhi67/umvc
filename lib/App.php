@@ -531,7 +531,9 @@ class App extends Component {
      */
     public static function log($level, $message) {
         $logfile = self::$app->basePath . '/runtime/logs/app.log';
-        $data_to_log = date(DATE_ATOM) . ' '. $level . ' ' . $message . PHP_EOL;
+        $sid = session_id();
+        $uid = App::$app->getUserId();
+        $data_to_log = date(DATE_ATOM) . ' '. $level . ' ('.$uid.') ['.$sid.'] ' . $message . PHP_EOL;
         file_put_contents($logfile, $data_to_log, FILE_APPEND + LOCK_EX);
     }
 
@@ -661,5 +663,14 @@ class App extends Component {
     
     public static function nameSpace() {
         return substr(static::class, 0, strrpos(static::class, '\\'));
+    }
+
+    /**
+     * Returns the uid of the logged-in user or empty string if no user is logged in.
+     *
+     * @return mixed|string
+     */
+    public static function getUserId() {
+        return App::$app->user ? App::$app->user->getUserId() : '';
     }
 }
