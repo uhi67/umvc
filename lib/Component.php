@@ -33,7 +33,7 @@ use ReflectionException;
  */
 abstract class Component {
 
-    /** @var Component $parent -- the parent component which created this object (The App itself for the config-defined components) */
+    /** @var Component|App $parent -- the parent component which created this object (The App itself for the config-defined components) */
     public $parent;
 
     /**

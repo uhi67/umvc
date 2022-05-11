@@ -2,7 +2,6 @@
 namespace uhi67\umvc;
 
 use Exception;
-use SimpleSAML\Utils\HTTP;
 
 /**
  * Component to handle user login and logout.
@@ -66,7 +65,7 @@ abstract class AuthManager extends Component {
             $this->parent->user = $this->requireLogin($returnTo);
         }
 
-        // Manage already logged in user
+        // Manage already logged-in user
         $this->uid = $_SESSION['uid'] ?? null;
         if($this->uid && $this->uid!=static::INVALID_USER) {
             $user = $this->userModel::findUser($this->uid);

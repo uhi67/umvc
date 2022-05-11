@@ -23,9 +23,7 @@
     "ext-pdo_sqlite": "*",
     "ext-pdo": "*",
     "ext-simplexml": "*",
-    "psr/log": "^1.1",
-    "simplesamlphp/simplesamlphp": "1.19.3",
-    "symfony/http-foundation": "*"
+    "psr/log": "^1.1"
   },
   "require-dev": {
     "codeception/codeception": "^4.0",
@@ -43,11 +41,6 @@
       "uhi67\\umvc\\models\\": "models",
       "uhi67\\umvc\\": "lib",
       "Helper\\": "lib/testhelper"
-    }
-  },
-  "config": {
-    "allow-plugins": {
-      "simplesamlphp/composer-module-installer": true
     }
   }
 }

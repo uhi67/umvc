@@ -2,7 +2,6 @@
 namespace uhi67\umvc;
 
 use Exception;
-use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Class for various static helper functions for the framework and the application
@@ -108,7 +107,7 @@ class AppHelper {
      */
     static function showException($e, $responseStatus=null) {
         $responseStatus = $responseStatus ?: HTTP::HTTP_INTERNAL_SERVER_ERROR;
-        $title = Response::$statusTexts[$responseStatus] ?? 'Internal application error';
+        $title = HTTP::$statusTexts[$responseStatus] ?? 'Internal application error';
 
         if(php_sapi_name() == "cli") {
 

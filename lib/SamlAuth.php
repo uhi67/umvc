@@ -8,6 +8,9 @@ use SimpleSAML\Session;
 use SimpleXMLElement;
 use Throwable;
 
+/**
+ * Using this class needs `composer require "simplesamlphp/simplesamlphp:^1.19.2"`
+ */
 class SamlAuth extends AuthManager {
     // Must be set to a secure password
     public $admin_password;
@@ -134,9 +137,7 @@ class SamlAuth extends AuthManager {
         else if(method_exists('SimpleSAML_Session', 'getInstance')) {
             // SimpleSamlPhp Older than 1.9 version
             /** @var Session $session */
-            /** @noinspection PhpUndefinedMethodInspection */
             $session = Session::getInstance();
-            /** @noinspection PhpUndefinedMethodInspection */
             $idp = $session->getIdP();
         }
         return $idp;
