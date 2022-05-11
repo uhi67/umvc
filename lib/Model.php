@@ -277,9 +277,9 @@ class Model extends BaseModel implements JsonSerializable {
      * $customer->update();
      * ```
      *
-     * Note that it is possible the update does not affect any row in the table.
-     * In this case, this method will return 0. For this reason, you should use the following
-     * code to check if update() is successful or not:
+     * Note that it is possible that the update does not affect any row in the table.
+     * In this case, this method will return 0.
+     * The following code can be used to check if update() was successful or not:
      *
      * ```php
      * if ($customer->update() !== false) {
@@ -419,7 +419,7 @@ class Model extends BaseModel implements JsonSerializable {
         if ($this->isNew) {
             return $this->insert($attributeNames);
         } else {
-            return $this->update($attributeNames);
+            return $this->update($attributeNames)!== false; // see documentation of Model::update();
         }
     }
 
@@ -515,8 +515,8 @@ class Model extends BaseModel implements JsonSerializable {
     /**
      * Returns the old (database-saved) value of the attribute.
      *
-     * @param string $name the attribute name
-     * @return mixed the old attribute value. `null` if the attribute is not loaded before or does not exist.
+     * @param string $name -- the attribute name
+     * @return mixed -- the old attribute value. `null` if the attribute is not loaded before or does not exist.
      * @see hasAttribute()
      */
     public function getOldAttribute($name) {

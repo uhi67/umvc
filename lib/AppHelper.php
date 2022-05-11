@@ -135,7 +135,8 @@ class AppHelper {
             }
             return;
         }
-        if(!headers_sent()) http_response_code($responseStatus);
+        $errorMessage = (ENV_DEV || $e instanceof UserException) ? $e->getMessage() : 'Something went wrong';
+        if(!headers_sent()) http_response_code((int)$responseStatus ?? 500);
         echo '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">';
         echo '<html lang="hu">';
         echo "<head><title>$title - UMVC</title>";
@@ -144,7 +145,7 @@ class AppHelper {
         echo "<h1>$responseStatus $title</h1>";
         echo '<p>Oops, the page cannot be displayed :-(</p>';
         $details = sprintf(" in file '%s' at line '%d'", $e->getFile(), $e->getLine());
-        echo '<div><b>'.htmlspecialchars($e->getMessage()).'</b>'.(ENV_DEV ? $details : '').'</div>';
+        echo '<div><b>'.htmlspecialchars($errorMessage).'</b>'.(ENV_DEV ? $details : '').'</div>';
 
         if(ENV_DEV) {
             $basePath = dirname(__DIR__,4);
@@ -349,5 +350,31 @@ class AppHelper {
         if(!preg_match("~^[A-Za-z_]~", $str)) $str = '_'.$str;
 
         return $str;
+    }
+
+    /**
+     * Converts JSON string into array.
+     * Useful when dealing with JSON data stored in database as string.
+     *
+     * @param string $data
+     * @return array
+     * @author arlogy
+     */
+    public static function arrayFromJsonString($data) {
+        $data = json_decode($data, true);
+        return is_array($data) ? $data : [];
+    }
+
+    /**
+     * Converts array value into JSON string.
+     * Useful to revert AppHelper::arrayFromJsonString().
+     *
+     * @param mixed $data
+     * @return string
+     * @author arlogy
+     */
+    public static function jsonStringFrom($data) {
+        $data = json_encode($data);
+        return is_string($data) ? $data : '';
     }
 }

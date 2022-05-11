@@ -171,7 +171,7 @@ class Field extends Component
     }
 
     /**
-     * Render the input field of all types
+     * Renders the input field of all types
      *
      * @throws Exception
      */

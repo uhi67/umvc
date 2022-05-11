@@ -45,10 +45,10 @@ class ArrayHelper {
 	 * ]
 	 * ```
 	 *
-	 * @param object|array|string $object the object to be converted into an array
-	 * @param array $properties a mapping from object class names to the properties that need to put into the resulting arrays.
-	 * @param bool $recursive whether to recursively converts properties which are objects into arrays.
-	 * @return array the array representation of the object
+	 * @param object|array|string $object -- the object to convert into an array
+	 * @param array $properties -- a mapping from object class names to the properties that must be put into the resulting arrays.
+	 * @param bool $recursive -- whether to recursively convert properties which are objects into arrays.
+	 * @return array -- the array representation of the object
 	 */
 	public static function toArray($object, $properties = array(), $recursive = true)
 	{
@@ -117,14 +117,14 @@ class ArrayHelper {
 	 * $value = ArrayUtils::getValue($order, ['article', 'name']); // returns $order->article->name or $order['article']['name'] (or null if any of the indices is missing)
 	 * ```
 	 *
-	 * @param array|object $array array or object to extract value from
-	 * @param string|Closure|array $key key name of the array element, an array of keys or property name of the object,
+	 * @param array|object $array -- array or object to extract value from
+	 * @param string|Closure|array $key -- key name of the array element, an array of keys or property name of the object,
 	 * or an anonymous function returning the value. The anonymous function signature should be:
 	 * `function($array, $defaultValue)`.
-	 * @param mixed $default the default value to be returned if the specified array key does not exist. Not used when
+	 * @param mixed $default -- the default value to be returned if the specified array key does not exist. Not used when
 	 * getting value from an object.
 	 *
-	 * @return mixed the value of the element if found, default value otherwise
+	 * @return mixed -- the value of the element if found, default value otherwise
 	 */
 	public static function getValue($array, $key, $default = null) {
 		if(is_null($array)) return $default;
@@ -182,7 +182,7 @@ class ArrayHelper {
 	 *
 	 * @param array $array -- array to extract value from
 	 * @param string $key -- key name
-	 * @param mixed $default the default value to be returned if the specified array key does not exist
+	 * @param mixed $default -- default return value when the specified array key does not exist
 	 *
 	 * @return mixed the value of the element if found, default value otherwise
 	 * @throws Exception
@@ -206,7 +206,7 @@ class ArrayHelper {
 	 *
 	 * An empty array will be considered associative only in strict mode.
 	 *
-	 *    - `isAssociative(array, false)` means the array has associative elements,
+	 *    - `isAssociative(array, false)` means the array has associative elements.
 	 *    - `!isAssociative(array, true)` means the array has non-associative elements.
 	 *
 	 * @param array $array the array being checked
@@ -231,7 +231,7 @@ class ArrayHelper {
 	 *
 	 * @return false|int|string -- index of first match or false if not found
 	 */
-	static function array_find_key($aa, $fn) {
+	public static function array_find_key($aa, $fn) {
 		foreach($aa as $k=>$v) if($fn($v, $k)) return $k;
 		return false;
 	}
@@ -249,7 +249,7 @@ class ArrayHelper {
 	 * @return array -- mapped associative array
 	 * @throws Exception
 	 */
-	static function map($objects, $indexProp, $valueProp=null) {
+	public static function map($objects, $indexProp, $valueProp=null) {
 		$result = array();
 		if(!is_iterable($objects)) throw new Exception('`Objects` must be iterable', gettype($objects));
 		foreach($objects as $key => $obj) {
@@ -273,9 +273,8 @@ class ArrayHelper {
      * type and are having the same key.
      * For integer-keyed elements, the elements from the latter array will
      * be appended to the former array.
-     * @param array $a array to be merged to
-     * @param array $b array to be merged from. You can specify additional
-     * arrays via third argument, fourth argument etc.
+     * @param array $a -- array to merge into
+     * @param array $b -- array to merge from; additional arrays are allowed as per a variadic argument
      * @return array the merged array (the original arrays are not changed.)
      */
     public static function merge($a, $b)
@@ -307,5 +306,27 @@ class ArrayHelper {
             $r = $prefix . $i++;
         } while(array_key_exists($r, $array));
         return $r;
+    }
+
+    /**
+     * Copies an array using a keymap definition.
+     *
+     * @param array $array -- the array to copy
+     * @param array $keymap -- the keymap definition to use
+     *  - each key in this array must be mapped to a replacement key
+     *  - replacement keys and only these are used to initialize the new array
+     *  (so keys in the input array that are not part of the keymap definition are ignored)
+     *  - when a replacement key cannot be reached from the input array, its corresponding value will be null in the new array
+     *
+     * @return array
+     * @author arlogy
+     */
+    public static function copyArrayMappingKeys($array, $keymap) {
+        if(!is_array($array) || !is_array($keymap)) return [];
+        $result = [];
+        foreach($keymap as $k1 => $k2) {
+            $result[$k2] = $array[$k1] ?? null;
+        }
+        return $result;
     }
 }

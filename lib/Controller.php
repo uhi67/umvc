@@ -9,17 +9,17 @@ use ReflectionMethod;
  * Represents a function in the application.
  * The App dispatcher will run the proper action of the selected Controller class.
  *
- * All main function's path in the application must be mapped to a Controller class named `<function>Controller`
+ * All main function's path in the application must be mapped to a Controller class named `<function>Controller`.
  * The `action<Action>` methods are mapped to the function action, e.g. CRUD action names.
  *
  * **Example:**
  * - Suppose the HTTP request is /user/create
- * - The dispatcher finds the UserController class, and creates an instance of it, and invokes its go() method.
+ * - The dispatcher finds the UserController class, creates an instance of it, and invokes its go() method
  * - The UserController finds the actionCreate() method, based on the remainder of the path ('/create')
  * - The actionCreate() method performs the desired function
  *
  * ### Most important properties and methods:
- * - app: the application instance invoked this controller
+ * - app: the application instance that invoked this controller
  * - path: the path portion passed to the controller (controller name already shifted out)
  * - query: the query part of the original request, as an associative array
  * - beforeAction(): Invoked before each action. if you define it, it must return true to enable the current action.
@@ -42,7 +42,7 @@ class Controller extends Component
     public $action;
 
     /**
-     * Execute the request by this controller
+     * Determines and performs the requested action using $this controller
      *
      * @throws Exception if no matching action
      * @return int -- HTTP response status
@@ -108,7 +108,7 @@ class Controller extends Component
     /**
      * Outputs a JSON response
      *
-     * @param array|object $response -- array or object containing the output data. Null is not permitted, use empty array for empty data.
+     * @param array|object $response -- array or object containing the output data. Null is not permitted, use empty array for empty data
      * @param array $headers -- more custom headers to send
      * @return int
      * @throws Exception -- if the response is not a valid data to convert to JSON.
@@ -128,7 +128,7 @@ class Controller extends Component
      * The data must be a 2-dim array containing plain text.
      * If a header line is needed, it must be in the data.
      *
-     * @param array[] $models -- array containing the output data. Null is not permitted, use empty array for empty data.
+     * @param array[] $models -- array containing the output data. Null is not permitted, use empty array for empty data
      * @param array $headers -- more custom headers to send
      * @return int
      * @throws Exception -- if the response is not a valid data to convert to JSON.
@@ -182,14 +182,15 @@ class Controller extends Component
     /**
      * A shortcut for app->render
      *
-     * @param string $viewName -- basename of a php viewfile in the `views` directory, without extension
+     * @param string $viewName -- basename of a php view-file in the `views` directory, without extension
      * @param array $params -- parameters to assign to variables used in the view
-     * @param string $layout -- the layout applied to this render after the view rendered. If null, no layout will be applied.
+     * @param string $layout -- the layout applied to this render after the view rendered. Ignored if false-like
+     * @param array $layoutParams -- optional parameters for the layout view
      *
      * @return false|string
      * @throws Exception
      */
-    public function render($viewName, $params=[], $layout='layout') {
-        return $this->app->render($viewName, $params, $layout);
+    public function render($viewName, $params=[], $layout='layout', $layoutParams=[]) {
+        return $this->app->render($viewName, $params, $layout, $layoutParams);
     }
 }

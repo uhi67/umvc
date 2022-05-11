@@ -322,12 +322,12 @@ class App extends Component {
      *
      * @param string $viewName -- basename of a php view-file in the `views` directory, without extension
      * @param array $params -- parameters to assign to variables used in the view
-     * @param string $layout -- the layout applied to this render after the view rendered. If null, no layout will be applied.
-     *
+     * @param string $layout -- the layout applied to this render after the view rendered, ignored if false-like
+     * @param array $layoutParams -- optional parameters for the layout view
      * @return false|string
      * @throws Exception
      */
-    public function render($viewName, $params=[], $layout = 'layout') {
+    public function render($viewName, $params=[], $layout='layout', $layoutParams=[]) {
         $viewPath = dirname(__DIR__,4).'/views';
         $viewFile = $viewPath . '/' . $viewName.'.php';
         if(!file_exists($viewFile)) {
@@ -337,7 +337,7 @@ class App extends Component {
         if(!file_exists($viewFile)) throw new Exception("View file '$viewName.php' does not exist", HTTP::HTTP_NOT_FOUND);
         $content = $this->renderPhpFile($viewFile, $params);
         if($layout) {
-            $content = $this->render($layout, ['content'=>$content], false);
+            $content = $this->render($layout, array_merge(['content'=>$content], $layoutParams), false);
         }
         return $content;
     }
@@ -672,5 +672,25 @@ class App extends Component {
      */
     public static function getUserId() {
         return App::$app->user ? App::$app->user->getUserId() : '';
+    }
+
+    /**
+     * This method is only introduced to avoid duplicating explanations in the source code.
+     * When used as shown below, a PHP runtime error will be raised for variables expected by a view that are not passed.
+     * Please note that such an error is automatically raised when the variable is explicitly referenced in the PHP view.
+     * However, in some cases, like when the variable is referenced in the PHP view but only in a JS <script> tag,
+     * the error message is not clear and the server output is messed up without any warning.
+     *     <script>console.log('<?= $undefinedVar ?>');</script>
+     * Therefore, this method helps prevent unnecessary headaches for the developer.
+     *
+     * Usage in a template/view file:
+     *     @var App $this // typehint for $this but any other variable name is fine
+     *     assert($this->requireVars($var1, ..., $varN), ''); // $var<i> are variables expected by the view
+     *                                                        // the use of assert() is to not impact production environment
+     *
+     * @param array $variables -- Variable list of PHP variables
+     */
+    public function requireVars(...$variables) {
+        return true; // for assert() to succeed: see usage in documentation above
     }
 }

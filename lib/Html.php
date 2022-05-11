@@ -13,12 +13,12 @@ class Html {
      * @param string|NULL $val The value to check.
      * @return boolean
      */
-    public static function isUrl($val) {
+    public static function isAbsoluteUrl($val) {
         return strpos($val, 'http://') === 0 || strpos($val, 'https://') === 0;
     }
 
     /**
-     * Returns the HTML string of an <tag> element
+     * Returns the HTML string of an `<tag>` element
      *
      * @param $tag -- cleaned
      * @param $content -- not cleaned to allow embed HTML structures
@@ -37,23 +37,25 @@ class Html {
     }
 
     /**
-     * Returns the HTML string of an <a> element (possibly including the "mailto" URI schema) or an error string.
+     * Returns the HTML string of an `<a>` element (possibly including the "mailto" URI schema) or an error string.
+     * You should use Html::tag() instead when the URL is relative.
      *
-     * @param string|NULL $href The value to return HTML from if URL or email address.
+     * @param string|NULL $href The value to return HTML from if an absolute URL (see {@see isAbsoluteUrl()}) or email address.
      * @param string|NULL $content The visual text to show if any, otherwise the input href is used. Cleaned!
      * @return string
      */
-    public static function a($href, $content = null, $options=[]) {
+    public static function a($href, $content=null, $options=[]) {
         $href = AppHelper::xss_clean($href);
 
         // determine whether the input value is a URL (possibly containing @) or email alike
-        $hrefIsUrl = self::isUrl($href);
+        $hrefIsUrl = self::isAbsoluteUrl($href);
         $hrefIsEmail = !$hrefIsUrl && preg_match('/.+@.+/', $href);
 
         // set content
-        if(!isset($content)) {
+        if(!isset($content) || trim($content)==='') {
             $content = $href;
         }
+        $content = AppHelper::xss_clean($content);
 
         if($hrefIsUrl) {
             $options['href'] = $href;
@@ -69,8 +71,21 @@ class Html {
     }
 
     /**
-     * Returns the HTML string of a button-like <a> element or a disabled <button>.
-     * Please note that <a> elements can be disabled as well, but this is easily achieved with <button> elements.
+     * Returns the HTML string of a button element with optional id attribute.
+     *
+     * @param string $text text to display
+     * @param string $class optional additional class for the button
+     * @param string $id optional ID for the button
+     * @return string
+     */
+    public static function button($text, $class=NULL, $id=NULL) {
+        return sprintf('<button type="button" class="btn btn-secondary %s" %s>%s</button>',
+            $class ?? '', isset($id) ? 'id="'.$id.'"' : '', $text);
+    }
+
+    /**
+     * Returns the HTML string of a button-like `<a>` element or a disabled `<button>`.
+     * Please note that `<a>` elements can be disabled as well, but this is easily achieved with `<button>` elements.
      *
      * @param string|NULL $href The href to return a link button from.
      * @param string|NULL $enabledText The text to use if the input href is a URL.
@@ -80,7 +95,7 @@ class Html {
     public static function linkButton($href, $enabledText, $disabledText) {
         $href = AppHelper::xss_clean($href);
 
-        return self::isUrl($href) ?
+        return self::isAbsoluteUrl($href) ?
                sprintf('<a role="button" class="btn btn-secondary btn-sm" target="_blank" href="%s">%s</a>', $href, $enabledText) :
                sprintf('<button type="button" class="btn btn-secondary btn-sm" disabled>%s</button>', $disabledText)
         ;
