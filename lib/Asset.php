@@ -7,22 +7,28 @@ use Exception;
 /**
  * Asset class manages external (composer-loaded) asset files.
  * These files in the vendor-path, they must be copied to a web-accessible directory.
- *
+ * @property-read $name
  */
 class Asset extends Component {
-    /** @var string $path -- package path relative to vendor dir. */
+    /** @var string $name -- package name (default is path) */
+    public $name;
+    /** @var string $path -- package path relative to vendor dir or app dir ('/...') or www dir ('') */
     public $path;
+    /** @var string $dir -- absolute source directory of the current asset -- computed from path if not specified */
+    public $dir;
     /** @var string $id -- unique package id used as a directory name in the cache */
     public $id;
-    /** @var string $dir -- absolute source directory of the current asset */
-    public $dir;
     /** @var array|null $patterns -- file patterns to select files to copy from the package path */
     public $patterns;
-    /** @var string[][] -- copy these extensions into cache together with the original file */
+    /** @var string[] $files -- file names or patterns to link from the package to the view. Use '*' for all files */
+    public $files = [];
+    /** @var string[][] -- copy these extensions into cache together with the original files */
     public $extensions = [
         'css' => ['css.map', 'min.css', 'min.css.map'],
         'js' => ['js.map', 'min.js', 'min.js.map'],
     ];
+    /** @var string[] $after */
+    public $after =[];
     /** @var string $cacheDir -- web-accessible directory of the asset. E.g '/www/assets/112233445566778F' */
     public $cacheDir;
     /** @var string $cacheUrl -- url-path of the asset directory. E.g '/assets/112233445566778F' */
@@ -33,20 +39,34 @@ class Asset extends Component {
      * @throws Exception
      */
     public function init() {
-        if(!$this->id) $this->id = substr(md5($this->path),0,16);
+        if(!$this->name && !$this->path) throw new Exception('Package name or path must be specified');
+        if(!$this->name) $this->name = $this->path;
+
+        // TODO check uníque name
+
+        if(!$this->dir) {
+            if($this->path=='') $this->dir = App::$app->basePath.'/www';
+            elseif($this->path[0]=='/') $this->dir = App::$app->basePath.$this->path;
+            else $this->dir = App::$app->basePath.'/vendor/'.$this->path;
+        }
+
+        if(!$this->id) $this->id = substr(md5($this->dir),0,16);
         if(!$this->cacheDir) $this->cacheDir = App::$app->basePath.'/www/assets/cache/'.$this->id;
         if(!$this->cacheUrl) $this->cacheUrl = '/assets/cache/'.$this->id;
 
         if(!is_dir($this->cacheDir)) mkdir($this->cacheDir, 0774, true);
         if(!$this->patterns) $this->patterns = ['*'];
 
-        $this->dir = App::$app->basePath.'/vendor/'.$this->path;
         // Copy files
         foreach($this->patterns as $pattern) {
             $this->matchPattern($this->dir, '', $pattern, function($file) {
                 $this->copyFile($file);
             });
         }
+    }
+
+    public function getName() {
+        return $this->path ?? $this->dir;
     }
 
     /**

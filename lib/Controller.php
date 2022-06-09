@@ -40,6 +40,9 @@ class Controller extends Component
     public $query;
     /** @var string|null -- name of the currently executed action (without 'action' prefix) */
     public $action;
+    
+    /** @var Asset[] $assets -- registered assets indexed by name */
+    public $assets = [];
 
     /**
      * Determines and performs the requested action using $this controller
@@ -193,4 +196,24 @@ class Controller extends Component
     public function render($viewName, $params=[], $layout='layout', $layoutParams=[]) {
         return $this->app->render($viewName, $params, $layout, $layoutParams);
     }
+
+    public function registerAsset(Asset $asset) {
+        // TODO: implement 'after'
+        $this->assets[] = $asset;
+    }
+
+    public function linkAssets($extensions=null) {
+        $html = '';
+        foreach($this->assets as $asset) {
+            foreach($asset->files as $file) {
+                // TODO iterate file pattern in the cache (use extension filter)
+                // TODO create link based on extension
+                $css_example = '<link rel="stylesheet" href="<?= $this->asset("twitter/bootstrap/dist", "css/bootstrap.min.css"); ?>">';
+                $js_example = '<script src="<?= $this->asset("bower-asset/jquery/dist", "jquery.min.js") ?>"></script>';
+            }
+        }
+
+        return $html;
+    }
+
 }
