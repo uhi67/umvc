@@ -31,7 +31,10 @@ class Html {
         if($options) foreach($options as $attr=>$value) {
             $name = AppHelper::toNameID($attr);
             if($value===true) $parts[] = $name;
-            if($value!==null && $value!==false) $parts[] = $name.'="'.AppHelper::xss_clean($value).'"';
+            if($value!==null && $value!==false) {
+                if(!is_scalar($value)) throw new Exception('Attribute value must be scalar');
+                $parts[] = $name.'="'.AppHelper::xss_clean($value).'"';
+            }
         }
         return '<'.implode(' ', $parts).'>'.$content.'</'.$tag.'>';
     }
@@ -115,5 +118,9 @@ class Html {
             if($actualValue!==null && $actualValue !=='' && $actualValue==$value) $opt['selected']=true;
             return Html::tag('option', $label, $opt);
         }, array_keys($values), array_values($values))), $options);
+    }
+
+    public static function link($options=[]) {
+        return Html::tag('link', '', $options);
     }
 }

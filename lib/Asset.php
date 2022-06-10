@@ -5,8 +5,9 @@ namespace uhi67\umvc;
 use Exception;
 
 /**
- * Asset class manages external (composer-loaded) asset files.
+ * Asset class manages external (composer-loaded) asset files (~ asset package)
  * These files in the vendor-path, they must be copied to a web-accessible directory.
+ *
  * @property-read $name
  */
 class Asset extends Component {
@@ -27,8 +28,6 @@ class Asset extends Component {
         'css' => ['css.map', 'min.css', 'min.css.map'],
         'js' => ['js.map', 'min.js', 'min.js.map'],
     ];
-    /** @var string[] $after */
-    public $after =[];
     /** @var string $cacheDir -- web-accessible directory of the asset. E.g '/www/assets/112233445566778F' */
     public $cacheDir;
     /** @var string $cacheUrl -- url-path of the asset directory. E.g '/assets/112233445566778F' */
@@ -36,7 +35,7 @@ class Asset extends Component {
 
     /**
      * Package files are copied into the cache
-     * @throws Exception
+     * @throws Exception -- if nor path nor package name is specified 
      */
     public function init() {
         if(!$this->name && !$this->path) throw new Exception('Package name or path must be specified');
@@ -59,7 +58,7 @@ class Asset extends Component {
 
         // Copy files
         foreach($this->patterns as $pattern) {
-            $this->matchPattern($this->dir, '', $pattern, function($file) {
+            static::matchPattern($this->dir, '', $pattern, function($file) {
                 $this->copyFile($file);
             });
         }
@@ -70,7 +69,7 @@ class Asset extends Component {
     }
 
     /**
-     * Iterates through files of given pattern and calls the callback function for every file.
+     * Iterates through files of given pattern in the `$basedir/$dir` directory and calls the callback function for every file.
      *
      * Special pattern matches:
      *
@@ -82,12 +81,12 @@ class Asset extends Component {
      * @param string $baseDir -- absolute package root (search and return filenames in relation to this; no trailing '/')
      * @param string $dir -- iterated subdirectory, empty or 'dir/' (must have trailing / if non-empty)
      * @param string $pattern -- literal filename, directory pattern or RegEx pattern or dir/pattern
-     * @param callable $callback -- function(string $file) -- operation on found file
+     * @param callable $callback -- function(string $file) -- operation on found file, using path relative to $basedir
      * @param null $missing -- function(string $file) -- operation on missing file or directory
      *
      * @throws Exception
      */
-    private function matchPattern($baseDir, $dir, $pattern, $callback, $missing=null) {
+    public static function matchPattern($baseDir, $dir, $pattern, $callback, $missing=null) {
         $d = $baseDir . '/' . $dir;
 
         // RegEx pattern
@@ -115,8 +114,8 @@ class Asset extends Component {
                 while(($file = $dh->read())!==false) {
                     if($file=='.'||$file=='..') continue;
                     if(filetype($d.$file)!='dir') continue;
-                    $this->matchPattern($baseDir, $dir.$file.'/', $subpattern, $callback);
-                    $this->matchPattern($baseDir, $dir.$file.'/', $pattern, $callback); // restart ... matching!
+                    static::matchPattern($baseDir, $dir.$file.'/', $subpattern, $callback);
+                    static::matchPattern($baseDir, $dir.$file.'/', $pattern, $callback); // restart ... matching!
                 }
                 $dh->close();
             }
@@ -127,14 +126,14 @@ class Asset extends Component {
                     if($file=='.'||$file=='..') continue;
                     if(filetype($d.$file)!='dir') continue;
                     if(!fnmatch($dirPattern, $file)) continue;
-                    $this->matchPattern($baseDir, $dir.$file.'/', $subpattern, $callback);
+                    static::matchPattern($baseDir, $dir.$file.'/', $subpattern, $callback);
                 }
                 $dh->close();
             }
             else {
                 // literal subdirectory
                 if(is_dir($d.$dirPattern)) {
-                    $this->matchPattern($baseDir, $dir.$dirPattern.'/', $subpattern, $callback, $missing);
+                    static::matchPattern($baseDir, $dir.$dirPattern.'/', $subpattern, $callback, $missing);
                 }
                 else {
                     if($missing) $missing($d.$dirPattern);
@@ -160,7 +159,7 @@ class Asset extends Component {
         else {
             $fileName = $dir.$pattern;
             // Use a single file (fileName includes path relative to asset root)
-            if($missing && !file_exists($this->dir . '/' . $fileName)) $missing($fileName);
+            if($missing && !file_exists($baseDir . '/' . $fileName)) $missing($fileName);
             else $callback($fileName);
         }
     }

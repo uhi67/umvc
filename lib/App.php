@@ -601,17 +601,18 @@ class App extends Component {
      * @return string -- the valid url accessible by the client
      * @throws Exception
      */
-    public function asset(string $package, string $resource, ?array $patterns=null) {
-        if(!isset($this->_assets[$package])) {
+    public function linkAssetFile(string $package, string $resource, ?array $patterns=null) {
+        if(!$this->controller) throw new Exception('No controller is executed');
+        if(!isset($this->controller->assets[$package])) {
             // Create a new asset package (copies files on init)
             $asset = new Asset([
                 'path' => $package,
                 'patterns' => $patterns,
             ]);
             // Register the asset package
-            $this->_assets[$package] = $asset;
+            $this->controller->registerAsset($asset);
         }
-        else $asset = $this->_assets[$package];
+        else $asset = $this->controller->assets[$package];
         return $asset->url($resource);
     }
 
