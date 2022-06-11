@@ -89,7 +89,7 @@ class Asset extends Component {
     public static function matchPattern($baseDir, $dir, $pattern, $callback, $missing=null) {
         $d = $baseDir . '/' . $dir;
 
-        // RegEx pattern
+        // RegEx pattern (surrounded by ~)
         if(substr($pattern,0,1)=='~' && substr($pattern,-1)=='~') {
             // Single level RegEx pattern
             $dh = dir($d);
@@ -103,7 +103,7 @@ class Asset extends Component {
             $dh->close();
         }
 
-        // Directory pattern
+        // Directory pattern (contains /)
         else if(($p = strpos($pattern, '/'))!==false) {
             // Match $dir and $subpattern
             $dirPattern = substr($pattern, 0, $p);
@@ -122,7 +122,7 @@ class Asset extends Component {
             elseif(preg_match('~[*?]~', $dirPattern)) {
                 // Single level subdirectory pattern
                 $dh = dir($d);
-                while(($file = $dh->read($dh))!==false) {
+                while(($file = $dh->read())!==false) {
                     if($file=='.'||$file=='..') continue;
                     if(filetype($d.$file)!='dir') continue;
                     if(!fnmatch($dirPattern, $file)) continue;
@@ -141,7 +141,7 @@ class Asset extends Component {
             }
         }
 
-        // legacy wildcards pattern
+        // legacy wildcards pattern (contains * or ?)
         else if(preg_match('~[*?]~', $pattern)) {
             // match directory pattern in the current directory (use fnmatch)
             if($dh = opendir($d)) {
@@ -176,9 +176,10 @@ class Asset extends Component {
      * @return string -- cache path (relative to cacheDir)
      */
     private function copyFile($fileName) {
-        $filePath = $this->dir.'/'.$fileName;
-        $cacheFileName = $this->cacheDir . '/' . $fileName;
-        if(!file_exists($cacheFileName)) {
+        $filePath = $this->dir.'/'.$fileName;   // Absolute path of original file to copy
+        $cacheFileName = $this->cacheDir . '/' . $fileName; // Absolute path of cache file to copy into
+
+        if(!file_exists($cacheFileName) || (filemtime($cacheFileName) < filemtime($filePath))) {
             if(!file_exists(dirname($cacheFileName))) mkdir(dirname($cacheFileName), 0774, true);
             copy($filePath, $cacheFileName);
 
