@@ -678,7 +678,15 @@ class Query extends Component
     public function getOne() {
         if($this->sql && $this->_one!==null) return $this->_one;
         $start = microtime(true);
-        if(!($this->stmt = $this->prepareStatement([PDO::ATTR_CURSOR => PDO::CURSOR_SCROLL]))) throw new Exception($this->lastError(true));
+        try {
+            if (!($this->stmt = $this->prepareStatement([PDO::ATTR_CURSOR => PDO::CURSOR_SCROLL]))) {
+                throw new Exception($this->lastError(true) . ', SQL=' . $this->sql);
+            }
+        }
+        catch(Throwable $e) {
+            AppHelper::showException($e);
+            throw new Exception($this->lastError(true) . ', SQL=' . $this->sql);
+        }
         if(!$this->stmt->execute()) throw new Exception($this->lastError(true));
         $result = $this->stmt->fetch(PDO::FETCH_ASSOC);
         $error = $this->lastError(true);
@@ -1050,7 +1058,7 @@ class Query extends Component
      * @return PDOStatement|false -- false if bind or prepare failed
      */
     public function prepareStatement($options=[]) {
-        $stmt = $this->connection->pdo->prepare($this->sql, $options); // this actually builds up the SQL statement and computes the inner parameters
+        $stmt = $this->connection->prepareStatement($this->sql, $options); // this actually builds up the SQL statement and computes the inner parameters
         if($stmt===false) return false;
         if($this->_innerParams) foreach($this->_innerParams as $name=>&$value) {
             if(!$stmt->bindParam(is_int($name) ? $name+1 : $name, $value)) return false;

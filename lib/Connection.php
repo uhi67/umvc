@@ -164,40 +164,15 @@ abstract class Connection extends Component {
     }
 
 	/**
-	 * Returns metadata of the table
+     * Must return the metadata of the table
 	 *
 	 * (Associative to field names)
-	 * Vendor-specific, this implementation is for MySQL only.
 	 *
 	 * @param string $table
 	 * @return array|boolean -- returns false if table does not exist
 	 * @throws Exception
 	 */
-    public function tableMetadata($table) {
-        $table = $this->quoteIdentifier($table);
-        $stmt = $this->pdo->query('show fields from '.$table);
-        if(!$stmt) return false;
-        $rows = $stmt->fetchAll();
-        if($rows===false) return false;
-        $i = 1;
-        $result = array();
-        foreach($rows as $row) {
-            $type = $row['Type'];
-            $len = -1;
-            if(preg_match('/(\w+)\((\d+)\)/', $type, $mm)) {
-                $type = $mm[1];
-                $len = (int)$mm[2];
-            }
-            $result[$row['Field']] = [
-                'num' => $i++,
-                'type' => $type,
-                'len' => $len,
-                'not null' => $row['Null']=='NO',
-                'has default' => $row['Default']!==null,
-            ];
-        }
-        return $result;
-    }
+    abstract public function tableMetadata($table);
 
     /**
      * Return dbname part of the DSN string, or empty string if dbname part not found
@@ -212,6 +187,13 @@ abstract class Connection extends Component {
 
     public function setUser($user) { $this->_user = $user; }
     public function setPassword($password) { $this->_password = $password; }
+
+    /**
+     * Override if vendor-specific preparation is needed.
+     */
+    public function prepareStatement($sql, $options) {
+        return $this->pdo->prepare($this->sql, $options);
+    }
 
 	/**
 	 * Creates a new connection using vendor driver specified in the DSN
