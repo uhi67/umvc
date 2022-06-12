@@ -587,7 +587,7 @@ class App extends Component {
     /**
      * Asset manager for distributed packages
      *
-     * First call on an asset package copies the package content from the vendor dir into the asset cache.
+     * The first call on an asset package copies the package content from the vendor dir into the asset cache.
      * The content of the package is kept together.
      * The `patterns` parameter must be specified only at the first call. At subsequent calls it will be ignored.
      *
@@ -595,23 +595,24 @@ class App extends Component {
      *
      * Composer install script clears the asset cache.
      *
-     * @param string $package -- package root directory under the vendor dir
+     * @param string $package -- package root directory relative to the vendor dir or beginning with '/' indicates relative to the project root.
      * @param string $resource -- the resource to return
      * @param array|null $patterns -- optional pattern array (RegEx patterns to select files from the package path), see {@see Asset::matchPattern() }
      * @return string -- the valid url accessible by the client
      * @throws Exception
      */
-    public function asset(string $package, string $resource, ?array $patterns=null) {
-        if(!isset($this->_assets[$package])) {
+    public function linkAssetFile(string $package, string $resource, ?array $patterns=null) {
+        if(!$this->controller) throw new Exception('No controller is executed');
+        if(!isset($this->controller->assets[$package])) {
             // Create a new asset package (copies files on init)
             $asset = new Asset([
                 'path' => $package,
                 'patterns' => $patterns,
             ]);
             // Register the asset package
-            $this->_assets[$package] = $asset;
+            $this->controller->registerAsset($asset);
         }
-        else $asset = $this->_assets[$package];
+        else $asset = $this->controller->assets[$package];
         return $asset->url($resource);
     }
 

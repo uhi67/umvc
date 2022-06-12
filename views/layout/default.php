@@ -13,9 +13,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title></title>
     <meta name="description" content="">
+    <?= $this->controller->linkAssets(['css']) ?>
 </head>
 
 <body>
     <?= $content ?>
+    <?= $this->controller->linkAssets(['js']) ?>
 </body>
 </html>

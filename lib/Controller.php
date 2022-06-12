@@ -40,7 +40,23 @@ class Controller extends Component
     public $query;
     /** @var string|null -- name of the currently executed action (without 'action' prefix) */
     public $action;
+    
+    /** @var Asset[] $assets -- registered assets indexed by name */
+    public $assets = [];
 
+    public function init() {
+        $this->registerAssets();
+    }
+
+    /**
+     * Descendant classes must override and register asset packages here.
+     * The default implementation is empty.
+     * @return void
+     */
+    public function registerAssets() {
+        // This function is intentionally empty. Descendants need not call it.
+    }
+    
     /**
      * Determines and performs the requested action using $this controller
      *
@@ -190,7 +206,55 @@ class Controller extends Component
      * @return false|string
      * @throws Exception
      */
-    public function render($viewName, $params=[], $layout='layout', $layoutParams=[]) {
+    public function render($viewName, $params=[], $layout='layout/default', $layoutParams=[]) {
         return $this->app->render($viewName, $params, $layout, $layoutParams);
     }
+
+    /**
+     * @param Asset $asset
+     * @return void
+     */
+    public function registerAsset(Asset $asset) {
+        $this->assets[$asset->name] = $asset;
+    }
+
+    /**
+     * Link registered assets (optionally filtered by extensions)
+     *
+     * @param string|string[] $extensions -- extension name(s), e.g. 'css', default is null == all extensions
+     * @return string -- the generated html code
+     * @throws Exception
+     */
+    public function linkAssets($extensions=null) {
+        $html = '';
+        foreach($this->assets as $asset) {
+            foreach((array)$asset->files as $file) {
+                // Iterate file pattern in the cache (use extension filter)
+                Asset::matchPattern($asset->dir, '', $file, function($file) use($asset, $extensions, &$html) {
+                    $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+                    if(!$extensions || in_array($ext, (array)$extensions)) {
+                        switch($ext) {
+                            // Create link based on extension
+                            case 'css':
+                                $html .= Html::link([
+                                    'rel'=>'stylesheet',
+                                    'href'=>$asset->url($file)
+                                ]);
+                                break;
+                            case 'js':
+                                $html .= Html::tag('script', '', [
+                                    'src'=>$asset->url($file)
+                                ]);
+                                break;
+                            default:
+                                throw new Exception("Unknown asset extension `$ext`");
+                        }
+                    }
+                });
+            }
+        }
+
+        return $html;
+    }
+
 }
