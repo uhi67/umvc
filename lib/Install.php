@@ -68,7 +68,7 @@ class Install {
      * @return void
      * @throws Exception
      */
-    private static function clearDir(string $path) {
+    public static function clearDir(string $path) {
         if(!is_dir($path)) throw new Exception('Invalid directory: '.$path);
         $dh = opendir($path);
         while (($file = readdir($dh)) !== false) {
