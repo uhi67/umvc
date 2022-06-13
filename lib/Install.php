@@ -84,4 +84,30 @@ class Install {
         }
         closedir($dh);
     }
+
+    /**
+     * copies multiple files from source to destination directory
+     *
+     * @param string $src -- source directory or file
+     * @param string $dst -- destination directory or file
+     * @param bool $overwrite
+     * @return int -- number of files copied
+     */
+    public static function rcopy($src, $dst, $overwrite=false) {
+        if (is_dir($src)) {
+            // echo "Copying to $dst\n";
+            if (!file_exists($dst)) mkdir($dst);
+            $files = scandir($src);
+            $c = 0;
+            foreach ($files as $file) {
+                if ($file != "." && $file != "..")
+                    $c += self::rcopy("$src/$file", "$dst/$file", $overwrite);
+            }
+            return $c;
+        }
+        else if(file_exists($src) && !file_exists($dst) || $overwrite) {
+            return copy($src, $dst) ? 1 : 0;
+        }
+        return 0;
+    }
 }
