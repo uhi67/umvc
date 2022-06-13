@@ -19,9 +19,6 @@ class SqliteConnection extends Connection {
      * @throws Exception
      */
     public function init() {
-//        $fileName = strchr($this->dsn, ':');
-//        if(!file_exists($fileName) && $this->autoCreate)
-        echo $this->dsn, PHP_EOL;
         $this->pdo = new PDO($this->dsn);
         $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $this->reset();
