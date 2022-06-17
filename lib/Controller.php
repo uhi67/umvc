@@ -132,7 +132,7 @@ class Controller extends Component
     public function jsonResponse($response, $headers=[]) {
         foreach ($headers as $header) $this->app->sendHeader($header);
         $this->app->sendHeader('Content-Type: application/json');
-        $result = json_encode($response);
+        $result = json_encode($response, JSON_UNESCAPED_SLASHES);
         if(!$result) throw new Exception('Invalid data');
         echo $result;
         //Debug::debug('[JSON result] '.$result);
