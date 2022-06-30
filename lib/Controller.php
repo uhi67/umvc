@@ -102,7 +102,7 @@ class Controller extends Component
      * @throws Exception
      */
     public function actionDefault() {
-        throw new Exception('No default action is defined');
+        throw new Exception('No default action is defined in '.call_user_func([get_called_class(), 'shortName']));
     }
 
     /**
@@ -184,12 +184,14 @@ class Controller extends Component
      *
      * @param string $viewName -- basename of a php viewfile in the `views` directory, without extension
      * @param array $params -- parameters to assign to variables used in the view
-     * @param string $layout -- the layout applied to this render after the view rendered. If null, no layout will be applied.
+     * @param string|bool $layout -- the layout applied to this render after the view rendered. If false, no layout will be applied.
      *
      * @return false|string
      * @throws Exception
      */
-    public function render($viewName, $params=[], $layout='layout') {
+    public function render($viewName, $params=[], $layout=null) {
         return $this->app->render($viewName, $params, $layout);
     }
+
+    
 }

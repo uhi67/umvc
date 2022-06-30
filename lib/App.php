@@ -88,6 +88,19 @@ class App extends Component {
     public $responseStatus;
     /** @var array $headers -- the http headers will be sent after completing the request */
     public $headers;
+    /** @var Request $request */
+    public $request;
+    /** @var Session $session */
+    public $session;
+
+    /** @var string $layout -- the default layout */
+    public $layout = 'layout';
+
+    /** @var string $source_locale -- the locale of the source messages for localization, e.g. "en-GB" (IETF BCP47 language tag) */
+    public $source_locale = 'en_GB';
+    /** @var string $locale -- the current locale for localization, e.g. "hu-HU" (IETF BCP47 language tag) */
+    public $locale = 'en_GB';
+
 
     /** @var Component[] $_components  -- the configured components */
     private $_components;
@@ -122,6 +135,8 @@ class App extends Component {
         if($this->sapi != 'cli') {
             $this->baseUrl = isset($_SERVER['REQUEST_URI']) ? parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) : null;
             if(!is_dir($logDir = $this->basePath.'/runtime/logs')) mkdir($logDir);
+            if(!$this->request) $this->request = new Request();
+            if(!$this->session) $this->session = new Session();
         }
 
         $components = $this->config['components'] ?? [];
@@ -322,12 +337,13 @@ class App extends Component {
      *
      * @param string $viewName -- basename of a php view-file in the `views` directory, without extension
      * @param array $params -- parameters to assign to variables used in the view
-     * @param string $layout -- the layout applied to this render after the view rendered. If null, no layout will be applied.
+     * @param string|bool $layout -- the layout applied to this render after the view rendered. If false, no layout will be applied.
      *
      * @return false|string
      * @throws Exception
      */
-    public function render($viewName, $params=[], $layout = 'layout') {
+    public function render($viewName, $params=[], $layout = null) {
+        if($layout===null) $layout = $this->layout;
         $viewPath = dirname(__DIR__,4).'/views';
         $viewFile = $viewPath . '/' . $viewName.'.php';
         if(!file_exists($viewFile)) {
@@ -692,5 +708,18 @@ class App extends Component {
      */
     private function requireVars(...$variables) {
         return true; // for assert() to succeed: see usage in documentation above
+    }
+
+    /**
+     * Localize a message
+     * 
+     * TODO:
+     * @param $cat
+     * @param $msg
+     * @param $params
+     * @return mixed
+     */
+    public static function l($cat, $msg, $params=[]) {
+        return $msg;
     }
 }
