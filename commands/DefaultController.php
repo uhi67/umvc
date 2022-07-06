@@ -36,7 +36,7 @@ class DefaultController extends Command {
         }
         closedir($dh);
 
-        // User commands (overwrites UApp commands)
+        // User commands (overwrites umvc commands)
         $dir = $appPath.'/commands';
         if(is_dir($dir)) {
             $dh = opendir($dir);

@@ -2,6 +2,7 @@
 
 namespace uhi67\umvc;
 use Exception;
+use Psr\Log\LogLevel;
 
 /**
  * # Class BaseSession
@@ -48,8 +49,8 @@ class Session extends Component {
 		session_set_cookie_params(0, $this->cookie_path, $this->cookie_domain);
 		session_name($this->name);
 		session_cache_limiter('private_no_expire');
-		if(headers_sent($file, $line)) throw new UXAppException("Cannot start session, headers already sent in $file:$line");
-		if(session_status() == PHP_SESSION_ACTIVE) throw new UXAppException('Session is already active.');
+		if(headers_sent($file, $line)) throw new \Exception("Cannot start session, headers already sent in $file:$line");
+		if(session_status() == PHP_SESSION_ACTIVE) throw new \Exception('Session is already active.');
 
 		if(!static::is_started() && !session_start()) static::log('Error starting session');
 		else static::log('Session is started');
@@ -63,7 +64,7 @@ class Session extends Component {
 	 * @throws Exception
 	 */
 	function __destruct() {
-		UXApp::trace('Destructing session', ['tags' => 'uxapp']);
+		App::log('debug', 'Destructing session');
 		#$this->finish();
 	}
 
@@ -77,7 +78,7 @@ class Session extends Component {
 	}
 
 	function log($str) {
-		UXApp::trace($str, ['tags' => 'uxapp session']);
+		App::log(LogLevel::DEBUG, $str);
 	}
 
 	public static function is_started() {

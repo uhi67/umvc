@@ -8,6 +8,7 @@ use Exception;
  * Class Request
  *
  * @package uhi67\umvc
+ * @property-read boolean $isGet
  */
 class Request extends Component {
 	/** @var string $request -- original full request uri */

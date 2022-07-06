@@ -127,7 +127,7 @@ class App extends Component {
         $this->basePath = dirname(__DIR__, 4);
 
         // Other configurable settings
-        $conf = ['title', 'mainControllerClass'];
+        $conf = ['title', 'mainControllerClass', 'layout'];
         foreach($conf as $key) {
             if(array_key_exists($key, $this->config)) $this->$key = $this->config[$key];
         }
@@ -542,13 +542,19 @@ class App extends Component {
     /**
      * A very basic logger
      *
-     * @param string $level -- The PSR-3 standard levels are used (@see \Psr\Log\LogLevel)
+     * The PSR-3 standard levels are used (@see \Psr\Log\LogLevel)
+     *
+     * @param string $level -- emergency/alert/critical/error/warning/notice/info/debug
      * @param string $message -- string only
      */
-    public static function log($level, $message) {
+    public static function log($level, $message, $params=[]) {
         $logfile = self::$app->basePath . '/runtime/logs/app.log';
         $sid = session_id();
         $uid = App::$app->getUserId();
+		if(!is_string($message)) $message = json_encode($message);
+		if($params) {
+			foreach($params as $k=>$v) $message = str_replace("{$k}", $v, $message);
+		}
         $data_to_log = date(DATE_ATOM) . ' '. $level . ' ('.$uid.') ['.$sid.'] ' . $message . PHP_EOL;
         file_put_contents($logfile, $data_to_log, FILE_APPEND + LOCK_EX);
     }
@@ -714,12 +720,14 @@ class App extends Component {
      * Localize a message
      * 
      * TODO:
-     * @param $cat
-     * @param $msg
-     * @param $params
+     *
+     * @param string $cat
+     * @param string $msg
+     * @param array $params
+     * @param string|null $lang
      * @return mixed
      */
-    public static function l($cat, $msg, $params=[]) {
+    public static function l($cat, $msg, $params=[], $lang=null) {
         return $msg;
     }
 }
