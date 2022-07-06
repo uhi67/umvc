@@ -101,4 +101,8 @@ class Html {
             return Html::tag('option', $label, $opt);
         }, array_keys($values), array_values($values))), $options);
     }
+
+	public static function img($src, $options) {
+		return static::tag('img', '', array_merge($options, ['src'=>$src]));
+	}
 }
