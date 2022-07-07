@@ -64,7 +64,6 @@ class Session extends Component {
 	 * @throws Exception
 	 */
 	function __destruct() {
-		App::log('debug', 'Destructing session');
 		#$this->finish();
 	}
 
