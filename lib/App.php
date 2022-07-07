@@ -281,7 +281,7 @@ class App extends Component {
             }
 
             // Last resort: main controller action, if exists
-            $action = $this->path[0];
+            $action = $this->path[0]??'default';
             if($this->mainControllerClass && is_callable([$this->mainControllerClass, 'action'.$action])) {
                 return $this->runController($this->mainControllerClass, $this->path, $this->query);
             }
@@ -343,18 +343,23 @@ class App extends Component {
      * @throws Exception
      */
     public function render($viewName, $params=[], $layout = null) {
-        if($layout===null) $layout = $this->layout;
-        $viewPath = dirname(__DIR__,4).'/views';
-        $viewFile = $viewPath . '/' . $viewName.'.php';
-        if(!file_exists($viewFile)) {
-            $viewPath = dirname(__DIR__).'/views';
-            $viewFile = $viewPath . '/' . $viewName.'.php';
-        }
-        if(!file_exists($viewFile)) throw new Exception("View file '$viewName.php' does not exist", HTTP::HTTP_NOT_FOUND);
-        $content = $this->renderPhpFile($viewFile, $params);
-        if($layout) {
-            $content = $this->render($layout, ['content'=>$content], false);
-        }
+		try {
+			if($layout === null) $layout = $this->layout;
+			$viewPath = dirname(__DIR__, 4) . '/views';
+			$viewFile = $viewPath . '/' . $viewName . '.php';
+			if(!file_exists($viewFile)) {
+				$viewPath = dirname(__DIR__) . '/views';
+				$viewFile = $viewPath . '/' . $viewName . '.php';
+			}
+			if(!file_exists($viewFile)) throw new Exception("View file '$viewName.php' does not exist", HTTP::HTTP_NOT_FOUND);
+			$content = $this->renderPhpFile($viewFile, $params);
+			if($layout) {
+				$content = $this->render($layout, ['content' => $content], false);
+			}
+		}
+		catch(Throwable $e) {
+			$content = "<div>Render error in view '$viewName': ".$e->getMessage().'</div>';
+		}
         return $content;
     }
 
@@ -364,7 +369,7 @@ class App extends Component {
      * @throws Exception
      */
     public function renderPartial($viewName, $params=[]) {
-        return $this->render($viewName, $params, null);
+        return $this->render($viewName, $params, false);
     }
 
 
@@ -385,6 +390,9 @@ class App extends Component {
             require $_file_;
             return ob_get_clean();
         }
+		catch(Throwable $e) {
+			return "<div>Error rendering file '$_file_': ".$e->getMessage()."</div>\n";
+		}
         finally {
             while(ob_get_level() > $level) ob_end_clean();
         }
@@ -624,17 +632,22 @@ class App extends Component {
      * @throws Exception
      */
     public function asset(string $package, string $resource, ?array $patterns=null) {
-        if(!isset($this->_assets[$package])) {
-            // Create a new asset package (copies files on init)
-            $asset = new Asset([
-                'path' => $package,
-                'patterns' => $patterns,
-            ]);
-            // Register the asset package
-            $this->_assets[$package] = $asset;
-        }
-        else $asset = $this->_assets[$package];
-        return $asset->url($resource);
+		try {
+			if(!isset($this->_assets[$package])) {
+				// Create a new asset package (copies files on init)
+				$asset = new Asset([
+					'path' => $package,
+					'patterns' => $patterns,
+				]);
+				// Register the asset package
+				$this->_assets[$package] = $asset;
+			} else $asset = $this->_assets[$package];
+			return $asset->url($resource);
+		}
+		catch(Throwable $e) {
+			App::log('error', "Error in asset '$package' at resource '$resource': {msg}", ['msg'=>$e->getMessage()]);
+			return "Error in asset '$package' at resource '$resource'. See log.";
+		}
     }
 
     /**
