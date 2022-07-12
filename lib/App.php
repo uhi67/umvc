@@ -454,7 +454,11 @@ class App extends Component {
         static::setFlashMessages($flash_messages);
     }
 
-    private static function getFlashMessages() { return $_SESSION['flash_messages'] ?? []; }
+	public static function getFlashMessages($clear=false) {
+		$flashMessages = $_SESSION['flash_messages'] ?? [];
+		if($clear) static::clearFlashMessages();
+		return $flashMessages;
+	}
     private static function setFlashMessages(array $messages) { $_SESSION['flash_messages'] = $messages; }
     public static function clearFlashMessages() { static::setFlashMessages([]); }
 
@@ -662,12 +666,12 @@ class App extends Component {
         if(array_key_exists($name, $this->_components)) return $this->_components[$name];
         return parent::__get($name);
     }
-    
+
     public function hasComponent($name, $type=Component::class) {
         if(array_key_exists($name, $this->_components) && $this->_components[$name] instanceof $type) return $this->_components[$name];
         return null;
     }
-    
+
     public function getComponents() {
         return $this->_components;
     }
@@ -695,7 +699,7 @@ class App extends Component {
             return -1;
         }
     }
-    
+
     public static function nameSpace() {
         return substr(static::class, 0, strrpos(static::class, '\\'));
     }
@@ -731,7 +735,7 @@ class App extends Component {
 
     /**
      * Localize a message
-     * 
+     *
      * TODO:
      *
      * @param string $cat
