@@ -40,7 +40,7 @@ class Controller extends Component
     public $query;
     /** @var string|null -- name of the currently executed action (without 'action' prefix) */
     public $action;
-    
+
     /** @var Asset[] $assets -- registered assets indexed by name */
     public $assets = [];
 
@@ -56,7 +56,7 @@ class Controller extends Component
     public function registerAssets() {
         // This function is intentionally empty. Descendants need not call it.
     }
-    
+
     /**
      * Determines and performs the requested action using $this controller
      *
@@ -118,7 +118,7 @@ class Controller extends Component
      * @throws Exception
      */
     public function actionDefault() {
-        throw new Exception('No default action is defined');
+        throw new Exception('No default action is defined in '.call_user_func([get_called_class(), 'shortName']));
     }
 
     /**
@@ -200,13 +200,13 @@ class Controller extends Component
      *
      * @param string $viewName -- basename of a php view-file in the `views` directory, without extension
      * @param array $params -- parameters to assign to variables used in the view
-     * @param string $layout -- the layout applied to this render after the view rendered. Ignored if false-like
+     * @param string $layout -- the layout applied to this render after the view rendered. If false, no layout will be applied.
      * @param array $layoutParams -- optional parameters for the layout view
      *
      * @return false|string
      * @throws Exception
      */
-    public function render($viewName, $params=[], $layout='layout/default', $layoutParams=[]) {
+    public function render($viewName, $params=[], $layout=null, $layoutParams=[]) {
         return $this->app->render($viewName, $params, $layout, $layoutParams);
     }
 
@@ -252,6 +252,8 @@ class Controller extends Component
                     }
                 });
             }
+
+
         }
 
         return $html;

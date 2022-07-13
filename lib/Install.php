@@ -21,7 +21,7 @@ class Install {
         $config = include $configFile;
         defined('ENV') || define('ENV', $config['application_env'] ?? 'production');
         defined('ENV_DEV') || define('ENV_DEV', ENV != 'production');
-        
+
 		echo "Running application's postInstall\n";
 		$root = dirname(__DIR__, 3);
 
@@ -91,9 +91,8 @@ class Install {
         closedir($dh);
     }
 
-
     /**
-     * Copies multiple files from source to destination directory
+     * copies multiple files from source to destination directory
      *
      * @param string $src -- source directory or file
      * @param string $dst -- destination directory or file
@@ -102,7 +101,6 @@ class Install {
      */
     public static function rcopy($src, $dst, $overwrite=false) {
         if (is_dir($src)) {
-            // echo "Copying to $dst\n";
             if (!file_exists($dst)) mkdir($dst);
             $files = scandir($src);
             $c = 0;

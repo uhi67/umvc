@@ -144,6 +144,7 @@ class Asset extends Component {
         // legacy wildcards pattern (contains * or ?)
         else if(preg_match('~[*?]~', $pattern)) {
             // match directory pattern in the current directory (use fnmatch)
+	        if(!is_dir($d)) throw new Exception("Directory '$d' not found"); // note: opendir error is not catchable
             if($dh = opendir($d)) {
                 while (($file = readdir($dh)) !== false) {
                     if(filetype($d . $file)!= 'file') continue;

@@ -7,6 +7,8 @@ namespace uhi67\umvc;
  * @package UMVC Simple Application Framework
  */
 class Html {
+	public static $lastId = 0;
+
     /**
      * Returns whether a value starts with "http://" or "https://".
      *
@@ -38,6 +40,22 @@ class Html {
         }
         return '<'.implode(' ', $parts).'>'.$content.'</'.$tag.'>';
     }
+
+	/**
+	 * Return the attributes part of a HTML tag
+	 *
+	 * @param array $options -- attr=>value pairs
+	 * @return string -- The HTML representation of the attributes
+	 */
+	public static function attributes($options) {
+		$parts = [];
+		if($options) foreach($options as $attr=>$value) {
+			$name = AppHelper::toNameID($attr);
+			if($value===true) $parts[] = $name;
+			if($value!==null && $value!==false) $parts[] = $name.'="'.AppHelper::xss_clean($value).'"';
+		}
+		return implode(' ', $parts);
+	}
 
     /**
      * Returns the HTML string of an `<a>` element (possibly including the "mailto" URI schema) or an error string.
@@ -123,4 +141,12 @@ class Html {
     public static function link($options=[]) {
         return Html::tag('link', '', $options);
     }
+
+	public static function img($src, $options) {
+		return static::tag('img', '', array_merge($options, ['src'=>$src]));
+	}
+
+	public static function nextId($prefix='w') {
+		return $prefix.(++self::$lastId);
+	}
 }

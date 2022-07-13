@@ -88,6 +88,19 @@ class App extends Component {
     public $responseStatus;
     /** @var array $headers -- the http headers will be sent after completing the request */
     public $headers;
+    /** @var Request $request */
+    public $request;
+    /** @var Session $session */
+    public $session;
+
+    /** @var string $layout -- the default layout */
+    public $layout = 'layout';
+
+    /** @var string $source_locale -- the locale of the source messages for localization, e.g. "en-GB" (IETF BCP47 language tag) */
+    public $source_locale = 'en-GB';
+    /** @var string $locale -- the current locale for localization, e.g. "hu-HU" (IETF BCP47 language tag) */
+    public $locale = 'en-GB';
+
 
     /** @var Component[] $_components  -- the configured components */
     private $_components;
@@ -114,7 +127,7 @@ class App extends Component {
         $this->basePath = dirname(__DIR__, 4);
 
         // Other configurable settings
-        $conf = ['title', 'mainControllerClass'];
+        $conf = ['title', 'mainControllerClass', 'layout'];
         foreach($conf as $key) {
             if(array_key_exists($key, $this->config)) $this->$key = $this->config[$key];
         }
@@ -122,6 +135,8 @@ class App extends Component {
         if($this->sapi != 'cli') {
             $this->baseUrl = isset($_SERVER['REQUEST_URI']) ? parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) : null;
             if(!is_dir($logDir = $this->basePath.'/runtime/logs')) mkdir($logDir);
+            if(!$this->request) $this->request = new Request();
+            if(!$this->session) $this->session = new Session();
         }
 
         $components = $this->config['components'] ?? [];
@@ -266,7 +281,7 @@ class App extends Component {
             }
 
             // Last resort: main controller action, if exists
-            $action = $this->path[0];
+            $action = $this->path[0]??'default';
             if($this->mainControllerClass && is_callable([$this->mainControllerClass, 'action'.$action])) {
                 return $this->runController($this->mainControllerClass, $this->path, $this->query);
             }
@@ -320,25 +335,34 @@ class App extends Component {
     /**
      * Returns rendered contents of the view
      *
+     * If layout is null (or omitted), the default layout is applied.
+     *
      * @param string $viewName -- basename of a php view-file in the `views` directory, without extension
      * @param array $params -- parameters to assign to variables used in the view
-     * @param string $layout -- the layout applied to this render after the view rendered, ignored if false-like
+     * @param string|bool $layout -- the layout applied to this render after the view rendered. If false, no layout will be applied.
      * @param array $layoutParams -- optional parameters for the layout view
+     *
      * @return false|string
      * @throws Exception
      */
-    public function render($viewName, $params=[], $layout='layout', $layoutParams=[]) {
-        $viewPath = dirname(__DIR__,4).'/views';
-        $viewFile = $viewPath . '/' . $viewName.'.php';
-        if(!file_exists($viewFile)) {
-            $viewPath = dirname(__DIR__).'/views';
-            $viewFile = $viewPath . '/' . $viewName.'.php';
-        }
-        if(!file_exists($viewFile)) throw new Exception("View file '$viewName.php' does not exist", HTTP::HTTP_NOT_FOUND);
-        $content = $this->renderPhpFile($viewFile, $params);
-        if($layout) {
+    public function render($viewName, $params=[], $layout=null, $layoutParams=[]) {
+	    try {
+		    if($layout === null) $layout = $this->layout;
+	        $viewPath = dirname(__DIR__,4).'/views';
+	        $viewFile = $viewPath . '/' . $viewName.'.php';
+			if(!file_exists($viewFile)) {
+				$viewPath = dirname(__DIR__) . '/views';
+				$viewFile = $viewPath . '/' . $viewName . '.php';
+			}
+			if(!file_exists($viewFile)) throw new Exception("View file '$viewName.php' does not exist", HTTP::HTTP_NOT_FOUND);
+			$content = $this->renderPhpFile($viewFile, $params);
+			if($layout) {
             $content = $this->render($layout, array_merge(['content'=>$content], $layoutParams), false);
-        }
+			}
+		}
+		catch(Throwable $e) {
+			$content = "<div>Render error in view '$viewName': ".$e->getMessage().'</div>';
+		}
         return $content;
     }
 
@@ -348,7 +372,7 @@ class App extends Component {
      * @throws Exception
      */
     public function renderPartial($viewName, $params=[]) {
-        return $this->render($viewName, $params, null);
+        return $this->render($viewName, $params, false);
     }
 
 
@@ -369,6 +393,9 @@ class App extends Component {
             require $_file_;
             return ob_get_clean();
         }
+		catch(Throwable $e) {
+			return "<div>Error rendering file '$_file_': ".$e->getMessage()."</div>\n";
+		}
         finally {
             while(ob_get_level() > $level) ob_end_clean();
         }
@@ -430,7 +457,11 @@ class App extends Component {
         static::setFlashMessages($flash_messages);
     }
 
-    private static function getFlashMessages() { return $_SESSION['flash_messages'] ?? []; }
+	public static function getFlashMessages($clear=false) {
+		$flashMessages = $_SESSION['flash_messages'] ?? [];
+		if($clear) static::clearFlashMessages();
+		return $flashMessages;
+	}
     private static function setFlashMessages(array $messages) { $_SESSION['flash_messages'] = $messages; }
     public static function clearFlashMessages() { static::setFlashMessages([]); }
 
@@ -526,13 +557,19 @@ class App extends Component {
     /**
      * A very basic logger
      *
-     * @param string $level -- The PSR-3 standard levels are used (@see \Psr\Log\LogLevel)
+     * The PSR-3 standard levels are used (@see \Psr\Log\LogLevel)
+     *
+     * @param string $level -- emergency/alert/critical/error/warning/notice/info/debug
      * @param string $message -- string only
      */
-    public static function log($level, $message) {
+    public static function log($level, $message, $params=[]) {
         $logfile = self::$app->basePath . '/runtime/logs/app.log';
         $sid = session_id();
         $uid = App::$app->getUserId();
+		if(!is_string($message)) $message = json_encode($message);
+		if($params) {
+			foreach($params as $k=>$v) $message = str_replace("{$k}", $v, $message);
+		}
         $data_to_log = date(DATE_ATOM) . ' '. $level . ' ('.$uid.') ['.$sid.'] ' . $message . PHP_EOL;
         file_put_contents($logfile, $data_to_log, FILE_APPEND + LOCK_EX);
     }
@@ -603,17 +640,23 @@ class App extends Component {
      */
     public function linkAssetFile(string $package, string $resource, ?array $patterns=null) {
         if(!$this->controller) throw new Exception('No controller is executed');
-        if(!isset($this->controller->assets[$package])) {
-            // Create a new asset package (copies files on init)
-            $asset = new Asset([
-                'path' => $package,
-                'patterns' => $patterns,
-            ]);
-            // Register the asset package
-            $this->controller->registerAsset($asset);
-        }
-        else $asset = $this->controller->assets[$package];
-        return $asset->url($resource);
+	    try {
+	        if(!isset($this->controller->assets[$package])) {
+					// Create a new asset package (copies files on init)
+					$asset = new Asset([
+						'path' => $package,
+						'patterns' => $patterns,
+					]);
+					// Register the asset package
+	            $this->controller->registerAsset($asset);
+	        }
+	        else $asset = $this->controller->assets[$package];
+			return $asset->url($resource);
+		}
+		catch(Throwable $e) {
+			App::log('error', "Error in asset '$package' at resource '$resource': {msg}", ['msg'=>$e->getMessage()]);
+			return "Error in asset '$package' at resource '$resource'. See log.";
+		}
     }
 
     /**
@@ -628,12 +671,12 @@ class App extends Component {
         if(array_key_exists($name, $this->_components)) return $this->_components[$name];
         return parent::__get($name);
     }
-    
+
     public function hasComponent($name, $type=Component::class) {
         if(array_key_exists($name, $this->_components) && $this->_components[$name] instanceof $type) return $this->_components[$name];
         return null;
     }
-    
+
     public function getComponents() {
         return $this->_components;
     }
@@ -661,7 +704,7 @@ class App extends Component {
             return -1;
         }
     }
-    
+
     public static function nameSpace() {
         return substr(static::class, 0, strrpos(static::class, '\\'));
     }
@@ -691,7 +734,22 @@ class App extends Component {
      *
      * @param array $variables -- Variable list of PHP variables
      */
-    public function requireVars(...$variables) {
+    private function requireVars(...$variables) {
         return true; // for assert() to succeed: see usage in documentation above
+    }
+
+    /**
+     * Localize a message
+     *
+     * TODO:
+     *
+     * @param string $cat
+     * @param string $msg
+     * @param array $params
+     * @param string|null $lang
+     * @return mixed
+     */
+    public static function l($cat, $msg, $params=[], $lang=null) {
+        return $msg;
     }
 }
