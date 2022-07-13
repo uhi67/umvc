@@ -97,9 +97,9 @@ class App extends Component {
     public $layout = 'layout';
 
     /** @var string $source_locale -- the locale of the source messages for localization, e.g. "en-GB" (IETF BCP47 language tag) */
-    public $source_locale = 'en_GB';
+    public $source_locale = 'en-GB';
     /** @var string $locale -- the current locale for localization, e.g. "hu-HU" (IETF BCP47 language tag) */
-    public $locale = 'en_GB';
+    public $locale = 'en-GB';
 
 
     /** @var Component[] $_components  -- the configured components */
