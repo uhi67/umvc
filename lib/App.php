@@ -257,8 +257,8 @@ class App extends Component {
 
             /** @var App $app */
             // Default application class (uhi67\umvc\App) may be overriden in config
-            $class = $config['class'] ?? ($config[0] ?? App::class);
-            $app = App::create(['class'=>$class, 'config'=>$config]);
+            $class = $config['class'] ?? ($config[0] ?? get_called_class());
+            $app = static::create(['class'=>$class, 'config'=>$config]);
             return $app->run();
         }
         catch(Throwable $e) {
@@ -457,7 +457,7 @@ class App extends Component {
      * @param array $layoutParams -- optional parameters for the layout view
      *
      * @return null|string
-     * @throws Exception -- if file does not exist
+     * @throws Exception -- if the view file does not exist
      */
     public function renderFile($viewFile, $params=[], $layout=null, $layoutParams=[]) {
 	    try {
@@ -500,7 +500,7 @@ class App extends Component {
     /**
      * Renders a partial view without layout
      *
-     * @throws Exception
+     * @throws Exception -- if view file does not exist
      */
     public function renderPartial($viewName, $params=[]) {
         $result = $this->render($viewName, $params, false, null, $this->userLocale);
@@ -832,7 +832,7 @@ class App extends Component {
             });
 
             /** @var App $app */
-            $app = App::create(['config'=>$config]);
+            $app = static::create(['config'=>$config]);
 
             return $app->runCli();
         }

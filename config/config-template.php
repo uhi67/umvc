@@ -7,8 +7,10 @@
  */
 
 return [
-	\uhi67\umvc\App::class, // Can be an application-specific descendant
-	// Can be set to "development" or "local" on development site
+    // Class name must be the uhi67\umvc\App class or a descendant
+	\uhi67\umvc\App::class,
+
+    // Must be set to "production" on production site, can be set to "development" or "local" on development sites
     'application_env' => 'production',
 	'mainControllerClass' => '\app\controllers\MainController', // A user class derived from \uhi67\umvc\Controller
 	'layout'=>'layouts/main',
