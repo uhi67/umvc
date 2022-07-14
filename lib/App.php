@@ -24,6 +24,7 @@ use Throwable;
  * - connection: (read-only) the current default database connection (auto-connected at startup based on config)
  * - controller: the currently executed controller instance
  * - headers: the HTTP headers will be sent after completing the request
+ * - layout: the name of the default layout (view name relative to /views dir without extension)
  * - url: The actual requested URL (null in CLI)
  * - path: The actual requested path in the URL (recognized controller name removed after dispatching)
  *
