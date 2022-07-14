@@ -6,6 +6,9 @@
  * The configuration should be version-controlled with your code, and use secrets from environment variables or other external source.
  */
 return [
+	// Class name must be the uhi67\umvc\App class or a descendant
+	\uhi67\umvc\App::class,
+
     // Must be set to "production" on production site
     'application_env' => 'development',
 
