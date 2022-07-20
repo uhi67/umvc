@@ -196,17 +196,30 @@ class Controller extends Component
     }
 
     /**
-     * A shortcut for app->render
+     * A shortcut for app->render with optional localized view selection.
+     *
+     * Definitions of localized views:
+     * - default view: the original view path without localization, e.g 'main/index'
+     * - localized view: the view path with locale code, e.g. 'main/en/index' or 'main/en-GB/index' whichever fits better.
+     *
+     * If current locale is 'en-GB', the path with 'en-GB' is preferred, otherwise 'en' is used.
+     * If current locale is 'en', the path with 'en' is preferred, otherwise the first 'en-*' is used.
+     * If current locale is 'en-US', the path with 'en-US' is preferred, but no other 'en-*' is used.
+     *
+     * Locale selection:
+     * - true/null: use current locale if the localized view exists, otherwise use the default view
+     * - false: do not use localized view, even if exists. If the default view does not exist, an exception occurs.
      *
      * @param string $viewName -- basename of a php view-file in the `views` directory, without extension
      * @param array $params -- parameters to assign to variables used in the view
      * @param string $layout -- the layout applied to this render after the view rendered. If false, no layout will be applied.
      * @param array $layoutParams -- optional parameters for the layout view
+     * @param string|bool|null $locale -- localized layout selection, see above
      *
      * @return false|string
      * @throws Exception
      */
-    public function render($viewName, $params=[], $layout=null, $layoutParams=[]) {
+    public function render($viewName, $params=[], $layout=null, $layoutParams=[], $locale=null) {
         return $this->app->render($viewName, $params, $layout, $layoutParams);
     }
 
