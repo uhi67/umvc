@@ -4,9 +4,11 @@ namespace uhi67\umvc;
 
 use Exception;
 use SimpleSAML\Auth\Simple;
+use SimpleSAML\Configuration;
 use SimpleSAML\Session;
 use SimpleXMLElement;
 use Throwable;
+use yii\helpers\Html;
 
 /**
  * Using this class needs `composer require "simplesamlphp/simplesamlphp:^1.19.2"`
@@ -205,4 +207,72 @@ class SamlAuth extends AuthManager {
         $_SESSION['uid'] = $this->uid = null;
         return null;
     }
+
+	/**
+	 * Translates a SAML attribute name
+	 *
+	 * @param string $attributeName
+	 * @param string $la -- ISO 639-1 language or ISO 3166-1 locale
+	 *
+	 * @return string -- translated name or original if translation is not found
+	 * @throws Exception
+	 */
+	public static function translateAttributeName($attributeName, $la) {
+		if(
+			(!class_exists('\SimpleSAML\Configuration') && !class_exists('\SimpleSAML_Configuration')) ||
+			(!class_exists('\SimpleSAML\XHTML\Template') && !class_exists('\SimpleSAML_XHTML_Template'))
+		) return $attributeName;
+		if(static::$_template) $t = static::$_template;
+		else {
+			$globalConfig = Configuration::getInstance();
+			$t = (static::$_template = new Template($globalConfig, 'status.php', 'attributes'));
+			if(method_exists('\SimpleSAML\Locale\Language', 'setLanguage')) {
+				$t->getTranslator()->getLanguage()->setLanguage(substr($la, 0, 2), false);
+			}
+			else {
+				/** @noinspection PhpDeprecationInspection */
+				$t->setLanguage(substr($la, 0, 2), false);
+			}
+		}
+		if(method_exists('\SimpleSAML\Locale\Translate', 'getAttributeTranslation')) {
+			$translated = $t->getTranslator()->getAttributeTranslation($attributeName);
+		}
+		else {
+			/** @noinspection PhpDeprecationInspection */
+			$translated = $t->getAttributeTranslation($attributeName);
+		}
+		return $translated;
+	}
+
+	/**
+	 * Html-formats values of attribute, depending on attribute name
+	 *
+	 * @param string $attributeName
+	 * @param string|array $values -- multiple values can be passed in array
+	 *
+	 * @return string
+	 */
+	public static function formatAttribute($attributeName, $values) {
+		if (!is_array($values)) $values = [$values];
+		if (count($values) == 0) return '';
+		if (count($values) == 1) return static::formatValue($attributeName, $values[0]);
+		return Html::tag('ul', implode('', array_map(function ($v) use($attributeName) {
+			return Html::tag('li', static::formatValue($attributeName, $v));
+		}, $values)));
+	}
+	/**
+	 * Html-formats a single value of attribute, depending on attribute name
+	 *
+	 * @param string $attributeName
+	 * @param string $value
+	 *
+	 * @return string
+	 */
+	public static function formatValue($attributeName, $value) {
+		if($attributeName == 'jpegPhoto') return Html::tag('img', '', ['src' => 'data:image/jpeg;base64,'. $value]);
+		if(is_array($value)) return '['. implode(', ', array_map(function($k,$v) use($attributeName) {
+				return (is_integer($k) ? '' : $k . ': ') . self::formatValue($attributeName.'.'.$k, $v);
+			}, array_keys($value), array_values($value))). ']';
+		return $value;
+	}
 }

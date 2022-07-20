@@ -196,32 +196,47 @@ class Controller extends Component
     }
 
     /**
-     * A shortcut for app->render with optional localized view selection.
+     * ## A shortcut for app->render with optional localized view selection.
      *
-     * Definitions of localized views:
+     * **Definitions of localized views:**
      * - default view: the original view path without localization, e.g 'main/index'
      * - localized view: the view path with locale code, e.g. 'main/en/index' or 'main/en-GB/index' whichever fits better.
+     * - locale can be an ISO 639-1 language code ('en') optionally extended with a ISO 3166-1-a2 region ('en-GB')
      *
-     * If current locale is 'en-GB', the path with 'en-GB' is preferred, otherwise 'en' is used.
-     * If current locale is 'en', the path with 'en' is preferred, otherwise the first 'en-*' is used.
-     * If current locale is 'en-US', the path with 'en-US' is preferred, but no other 'en-*' is used.
+     * **Rules for locale and language codes**
+     * - If current locale is 'en-GB', the path with 'en-GB' is preferred, otherwise 'en' is used.
+     * - If current locale is 'en', the path with 'en' is used, no any 'en-*' is recognised.
+     * - If current locale is 'en-US', the path with 'en-US' is preferred, but no other 'en-*' is used.
      *
-     * Locale selection:
+     * **Locale selection:**
      * - true/null: use current locale if the localized view exists, otherwise use the default view
      * - false: do not use localized view, even if exists. If the default view does not exist, an exception occurs.
+     * - explicit locale: use the specified locale, as defined at 'true' case.
      *
-     * @param string $viewName -- basename of a php view-file in the `views` directory, without extension
+     * @param string $viewName -- basename of a php view-file in the `views` directory, without extension and without localization code
      * @param array $params -- parameters to assign to variables used in the view
      * @param string $layout -- the layout applied to this render after the view rendered. If false, no layout will be applied.
      * @param array $layoutParams -- optional parameters for the layout view
-     * @param string|bool|null $locale -- localized layout selection, see above
+     * @param string|bool|null $locale -- use localized layout selection (ISO 639-1 language / ISO 3166-1-a2 locale), see above
      *
      * @return false|string
      * @throws Exception
      */
     public function render($viewName, $params=[], $layout=null, $layoutParams=[], $locale=null) {
+	    if($locale === null || $locale===true) $locale = $this->app->locale;
+		if($locale) {
+			if (file_exists($lv = $this->localizedViewName($viewName, $locale))) $viewName = $lv;
+			else if (file_exists($lv = $this->localizedViewName($viewName, substr($locale,0,2)))) $viewName = $lv;
+		}
         return $this->app->render($viewName, $params, $layout, $layoutParams);
     }
+	
+	
+	public static function localizedViewName($viewName, $locale) {
+		$p = strrpos($viewName, '/');
+		if($p===false) $p = -1;
+		return substr($viewName,0, $p+1) . $locale . '/'.substr($viewName, $p+1);
+	}
 
     /**
      * @param Asset $asset
