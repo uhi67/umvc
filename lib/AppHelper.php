@@ -195,7 +195,7 @@ class AppHelper {
             if(isset($_POST) && $_SERVER['REQUEST_METHOD'] === 'POST') {
                 $content .= '<h3>POST</h3><table class="table">';
                 foreach($_POST as $key => $value) {
-                    $content .= "<tr><th>$key</th><td>" . print_r($value, true) . "</td></tr>";
+                    $content .= "<tr><th>$key</th><td><pre>" . print_r($value, true) . "</pre></td></tr>";
                 }
                 $content .= '</table>';
             }
