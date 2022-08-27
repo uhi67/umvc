@@ -40,7 +40,7 @@ class Session extends Component {
 
 	/**
 	 */
-	public function prepare() {
+	public function init() {
 		if($this->cookie_domain === true) $this->cookie_domain = parse_url($this->parent->baseurl, PHP_URL_HOST);
 		if(php_sapi_name() == "cli") return;
 		ini_set("session.gc_maxlifetime", $this->lifetime + 900);

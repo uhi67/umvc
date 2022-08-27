@@ -20,9 +20,7 @@ class Request extends Component {
 	/**
 	 * @throws Exception
 	 */
-	public function prepare() {
-		parent::prepare();
-
+	public function init() {
 		if(!$this->url) $this->url = ArrayHelper::getValue($_SERVER, 'REQUEST_URI');
 
 		// Determines original baseurl (canonic)
