@@ -40,7 +40,8 @@ class SamlAuth extends AuthManager {
      * @return string|array|null -- null: attribute is not found
      */
     public function get($attributeName, $index=null) {
-        if(array_key_exists($attributeName, $attributes = $this->attributes)) {
+		if(!$this->isAuthenticated()) return null;
+        if(array_key_exists($attributeName, $attributes = $this->auth->getAttributes())) {
             $value = $attributes[$attributeName];
             return ($index!==null) ? $value[$index] : $value;
         }
