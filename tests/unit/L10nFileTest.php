@@ -40,9 +40,6 @@ class L10nFileTest extends Unit
 	    $this->assertEquals('Fordítás', App::l('app', 'Translation', [], 'hu'));
 	    $this->assertEquals('Fordítás', App::l('app', 'Translation'));
 	    $this->assertEquals('any***', App::l('umvc/other', 'any'));
-
-
-
 		$this->assertEquals('kötelező', App::l('umvc', 'is mandatory'));
 	    $this->assertEquals('any other non-existing*', App::l('umvc', 'any other non-existing'));
 	    $this->assertEquals('Lokalizáció', App::l('cat1', 'Localization'));

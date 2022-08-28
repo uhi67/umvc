@@ -49,8 +49,6 @@ use IntlDateFormatter;
  */
 class L10n extends Component {
 	private static $_messages;
-	/** @var string $dir -- directory of translation files in form 'la.php', default is def/translations */
-	public $dir;
 	/** @var string $defaultLocale -- Default language with optional locale in ll-CC format (ISO 639-1 && ISO 3166-1) Default value is locale */
 	public $defaultLocale;
 	/** @var array $supportedLocales -- Supported languages with optional locale e.g. ['hu', 'en'=>'English', 'en-US']. Default is {@see $defaultLocale}, or ['en'] */
@@ -76,12 +74,6 @@ class L10n extends Component {
 	 * @throws Exception
 	 */
 	public function prepare() {
-		if($this->dir) {
-			if (substr($this->dir, -1) != '/') $this->dir .= '/';
-		} else {
-			$this->dir = App::$app->basePath . '/messages';
-			if (!is_dir($this->dir)) throw new Exception('Message directory does not exists');
-		}
 		if (!$this->defaultLocale && $this->locale) {
 			$this->defaultLocale = $this->locale;
 		}

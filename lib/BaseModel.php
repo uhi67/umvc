@@ -380,14 +380,14 @@ class BaseModel extends Component
         if($value===null) return true;
 
         if(is_array($value)) {
-            if($maxlength && count($value)>$maxlength) return $this->addError($fieldName, 'is too long');
-            if($minlength && count($value)<$minlength) return $this->addError($fieldName, 'is too short');
+            if($maxlength && count($value)>$maxlength) return $this->addError($fieldName, App::l('umvc', 'must have at most {maxlen} elements', ['maxlen'=>$maxlength]));
+            if($minlength && count($value)<$minlength) return $this->addError($fieldName, App::l('umvc', 'must have at least {minlen} elements', ['minlen'=>$minlength]));
             return true;
         }
 
         if(!is_scalar($value)) return $this->addError($fieldName, '$1 is not a scalar');
-        if($maxlength && strlen($value)>$maxlength) return $this->addError($fieldName, 'is too long');
-        if($minlength && strlen($value)<$minlength) return $this->addError($fieldName, 'is too short');
+        if($maxlength && strlen($value)>$maxlength) return $this->addError($fieldName, App::l('umvc', 'must be at most {maxlen} characters long', ['maxlen'=>$maxlength]));
+        if($minlength && strlen($value)<$minlength) return $this->addError($fieldName, App::l('umvc', 'must be at least {minlen} characters long', ['minlen'=>$minlength]));
         return true;
     }
 
@@ -423,7 +423,7 @@ class BaseModel extends Component
             return true;
         }
         if(!is_string($value) || !preg_match('~^((:?+|-)?[0-9]+)$~', $value)) {
-            return $this->addError($fieldName, 'is invalid integer');
+            return $this->addError($fieldName, App::l('umvc','is invalid integer'));
         }
         return true;
     }
@@ -536,7 +536,7 @@ class BaseModel extends Component
                 Assertions::assertString($pattern);
                 if(preg_match($pattern, $value) == 1) return true;
             }
-            return $this->addError($field, $customMessage ?: 'has invalid format');
+            return $this->addError($field, $customMessage ?: App::l('umvc','has invalid format'));
         }
         catch(Exception $e) {
             throw new Exception(sprintf('Field `%s`: %s', $field, $e->getMessage()), 0, $e);
@@ -554,7 +554,7 @@ class BaseModel extends Component
     public function validateMandatory($fieldName) {
         $value = $this->$fieldName;
         if($value !== false && empty($value)) {
-            return $this->addError($fieldName, 'is mandatory');
+            return $this->addError($fieldName, App::l('umvc', 'is mandatory'));
         }
         return true;
     }
@@ -588,7 +588,7 @@ class BaseModel extends Component
         $value = $this->$fieldName;
         if(is_null($value)) return true;
         $valid = ($min===null || $value >= $min) && ($max===null || $value <= $max);
-        return $valid || $this->addError($fieldName, sprintf('must be between {%s} and {%s}', $min, $max));
+        return $valid || $this->addError($fieldName, App::l('umvc','must be between {min} and {max}', ['min'=>$min, 'max'=>$max]));
     }
 
     /**
@@ -667,7 +667,7 @@ class BaseModel extends Component
             $this->$fieldName = $value1;
             return true;
         }
-        return $this->addError($fieldName, 'is invalid date: `'.$value.'`');
+        return $this->addError($fieldName, App::l('umvc','is invalid date'));
     }
 
     /**
@@ -699,7 +699,7 @@ class BaseModel extends Component
             $this->$fieldName = $v;
             return true;
         }
-        return $this->addError($fieldName, 'is invalid DateTime');
+        return $this->addError($fieldName, App::l('umvc','is invalid date and time'));
     }
 
     /**

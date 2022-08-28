@@ -56,7 +56,7 @@ class L10nFile extends L10n {
 			$this->dir = rtrim($this->dir, '/');
 		}
 		else {
-			$this->dir = App::$app->basePath.'/messages/';
+			$this->dir = App::$app->basePath.'/messages';
 		}
 		if(!is_dir($this->dir)) throw new Exception('Message directory does not exists: '.$this->dir);
 	}

@@ -17,18 +17,19 @@ class ControllerTest extends \Codeception\Test\Unit
 
     // tests
 
+// This test is skipped, because localizedViewName is already private
 	/**
 	 * @dataProvider provLocalizedViewName
 	 * @return void
 	 */
-    public function testLocalizedViewName($view, $locale, $localizedView)
-    {
-	    $this->assertEquals($localizedView, \uhi67\umvc\Controller::localizedViewName($view, $locale));
-    }
-	public function provLocalizedViewName() {
-		return [
-			['aaa', 'en', 'en/aaa'],
-			['bbb/aaa', 'en-GB', 'bbb/en-GB/aaa'],
-		];
-	}
+//    public function testLocalizedViewName($view, $locale, $localizedView)
+//    {
+//	    $this->assertEquals($localizedView, \uhi67\umvc\Controller::localizedViewName($view, $locale));
+//    }
+//	public function provLocalizedViewName() {
+//		return [
+//			['aaa', 'en', 'en/aaa'],
+//			['bbb/aaa', 'en-GB', 'bbb/en-GB/aaa'],
+//		];
+//	}
 }
