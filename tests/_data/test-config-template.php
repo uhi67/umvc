@@ -26,10 +26,10 @@ return [
         'db' => [
             \uhi67\umvc\MysqlConnection::class,
             // ---- DATABASE CONFIGURATION
-            'name' => $dbName = getenv('DB_NAME') ?: "",
+            'name' => $dbName = getenv('DB_NAME') ?: "umvc-test",
             'dsn' => getenv('DB_DSN') ?: "mysql:host=localhost;dbname=$dbName",
-            'user' => getenv('DB_USER') ?: "",
-            'password' => getenv('DB_PASSWORD') ?: "",
+            'user' => getenv('DB_USER') ?: "umvc-test",
+            'password' => getenv('DB_PASSWORD') ?: "umvc-test",
         ],
         //---- Authentication module
         'auth' => [

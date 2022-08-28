@@ -225,14 +225,35 @@ class Controller extends Component
     public function render($viewName, $params=[], $layout=null, $layoutParams=[], $locale=null) {
 	    if($locale === null || $locale===true) $locale = $this->app->locale;
 		if($locale) {
-			if (file_exists($lv = $this->localizedViewName($viewName, $locale))) $viewName = $lv;
-			else if (file_exists($lv = $this->localizedViewName($viewName, substr($locale,0,2)))) $viewName = $lv;
+			// Priority order: 1. Localized view (with long or short locale) / 2. untranslated / 3. default-locale view (long/short)
+			$lv = $this->localizedView($viewName, $locale);
+			if(!$lv && !file_exists($this->app->viewFile($viewName))) {
+				$lv = $this->localizedView($viewName, App::$app->source_locale);
+			}
+			if($lv) $viewName = $lv;
 		}
         return $this->app->render($viewName, $params, $layout, $layoutParams);
     }
-	
-	
-	public static function localizedViewName($viewName, $locale) {
+
+	/**
+	 * Returns localized view name using long or short locale. Checks if the view file exists.
+	 * Returns null if none of them exists.
+	 *
+	 * @param string $viewName
+	 * @param string $locale
+	 * @return string|null
+	 */
+	private function localizedView($viewName, $locale) {
+		// Look up view file using full locale
+		$lv = $this->localizedViewName($viewName, $locale);
+		if (file_exists($this->app->viewFile($lv))) return $lv;
+		// Look up view file using short language code
+		$lv = $this->localizedViewName($viewName, substr($locale,0,2));
+		if(file_exists($this->app->viewFile($lv))) return $lv;
+		return null;
+	}
+
+	private function localizedViewName($viewName, $locale) {
 		$p = strrpos($viewName, '/');
 		if($p===false) $p = -1;
 		return substr($viewName,0, $p+1) . $locale . '/'.substr($viewName, $p+1);

@@ -617,7 +617,7 @@ class Model extends BaseModel implements JsonSerializable {
             foreach ($pk as $k => $v) if ($e->$k == $v) return true;
         }
         if($e) {
-            $this->addError($fieldName, 'must be unique');
+            $this->addError($fieldName, App::l('umvc','must be unique'));
             return false;
         }
         return true;
@@ -640,7 +640,7 @@ class Model extends BaseModel implements JsonSerializable {
         if(!is_a($referencedModel, Model::class, true)) throw new Exception('Parameter 2 must be a className of a Model');
 
         $exist = $referencedModel::getOne($value);
-        if(!$exist) return $this->addError($fieldName, 'refers to a non-existing record');
+        if(!$exist) return $this->addError($fieldName, App::l('umvc','refers to a non-existing record'));
         return true;
     }
 

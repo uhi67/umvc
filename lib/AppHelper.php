@@ -1,7 +1,9 @@
 <?php
 namespace uhi67\umvc;
 
+use DateTime;
 use Exception;
+use IntlDateFormatter;
 
 /**
  * Class for various static helper functions for the framework and the application
@@ -377,4 +379,70 @@ class AppHelper {
         $data = json_encode($data);
         return is_string($data) ? $data : '';
     }
+
+	/**
+	 * Substitutes {$key} patterns of the text to values of associative data
+	 * Used primarily for native language texts, but used for SQL generation where substitution is not based on SQL data syntax.
+	 * If no substitution possible, the pattern remains unchanged without error
+	 * Special cases:
+	 *    - {DMY$var} - convert hungarian date to english (deprecated)
+	 *  - {$var/subvar} - array resolution within array values (using multiple levels possible)
+	 *  - Using special characters if necessary: `{{}` -> `{`, `}` -> `}`
+	 *    - values of DateTime will be substituted as SHORT date of the application's language.
+	 *
+	 * @param string $text
+	 * @param array $data
+	 *
+	 * @return string
+	 */
+	public static function substitute($text, $data) {
+		return preg_replace_callback(/* @lang */'#{(DMY|MDY)?(\\$[a-zA-Z_]+[\\\\/a-zA-Z0-9_-]*)}#', function($mm) use($data) {
+			if($mm[2]=='{') return '{';
+			if(substr($mm[2],0,1)=='$') {
+				// a keyname
+				$subvars = explode('/', substr($mm[2],1));
+				$d = $data;
+				foreach($subvars as $subvar) {
+					if(is_array($d) && array_key_exists($subvar, $d)) $d = $d[$subvar]===null ? '#null#' : $d[$subvar];
+					else return $mm[0];
+				}
+			}
+			else {
+				// Other expression (not implemented)
+				return $mm[0];
+			}
+			if($d instanceof DateTime) $d = static::formatDateTime($d, IntlDateFormatter::SHORT, IntlDateFormatter::NONE);
+			if($mm[1]=='MDY') {
+				$d = static::formatDateTime($d, IntlDateFormatter::SHORT, IntlDateFormatter::NONE, 'en');
+			}
+			if($mm[1]=='DMY') {
+				$d = static::formatDateTime($d, IntlDateFormatter::SHORT, IntlDateFormatter::NONE, 'en-GB');
+			}
+			return $d;
+		}, $text);
+	}
+
+	/**
+	 * formats a DateTime value using given locale
+	 *
+	 * @param DateTime $datetime
+	 * @param int $datetype -- date format as IntlDateFormatter::NONE, type values are 'NONE', 'SHORT', 'MEDIUM', 'LONG', 'FULL'
+	 * @param int $timetype -- time format as IntlDateFormatter::NONE, type values are 'NONE', 'SHORT', 'MEDIUM', 'LONG', 'FULL'
+	 * @param string $locale -- locale in ll-cc format (ISO 639-1 && ISO 3166-1), null to use default
+	 * @return string
+	 */
+	public static function formatDateTime($datetime, $datetype, $timetype, $locale=null) {
+		if(!$locale) $locale = App::$app->locale;
+		if(!$locale) $locale="en-GB";
+		$pattern = null;
+		if(substr($locale, 0,2)=='hu') {
+			if($datetype == IntlDateFormatter::SHORT && $timetype == IntlDateFormatter::SHORT)
+				$pattern = 'yyyy.MM.dd. H:mm';
+			if($datetype == IntlDateFormatter::SHORT && $timetype == IntlDateFormatter::NONE)
+				$pattern = 'yyyy.MM.dd.';
+		}
+		$dateFormatter = new IntlDateFormatter($locale, $datetype, $timetype, null, null, $pattern);
+		return $dateFormatter->format($datetime);
+	}
+
 }

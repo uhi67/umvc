@@ -36,7 +36,6 @@ class Session extends Component {
 	public $cookie_domain;
 	/** @var string */
 	public $logfile;
-	/** @var DBX */
 
 	/**
 	 */

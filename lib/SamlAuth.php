@@ -24,7 +24,8 @@ class SamlAuth extends AuthManager {
     public $disco;
     // Refers to the proper SAML auth-source config element in the `config/saml/config/authsource.php` file
     public $authSource;
-    public $idAttribute;
+	/** @var string $idAttribute -- attribute name used to identify the user */
+    public $idAttribute = 'eduPersonPrincipalName';
 
     /** @var Simple -- the SAML auth source */
     public $auth;
