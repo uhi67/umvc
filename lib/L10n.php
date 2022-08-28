@@ -80,6 +80,7 @@ class L10n extends Component {
 		if (!$this->supportedLocales) {
 			$this->supportedLocales = $this->defaultLocale ? [$this->defaultLocale] : ['en'];
 		}
+		// Canonize to [locale => name, ...] format
 		foreach($this->supportedLocales as $key => $name) {
 			if(is_int($key)) {
 				unset($this->supportedLocales[$key]);
@@ -89,8 +90,15 @@ class L10n extends Component {
 
 		if($this->switchParam && ($locale = App::$app->request->req($this->switchParam))) $this->setUserLocale($locale);
 
-		if(!$this->locale) $this->locale = $this->supportedLocales[0] ?? 'en-GB';
-		$this->locale = $this->getUserLocale();
+		if(!$this->source) $this->source = App::$app->source_locale;
+
+		// Set (global!) locale and ensure it is supported
+		if(!$this->locale) $this->locale = $this->getUserLocale();
+		if($this->supportedLocales && !$this->isSupported($this->locale)) $this->locale = null;
+		if(!$this->locale) {
+			$sli = array_keys($this->supportedLocales);
+			$this->locale = $sli[0] ?? 'en-GB';
+		}
 	}
 
 	/**
@@ -250,10 +258,10 @@ class L10n extends Component {
 	 * @param string $dir -- the directory of the language files (e.g. a category directory) without trailing '/'
 	 * @param string $source -- text in original language
 	 * @param string $lang -- language to translate to
-	 *
+	 * @param string|null $originalLanguage -- the source language (if translation is missing to this target, no warning is issued)
 	 * @return string
 	 */
-	public function getTextFile($cat, $dir, $source, $lang) {
+	public function getTextFile($cat, $dir, $source, $lang, $originalLanguage=null) {
 		if(!self::$_messages) self::$_messages = [];
 		if(!isset(self::$_messages[$cat])) self::$_messages[$cat] = [];
 		if(!isset(self::$_messages[$cat][$lang])) {
@@ -261,6 +269,7 @@ class L10n extends Component {
 			if(strlen($lang)==5 && !file_exists($dir.'/'.$lang.'.php')) $la = substr($lang,0,2);
 			$messagefile = $dir.'/'.$la.'.php';
 			if(!file_exists($messagefile)) {
+				if($originalLanguage && substr($lang,0,2) == substr($originalLanguage,0,2)) return $source;
 				App::log('warning', "Translation file is missing: `$messagefile`");
 				return $source.'**';
 			}

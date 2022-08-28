@@ -43,8 +43,6 @@ use Exception;
 class L10nFile extends L10n {
 	/** @var string $dir -- directory of translation files in form 'la.php', default is def/traslations */
 	public $dir;
-	/** @var string|array $source -- Default source language, default is 'en'; or source languages for categories */
-	public $source;
 
 	/**
 	 * {@inheritdoc}
@@ -80,7 +78,7 @@ class L10nFile extends L10n {
 		$directory = $this->directory($category);
 		if(!is_dir($directory)) return $source.'***'; // The category does not exist
 
-		$text = static::getTextFile($category, $directory, $source, $lang);
+		$text = static::getTextFile($category, $directory, $source, $lang, $this->source);
 
 		// substitute parameters
 		if($params) {

@@ -418,7 +418,10 @@ class App extends Component {
             return ob_get_clean();
         }
 		catch(Throwable $e) {
-			return "<div>Error rendering file '$_file_': ".$e->getMessage()."</div>\n";
+			echo "<h2>Server error</h2>";
+			echo "<div>Error rendering file '$_file_'</div>\n";
+			if(ENV_DEV) AppHelper::showException($e);
+			return ob_get_clean();
 		}
         finally {
             while(ob_get_level() > $level) ob_end_clean();

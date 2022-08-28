@@ -155,7 +155,7 @@ class AppHelper {
             echo preg_replace(
                 [
                     '~'.str_replace(['\\', '~'], ['\\\\', '\~'], $basePath).'~',
-                    '/^(#\\d+ [^(]+)(\\\\vendor\\\\uhi67\\\\umvc\\\\[^(]+)(.*)$/m',
+                    '/^(#\\d+ [^(]+)(\\\\vendor\\\\uhi67\\\\)(umvc)(\\\\[^(]+)(.*)$/m',
                     '/^(#\\d+ [^(]+)(\\\\views\\\\[^(]+)(.*)$/m',
                     '/^(#\\d+ [^(]+)(\\\\controllers\\\\[^(]+)(.*)$/m',
                     '/^(#\\d+ [^(]+)(\\\\models\\\\[^(]+)(.*)$/m',
@@ -163,7 +163,7 @@ class AppHelper {
                 ],
                 [
                     '...',
-                    '<span style="color:gray">$1$2$3</span>',
+                    '<span style="color:gray">$1$3</span><span style="color:#333">$4</span><span style="color:gray">$5</span>',
                     '<span style="color:gray">$1</span><span style="color:maroon">$2</span>$3',
                     '<span style="color:gray">$1</span><span style="color:blue">$2</span>$3',
                     '<span style="color:gray">$1</span><span style="color:darkgreen">$2</span>$3',
