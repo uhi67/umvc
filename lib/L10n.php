@@ -5,17 +5,16 @@ namespace uhi67\umvc;
 use DateTime;
 use Exception;
 use IntlDateFormatter;
-use uhi67\umvc\FormatterInterface;
 
 /**
  * L10n
  * Template (and base and default class) for L10n functions
  *
  * You must provide your class for L10n functionality and configure classname in the config file at 'L10n' key.
- * Your class must provide getText and formatDate for UXApp::la and UXApp::fd functions
- * The current language and locale may be set and get via UXApp::setLocale/getLocale/getLang
+ * Your class must provide getText and formatDate for App::l and App::fd functions
+ * The current language and locale may be set and get via App::setLocale/getLocale/getLang
  *
- * This template does not use database, and does not translates any text.
+ * This template does not use database, and does not translate any text.
  * Uses IntlDateFormatter for formatting dates.
  *
  * ### Configuration
@@ -23,8 +22,7 @@ use uhi67\umvc\FormatterInterface;
  * ```
  * 'l10n' => [
  * 		'class' => L10n::class,
- * 		'uappDir' => $uapppath.'/def/translations', // Place of translation files. This is the default
- * 		'defaultLocale' => 'hu',		// Default language with optional locale, may be changed by UXApp::setLang(lang/locale)
+ * 		'defaultLocale' => 'hu',		// Default language with optional locale, may be changed by App::setLocale(lang/locale)
  *      'supportedLocales' => ['hu'=>'Magyar', 'en'=>'English', 'en-US'], // Supported locales with optional name
  * 		'source' => 'hu',	            // Default source language, default is 'en'
  *      'param' => 'la',                // Language swith parameter
@@ -44,24 +42,21 @@ use uhi67\umvc\FormatterInterface;
  * ```
  *
  * @author uhi
- * @copyright 2011 - 2019
+ * @copyright 2011 - 2022
  *
+ * @property string $locale -- Current language with optional locale
  * @property-read string $lang
  */
 class L10n extends Component {
 	private static $_messages;
 	/** @var string $dir -- directory of translation files in form 'la.php', default is def/translations */
 	public $dir;
-	/** @var string $locale -- Current language with optional locale, may be changed by {@see setUserLocale()} or {@see UXApp::setLocale()} */
-	public $locale;
 	/** @var string $defaultLocale -- Default language with optional locale in ll-CC format (ISO 639-1 && ISO 3166-1) Default value is locale */
 	public $defaultLocale;
 	/** @var array $supportedLocales -- Supported languages with optional locale e.g. ['hu', 'en'=>'English', 'en-US']. Default is {@see $defaultLocale}, or ['en'] */
 	public $supportedLocales;
 	/** @var string $source -- Source language, default is 'en' */
 	public $source;
-	/** @var FormatterInterface $formatter */
-	public $formatter;
 	/** @var string $switchParam -- Request parameter to change language -- no auto change if skipped */
 	public $switchParam;
 	/** @var string $cookieName -- Cookie name to store selected language -- no cookie if empty */
@@ -84,8 +79,8 @@ class L10n extends Component {
 		if($this->dir) {
 			if (substr($this->dir, -1) != '/') $this->dir .= '/';
 		} else {
-			$this->dir = UXApp::$app->defPath . '/translations';
-			if (!FileHelper::makeDir($this->dir)) throw new UXAppException('Configuration error: directory does not exists for translation class: ' . $this->dir);
+			$this->dir = App::$app->basePath . '/messages';
+			if (!is_dir($this->dir)) throw new Exception('Message directory does not exists');
 		}
 		if (!$this->defaultLocale && $this->locale) {
 			$this->defaultLocale = $this->locale;
@@ -99,11 +94,10 @@ class L10n extends Component {
 				$this->supportedLocales[$name] = $name;
 			}
 		}
-		if(!$this->formatter) $this->formatter = new Formatter(['locale' => $this->locale]);
 
-		if($this->switchParam && ($locale = UXApp::$app->request->req($this->switchParam))) $this->setUserLocale($locale);
+		if($this->switchParam && ($locale = App::$app->request->req($this->switchParam))) $this->setUserLocale($locale);
 
-		if(!$this->locale) $this->locale = ArrayUtils::getValue(array_keys($this->supportedLocales), 0, 'en-GB');
+		if(!$this->locale) $this->locale = $this->supportedLocales[0] ?? 'en-GB';
 		$this->locale = $this->getUserLocale();
 	}
 
@@ -117,30 +111,31 @@ class L10n extends Component {
 	 *
 	 * @return string -- locale in ll-CC format (ISO 639-1 && ISO 3166-1)
 	 * @throws
-	 * @see UXApp::getLocale()
+	 * @see App::getLocale()
 	 */
 	public function getUserLocale() {
 		// 1. request parameter
-		if($this->switchParam && ($la = UXApp::$app->request->req($this->switchParam)) && ($la = $this->isSupported($la))) {
-			UXApp::trace("locale by param $la", ['tags'=>'umvc']);
+		if($this->switchParam && ($la = App::$app->request->req($this->switchParam)) && ($la = $this->isSupported($la))) {
 			return $la;
 		}
 
 		// 2. session
-		if(UXApp::$app->session && ($la = UXApp::$app->session->get('language')) && ($la = $this->isSupported($la))) {
-			UXApp::trace("locale by session $la", ['tags'=>'umvc']);
+		if(App::$app->session && ($la = App::$app->session->get('language')) && ($la = $this->isSupported($la))) {
 			return $la;
 		}
 
 		// 3. language cookie
 		if(($la = $this->getLanguageCookie()) && ($la = $this->isSupported($la))) {
-			UXApp::trace("locale by cookie $la", ['tags'=>'umvc']);
 			return $la;
 		}
 
 		// 4. HTTP Accept_Language
 		if($la = static::getHTTPLanguage()) {
-			UXApp::trace("locale by http header $la", ['tags'=>'umvc']);
+			return $la;
+		}
+
+		// 5. Application locale
+		if($la = App::$app->locale) {
 			return $la;
 		}
 
@@ -155,15 +150,15 @@ class L10n extends Component {
 	 *
 	 * If locale is not supported, locale not changes
 	 *
-	 * @see UXApp::setLocale()
 	 * @param string $locale -- locale in ll-CC format (ISO 639-1 && ISO 3166-1)
 	 * @return string|null -- the locale set (the supported value), null if not set.
+	 * @throws Exception
+	 * @see App::$locale
 	 */
 	public function setUserLocale($locale) {
 		if(!($locale = $this->isSupported($locale))) return null;
 		$this->locale = $locale;
 		$_SESSION['umxc_locale'] = $locale;
-		UXApp::trace("Session umxc_locale=$locale");
 		$this->setLanguageCookie($locale);
 		return $locale;
 	}
@@ -174,9 +169,10 @@ class L10n extends Component {
 	 * @param $locale -- language (ISO 639-1) or locale in ll-CC format (ISO 639-1 && ISO 3166-1)
 	 * @param $strict -- if false, partly matching is enabled, e.g. 'en-GB' will supported by 'en-US'
 	 * @return string|false -- locale in ll-CC format (ISO 639-1 && ISO 3166-1) or false if not found
+	 * @throws Exception
 	 */
 	public function isSupported($locale, $strict=false) {
-		if(is_array($locale)) throw new Exception('Scalar locale expected, got '. Util::objtostr($locale));
+		if(!is_string($locale)) throw new Exception('Locale must be a string');
 		if(!$locale) return false;
 		if(array_key_exists($locale, $this->supportedLocales)) return $locale;
 		if(strlen($locale)>2) {
@@ -195,10 +191,11 @@ class L10n extends Component {
 	 *
 	 * @param string|null $locale
 	 * @return string
+	 * @throws Exception
 	 */
 	public function localeName($locale=null) {
 		if($locale===null) $locale = $this->locale;
-		return ArrayUtils::getValue($this->supportedLocales, $this->isSupported($locale));
+		return $this->supportedLocales[$this->isSupported($locale)] ?? null;
 	}
 
 	/**
@@ -214,15 +211,15 @@ class L10n extends Component {
 	 */
 	public function getText($category, $source, $params=NULL, $lang=null) {
 		if($category=='umvc') {
-			if(!$lang) $lang = UXApp::$app->lang;
-			$text = static::getTextFile(dirname(__DIR__).'/def/translations', $source, $lang);
+			if(!$lang) $lang = App::$app->locale;
+			$text = static::getTextFile($category, dirname(__DIR__).'/messages', $source, $lang);
 		} else {
 			// Default is shortcut solution
 			$text = $source;
 		}
 		// substitute parameters
         if($params && !is_array($params)) $params = [$params];
-		if($params) $text = Util::substitute($text, $params);
+		if($params) $text = AppHelper::substitute($text, $params);
 		return $text;
 	}
 
@@ -235,7 +232,7 @@ class L10n extends Component {
 	 * @return string
 	 */
 	public function formatDate($datetime, $datetype=IntlDateFormatter::SHORT, $locale=null) {
-		return $this->formatter->formatDateTime($datetime, $datetype, IntlDateFormatter::NONE, $locale);
+		return $this->formatDateTime($datetime, $datetype, IntlDateFormatter::NONE, $locale);
 	}
 
 	/**
@@ -248,38 +245,40 @@ class L10n extends Component {
 	 * @return string
 	 */
 	public function formatDateTime($datetime, $datetype=IntlDateFormatter::SHORT, $timetype=IntlDateFormatter::NONE, $locale=null) {
-		return $this->formatter->formatDateTime($datetime, $datetype, $timetype, $locale);
+		return $this->formatDateTime($datetime, $datetype, $timetype, $locale);
 	}
 
 	/**
-	 * Translates an uxapp category text using built-in translation file in $dir
+	 * Translates a text using a translation file in the given $dir.
 	 * Does not substitute parameters.
-	 * If language definition does not exist, returns original without error.
-	 * If specific text does not exist, returns original with an appended '*'.
+	 * If the language definition file does not exist, returns original with appended '**'.
+	 * If the specific text does not exist in the file, returns original with an appended '*'.
 	 *
-	 * @param string $dir
+	 * @param string $cat
+	 * @param string $dir -- the directory of the language files (e.g. a category directory) without trailing '/'
 	 * @param string $source -- text in original language
 	 * @param string $lang -- language to translate to
 	 *
 	 * @return string
 	 */
-	public function getTextFile($dir, $source, $lang) {
+	public function getTextFile($cat, $dir, $source, $lang) {
 		if(!self::$_messages) self::$_messages = [];
-		if(!isset(self::$_messages[$lang])) {
+		if(!isset(self::$_messages[$cat])) self::$_messages[$cat] = [];
+		if(!isset(self::$_messages[$cat][$lang])) {
 			$la = $lang;
 			if(strlen($lang)==5 && !file_exists($dir.'/'.$lang.'.php')) $la = substr($lang,0,2);
 			$messagefile = $dir.'/'.$la.'.php';
 			if(!file_exists($messagefile)) {
-				UXApp::trace("Translation file is missing: `$messagefile`");
-				return $source;
+				App::log('warning', "Translation file is missing: `$messagefile`");
+				return $source.'**';
 			}
-			/** @noinspection PhpIncludeInspection */
-			self::$_messages[$lang] = include($messagefile);
+			self::$_messages[$cat][$lang] = require $messagefile;
 		}
 
-		if(!isset(self::$_messages[$lang][$source])) return $source.'*';
-		return self::$_messages[$lang][$source];
+		if(!isset(self::$_messages[$cat][$lang][$source])) return $source.'*';
+		return self::$_messages[$cat][$lang][$source];
 	}
+
 
 	/** @noinspection PhpUnused */
 
@@ -288,6 +287,7 @@ class L10n extends Component {
 	 * @return string
 	 */
 	public function getLang() {
+		if(!$this->locale) $this->locale = $this->getUserLocale();
 		return $this->locale ? substr($this->locale, 0, 2) : $this->locale;
 	}
 
@@ -295,6 +295,7 @@ class L10n extends Component {
 	 * Retrieve the user-selected language from a cookie.
 	 *
 	 * @return string|null The selected language or null if unset, false if not supported.
+	 * @throws Exception
 	 */
 	public function getLanguageCookie() {
 		$cookieName = $this->cookieName;
@@ -318,7 +319,6 @@ class L10n extends Component {
 		$cookieName = $this->cookieName;
 		if(!$cookieName || headers_sent()) return null;
 		if(!($locale = $this->isSupported($locale))) return false;
-		UXApp::trace("Setting cookie $cookieName=$locale");
 		return Http::setCookie($cookieName, $locale, $this->cookieParams, false);
 	}
 
@@ -327,6 +327,7 @@ class L10n extends Component {
 	 *
 	 * @return string|null The preferred language based on the Accept-Language HTTP header,
 	 * or null if none of the languages in the header is available.
+	 * @throws Exception
 	 */
 	private function getHTTPLanguage() {
 		$localeScore = Http::getAcceptLanguage(); // [locale => score,...]
@@ -339,7 +340,7 @@ class L10n extends Component {
 			if(!$locale) continue;
 
 			/* Some user agents use very limited precision of the quality value, but order the elements in descending
-			 * order. Therefore we rely on the order of the output from getAcceptLanguage() matching the order of the
+			 * order. Therefore, we rely on the order of the output from getAcceptLanguage() matching the order of the
 			 * languages in the header when two languages have the same quality.
 			 */
 			if ($score > $bestScore) {
@@ -360,5 +361,13 @@ class L10n extends Component {
 	public static function country($locale) {
 		if(strlen($locale)<5) return substr($locale,0,2);
 		return substr($locale,3,2);
+	}
+
+	public function getLocale() {
+		return App::$app->locale;
+	}
+
+	public function setLocale($locale) {
+		App::$app->locale = $locale;
 	}
 }

@@ -53,21 +53,21 @@ class L10nFile extends L10n {
 	public function prepare() {
 		parent::prepare();
 		if($this->dir) {
-			if(substr($this->dir,-1)!='/') $this->dir .= '/';
+			$this->dir = rtrim($this->dir, '/');
 		}
 		else {
-			$this->dir = UXApp::$app->defPath.'/translations/';
+			$this->dir = App::$app->basePath.'/messages/';
 		}
-		if(!Util::makeDir($this->dir,2)) throw new UXAppException('Configuration error: directory does not exists for translation class.', $this->dir);
+		if(!is_dir($this->dir)) throw new Exception('Message directory does not exists: '.$this->dir);
 	}
 
 	/**
-	 * Translates a piece of text from source language to given language.
+	 * Translates a text from source language to given language.
 	 *
-	 * 'umvc' category is translated by parent class, all others from files in the configured directory.
-	 * If translation is not found, returns source*
+	 * If category directory is not found, returns source**.
+	 * If translation is not found, returns source*.
 	 *
-	 * @param string $category -- message category, the framework uses 'umvc'. Application default is 'app'
+	 * @param string $category -- message category, the framework itself uses 'umvc'. Application default is 'app'
 	 * @param string $source - source language text or text identifier
 	 * @param array $params - replaces {$var} parameters
 	 * @param integer $lang - target language code (ll or ll-LL) to translate into. Default is the language set in the framework
@@ -76,17 +76,44 @@ class L10nFile extends L10n {
 	 */
 	public function getText($category, $source, $params=NULL, $lang=null) {
 		if($lang===null) $lang = $this->lang;
-		if($category=='umvc') return parent::getText($category, $source, $params, $lang);
 
-		$source_lang = is_array($this->source) ? ArrayUtils::getValue($this->source, $category) : $this->source;
+		$directory = $this->directory($category);
+		if(!is_dir($directory)) return $source.'***'; // The category does not exist
 
-		$text = $source_lang == $lang && !is_int($source)? $source : static::getTextFile($this->dir.$category.'/', $source, $lang);
+		$text = static::getTextFile($category, $directory, $source, $lang);
 
 		// substitute parameters
-        if($params) {
-        	if(!is_array($params)) $params = [$params];
-        	$text = Util::substitute($text, $params);
-       	}
+		if($params) {
+			if(!is_array($params)) $params = [$params];
+			$text = AppHelper::substitute($text, $params);
+		}
 		return $text;
+	}
+
+	/**
+	 * Returns the directory for the category.
+	 * If the directory is not found in the app,
+	 * - 'umvc' and 'umvc/*' will refer to the framework directory,
+	 * - 'vendor/lib/*' categories will refer to the corresponding library (~/messages/*)
+	 *
+	 * @param string $category
+	 * @return string
+	 */
+	public function directory($category) {
+		$category = str_replace('..', '.', $category); // prevent backstep in the directory tree
+		$directory = $this->dir.'/'.$category;
+		if(!is_dir($directory)) {
+			$cats = explode('/', $category);
+			if($cats[0]=='umvc') {
+				$directory = dirname(__DIR__).'/messages';
+				array_shift($cats);
+				if(count($cats)>0) $directory .= '/'.implode('/', $cats);
+			}
+			elseif(count($cats)>=2) {
+				$directory = dirname(__DIR__).'/vendor/'.array_shift($cats).'/'.array_shift($cats).'/messages';
+				if(count($cats)>0) $directory .= '/'.implode('/', $cats);
+			}
+		}
+		return $directory;
 	}
 }

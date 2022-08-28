@@ -54,6 +54,7 @@ use Throwable;
  * @property-read CacheInterface $cache -- the actual cache object
  * @property-read AuthManager $auth -- the actual auth manager
  * @property-read Connection $connection -- the default database connection defined in 'db' component
+ * @property-read L10n $l10n
  * @package UMVC Simple Application Framework
  */
 class App extends Component {
@@ -149,7 +150,12 @@ class App extends Component {
             $referredComponents = $this->config['components'] ?? [];
         }
 
-        $this->_components = [];
+	    // Default components
+	    if(!isset($components['l10n'])) $components['l10n'] = [
+		    'class' => L10n::class,
+	    ];
+
+	    $this->_components = [];
         if($components) {
             foreach ($components as $name => $config) {
                 if(is_integer($name)) {
@@ -755,4 +761,6 @@ class App extends Component {
     public static function l($cat, $msg, $params=[], $lang=null) {
         return $msg;
     }
+
+
 }
