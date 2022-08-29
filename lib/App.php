@@ -682,7 +682,7 @@ class App extends Component {
 		}
 		catch(Throwable $e) {
 			App::log('error', "Error in asset '$package' at resource '$resource': {msg}", ['msg'=>$e->getMessage()]);
-			return "Error in asset '$package' at resource '$resource'. See log.";
+			return '/js/error.js?res='.urlencode("$package::$resource");
 		}
     }
 
