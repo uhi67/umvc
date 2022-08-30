@@ -58,7 +58,7 @@ class Install {
         // 4. Version number
 		$version = trim(exec('git describe --tags --abbrev=1'));
 		if($version) {
-		    $versionOutputFilename = dirname(__DIR__).'/version.txt';
+		    $versionOutputFilename = dirname(__DIR__, 4).'/version.txt';
 		    file_put_contents($versionOutputFilename, $version);
 		    echo "Application version is $version (logged into $versionOutputFilename)\n\n";
 		}
