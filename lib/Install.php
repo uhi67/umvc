@@ -17,6 +17,11 @@ class Install {
 	 * @throws Exception
 	 */
 	public static function postInstall() {
+        $configFile = dirname(__DIR__, 4) . '/config/config.php';
+        $config = include $configFile;
+        defined('ENV') || define('ENV', $config['application_env'] ?? 'production');
+        defined('ENV_DEV') || define('ENV_DEV', ENV != 'production');
+
 		echo "Running application's postInstall\n";
 		$root = dirname(__DIR__, 3);
 
@@ -28,7 +33,7 @@ class Install {
         // 2. Empty cache
         try {
             /** @var App $app */
-            $app = require dirname(__DIR__, 3) . '/app.php';
+            $app = App::create(['config'=>$config]);
             if ($app->cache) {
                 $c = $app->cache->clear();
                 echo "$c items deleted from the cache.", PHP_EOL;
@@ -38,6 +43,7 @@ class Install {
         }
         catch (Exception $e) {
             echo "Failed to instantiate the application, the cache was not cleared.", PHP_EOL;
+            if(ENV_DEV) AppHelper::showException($e);
         }
 
         // 3. Empty asset cache
@@ -95,7 +101,6 @@ class Install {
      */
     public static function rcopy($src, $dst, $overwrite=false) {
         if (is_dir($src)) {
-            // echo "Copying to $dst\n";
             if (!file_exists($dst)) mkdir($dst);
             $files = scandir($src);
             $c = 0;

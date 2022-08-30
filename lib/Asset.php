@@ -5,20 +5,25 @@ namespace uhi67\umvc;
 use Exception;
 
 /**
- * Asset class manages external (composer-loaded) asset files.
+ * Asset class manages external (composer-loaded) asset files (~ asset package)
  * These files in the vendor-path, they must be copied to a web-accessible directory.
  *
+ * @property-read $name
  */
 class Asset extends Component {
-    /** @var string $path -- package path relative to vendor dir. */
+    /** @var string $name -- package name (default is path) */
+    public $name;
+    /** @var string $path -- package path relative to vendor dir or app dir ('/...') or www dir ('') */
     public $path;
+    /** @var string $dir -- absolute source directory of the current asset -- computed from path if not specified */
+    public $dir;
     /** @var string $id -- unique package id used as a directory name in the cache */
     public $id;
-    /** @var string $dir -- absolute source directory of the current asset */
-    public $dir;
     /** @var array|null $patterns -- file patterns to select files to copy from the package path */
     public $patterns;
-    /** @var string[][] -- copy these extensions into cache together with the original file */
+    /** @var string[] $files -- file names or patterns to link from the package to the view. Use '*' for all files */
+    public $files = [];
+    /** @var string[][] -- copy these extensions into cache together with the original files */
     public $extensions = [
         'css' => ['css.map', 'min.css', 'min.css.map'],
         'js' => ['js.map', 'min.js', 'min.js.map'],
@@ -30,27 +35,41 @@ class Asset extends Component {
 
     /**
      * Package files are copied into the cache
-     * @throws Exception
+     * @throws Exception -- if nor path nor package name is specified 
      */
     public function init() {
-        if(!$this->id) $this->id = substr(md5($this->path),0,16);
+        if(!$this->name && !$this->path) throw new Exception('Package name or path must be specified');
+        if(!$this->name) $this->name = $this->path;
+
+        // TODO check uníque name
+
+        if(!$this->dir) {
+            if($this->path=='') $this->dir = App::$app->basePath.'/www';
+            elseif($this->path[0]=='/') $this->dir = App::$app->basePath.$this->path;
+            else $this->dir = App::$app->basePath.'/vendor/'.$this->path;
+        }
+
+        if(!$this->id) $this->id = substr(md5($this->dir),0,16);
         if(!$this->cacheDir) $this->cacheDir = App::$app->basePath.'/www/assets/cache/'.$this->id;
         if(!$this->cacheUrl) $this->cacheUrl = '/assets/cache/'.$this->id;
 
         if(!is_dir($this->cacheDir)) mkdir($this->cacheDir, 0774, true);
         if(!$this->patterns) $this->patterns = ['*'];
 
-        $this->dir = App::$app->basePath.'/vendor/'.$this->path;
         // Copy files
         foreach($this->patterns as $pattern) {
-            $this->matchPattern($this->dir, '', $pattern, function($file) {
+            static::matchPattern($this->dir, '', $pattern, function($file) {
                 $this->copyFile($file);
             });
         }
     }
 
+    public function getName() {
+        return $this->path ?? $this->dir;
+    }
+
     /**
-     * Iterates through files of given pattern and calls the callback function for every file.
+     * Iterates through files of given pattern in the `$basedir/$dir` directory and calls the callback function for every file.
      *
      * Special pattern matches:
      *
@@ -62,15 +81,15 @@ class Asset extends Component {
      * @param string $baseDir -- absolute package root (search and return filenames in relation to this; no trailing '/')
      * @param string $dir -- iterated subdirectory, empty or 'dir/' (must have trailing / if non-empty)
      * @param string $pattern -- literal filename, directory pattern or RegEx pattern or dir/pattern
-     * @param callable $callback -- function(string $file) -- operation on found file
+     * @param callable $callback -- function(string $file) -- operation on found file, using path relative to $basedir
      * @param null $missing -- function(string $file) -- operation on missing file or directory
      *
      * @throws Exception
      */
-    private function matchPattern($baseDir, $dir, $pattern, $callback, $missing=null) {
+    public static function matchPattern($baseDir, $dir, $pattern, $callback, $missing=null) {
         $d = $baseDir . '/' . $dir;
 
-        // RegEx pattern
+        // RegEx pattern (surrounded by ~)
         if(substr($pattern,0,1)=='~' && substr($pattern,-1)=='~') {
             // Single level RegEx pattern
             $dh = dir($d);
@@ -84,7 +103,7 @@ class Asset extends Component {
             $dh->close();
         }
 
-        // Directory pattern
+        // Directory pattern (contains /)
         else if(($p = strpos($pattern, '/'))!==false) {
             // Match $dir and $subpattern
             $dirPattern = substr($pattern, 0, $p);
@@ -95,26 +114,26 @@ class Asset extends Component {
                 while(($file = $dh->read())!==false) {
                     if($file=='.'||$file=='..') continue;
                     if(filetype($d.$file)!='dir') continue;
-                    $this->matchPattern($baseDir, $dir.$file.'/', $subpattern, $callback);
-                    $this->matchPattern($baseDir, $dir.$file.'/', $pattern, $callback); // restart ... matching!
+                    static::matchPattern($baseDir, $dir.$file.'/', $subpattern, $callback);
+                    static::matchPattern($baseDir, $dir.$file.'/', $pattern, $callback); // restart ... matching!
                 }
                 $dh->close();
             }
             elseif(preg_match('~[*?]~', $dirPattern)) {
                 // Single level subdirectory pattern
                 $dh = dir($d);
-                while(($file = $dh->read($dh))!==false) {
+                while(($file = $dh->read())!==false) {
                     if($file=='.'||$file=='..') continue;
                     if(filetype($d.$file)!='dir') continue;
                     if(!fnmatch($dirPattern, $file)) continue;
-                    $this->matchPattern($baseDir, $dir.$file.'/', $subpattern, $callback);
+                    static::matchPattern($baseDir, $dir.$file.'/', $subpattern, $callback);
                 }
                 $dh->close();
             }
             else {
                 // literal subdirectory
                 if(is_dir($d.$dirPattern)) {
-                    $this->matchPattern($baseDir, $dir.$dirPattern.'/', $subpattern, $callback, $missing);
+                    static::matchPattern($baseDir, $dir.$dirPattern.'/', $subpattern, $callback, $missing);
                 }
                 else {
                     if($missing) $missing($d.$dirPattern);
@@ -122,9 +141,10 @@ class Asset extends Component {
             }
         }
 
-        // legacy wildcards pattern
+        // legacy wildcards pattern (contains * or ?)
         else if(preg_match('~[*?]~', $pattern)) {
             // match directory pattern in the current directory (use fnmatch)
+	        if(!is_dir($d)) throw new Exception("Directory '$d' not found"); // note: opendir error is not catchable
             if($dh = opendir($d)) {
                 while (($file = readdir($dh)) !== false) {
                     if(filetype($d . $file)!= 'file') continue;
@@ -140,7 +160,7 @@ class Asset extends Component {
         else {
             $fileName = $dir.$pattern;
             // Use a single file (fileName includes path relative to asset root)
-            if($missing && !file_exists($this->dir . '/' . $fileName)) $missing($fileName);
+            if($missing && !file_exists($baseDir . '/' . $fileName)) $missing($fileName);
             else $callback($fileName);
         }
     }
@@ -157,9 +177,10 @@ class Asset extends Component {
      * @return string -- cache path (relative to cacheDir)
      */
     private function copyFile($fileName) {
-        $filePath = $this->dir.'/'.$fileName;
-        $cacheFileName = $this->cacheDir . '/' . $fileName;
-        if(!file_exists($cacheFileName)) {
+        $filePath = $this->dir.'/'.$fileName;   // Absolute path of original file to copy
+        $cacheFileName = $this->cacheDir . '/' . $fileName; // Absolute path of cache file to copy into
+
+        if(!file_exists($cacheFileName) || (filemtime($cacheFileName) < filemtime($filePath))) {
             if(!file_exists(dirname($cacheFileName))) mkdir(dirname($cacheFileName), 0774, true);
             copy($filePath, $cacheFileName);
 

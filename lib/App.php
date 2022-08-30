@@ -54,6 +54,7 @@ use Throwable;
  * @property-read CacheInterface $cache -- the actual cache object
  * @property-read AuthManager $auth -- the actual auth manager
  * @property-read Connection $connection -- the default database connection defined in 'db' component
+ * @property-read L10n $l10n
  * @package UMVC Simple Application Framework
  */
 class App extends Component {
@@ -88,6 +89,22 @@ class App extends Component {
     public $responseStatus;
     /** @var array $headers -- the http headers will be sent after completing the request */
     public $headers;
+    /** @var Request $request */
+    public $request;
+    /** @var Session $session */
+    public $session;
+
+    /** @var string $layout -- the default layout */
+    public $layout = 'layout';
+
+    /**
+     * @var string $source_locale -- the locale of the source messages for localization.
+     * locale can be an ISO 639-1 language code ('en') optionally extended with a ISO 3166-1-a2 region ('en-GB')
+     */
+    public $source_locale = 'en-GB';
+    /** @var string $locale -- the current locale for localization, e.g. "hu-HU".*/
+    public $locale = 'en-GB';
+
 
     /** @var Component[] $_components  -- the configured components */
     private $_components;
@@ -114,7 +131,7 @@ class App extends Component {
         $this->basePath = dirname(__DIR__, 4);
 
         // Other configurable settings
-        $conf = ['title', 'mainControllerClass'];
+        $conf = ['title', 'mainControllerClass', 'layout'];
         foreach($conf as $key) {
             if(array_key_exists($key, $this->config)) $this->$key = $this->config[$key];
         }
@@ -122,6 +139,8 @@ class App extends Component {
         if($this->sapi != 'cli') {
             $this->baseUrl = isset($_SERVER['REQUEST_URI']) ? parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) : null;
             if(!is_dir($logDir = $this->basePath.'/runtime/logs')) mkdir($logDir);
+            if(!$this->request) $this->request = new Request();
+            if(!$this->session) $this->session = new Session();
         }
 
         $components = $this->config['components'] ?? [];
@@ -131,7 +150,12 @@ class App extends Component {
             $referredComponents = $this->config['components'] ?? [];
         }
 
-        $this->_components = [];
+	    // Default components
+	    if(!isset($components['l10n'])) $components['l10n'] = [
+		    'class' => L10n::class,
+	    ];
+
+	    $this->_components = [];
         if($components) {
             foreach ($components as $name => $config) {
                 if(is_integer($name)) {
@@ -266,7 +290,7 @@ class App extends Component {
             }
 
             // Last resort: main controller action, if exists
-            $action = $this->path[0];
+            $action = $this->path[0]??'default';
             if($this->mainControllerClass && is_callable([$this->mainControllerClass, 'action'.$action])) {
                 return $this->runController($this->mainControllerClass, $this->path, $this->query);
             }
@@ -320,27 +344,51 @@ class App extends Component {
     /**
      * Returns rendered contents of the view
      *
+     * If layout is null (or omitted), the default layout is applied.
+     *
      * @param string $viewName -- basename of a php view-file in the `views` directory, without extension
      * @param array $params -- parameters to assign to variables used in the view
-     * @param string $layout -- the layout applied to this render after the view rendered. If null, no layout will be applied.
+     * @param string|bool $layout -- the layout applied to this render after the view rendered. If false, no layout will be applied.
+     * @param array $layoutParams -- optional parameters for the layout view
      *
      * @return false|string
      * @throws Exception
      */
-    public function render($viewName, $params=[], $layout = 'layout') {
-        $viewPath = dirname(__DIR__,4).'/views';
-        $viewFile = $viewPath . '/' . $viewName.'.php';
-        if(!file_exists($viewFile)) {
-            $viewPath = dirname(__DIR__).'/views';
-            $viewFile = $viewPath . '/' . $viewName.'.php';
-        }
-        if(!file_exists($viewFile)) throw new Exception("View file '$viewName.php' does not exist", HTTP::HTTP_NOT_FOUND);
-        $content = $this->renderPhpFile($viewFile, $params);
-        if($layout) {
-            $content = $this->render($layout, ['content'=>$content], false);
-        }
+    public function render($viewName, $params=[], $layout=null, $layoutParams=[]) {
+	    try {
+		    if($layout === null) $layout = $this->layout;
+		    $viewFile = $this->viewFile($viewName);
+			if(!$viewFile) throw new Exception("View file for view '$viewName' does not exist", HTTP::HTTP_NOT_FOUND);
+			$content = $this->renderPhpFile($viewFile, $params);
+			if($layout) {
+                $content = $this->render($layout, array_merge(['content'=>$content], $layoutParams ?? []), false);
+			}
+		}
+		catch(Throwable $e) {
+			$content = "<div>Render error in view '$viewName': ".$e->getMessage().'</div>';
+		}
         return $content;
     }
+
+	/**
+	 * Returns the file name of the view file.
+	 * Returns null if view file does not exist.
+	 * View can be in the application or in the framework.
+	 *
+	 * @param string $viewName
+	 * @return string|null
+	 */
+	public function viewFile($viewName) {
+		$viewPath = dirname(__DIR__,4).'/views';
+		$viewFile = $viewPath . '/' . $viewName.'.php';
+		// If view not found in the app, look up in the framework
+		if(!file_exists($viewFile)) {
+			$viewPath = dirname(__DIR__) . '/views';
+			$viewFile = $viewPath . '/' . $viewName . '.php';
+		}
+		if(!file_exists($viewFile)) return null;
+		return $viewFile;
+	}
 
     /**
      * Renders a partial view without layout
@@ -348,7 +396,7 @@ class App extends Component {
      * @throws Exception
      */
     public function renderPartial($viewName, $params=[]) {
-        return $this->render($viewName, $params, null);
+        return $this->render($viewName, $params, false);
     }
 
 
@@ -369,6 +417,12 @@ class App extends Component {
             require $_file_;
             return ob_get_clean();
         }
+		catch(Throwable $e) {
+			echo "<h2>Server error</h2>";
+			echo "<div>Error rendering file '$_file_'</div>\n";
+			if(ENV_DEV) AppHelper::showException($e);
+			return ob_get_clean();
+		}
         finally {
             while(ob_get_level() > $level) ob_end_clean();
         }
@@ -430,7 +484,11 @@ class App extends Component {
         static::setFlashMessages($flash_messages);
     }
 
-    private static function getFlashMessages() { return $_SESSION['flash_messages'] ?? []; }
+	public static function getFlashMessages($clear=false) {
+		$flashMessages = $_SESSION['flash_messages'] ?? [];
+		if($clear) static::clearFlashMessages();
+		return $flashMessages;
+	}
     private static function setFlashMessages(array $messages) { $_SESSION['flash_messages'] = $messages; }
     public static function clearFlashMessages() { static::setFlashMessages([]); }
 
@@ -526,13 +584,19 @@ class App extends Component {
     /**
      * A very basic logger
      *
-     * @param string $level -- The PSR-3 standard levels are used (@see \Psr\Log\LogLevel)
+     * The PSR-3 standard levels are used (@see \Psr\Log\LogLevel)
+     *
+     * @param string $level -- emergency/alert/critical/error/warning/notice/info/debug
      * @param string $message -- string only
      */
-    public static function log($level, $message) {
+    public static function log($level, $message, $params=[]) {
         $logfile = self::$app->basePath . '/runtime/logs/app.log';
         $sid = session_id();
         $uid = App::$app->getUserId();
+		if(!is_string($message)) $message = json_encode($message);
+		if($params) {
+			foreach($params as $k=>$v) $message = str_replace("{$k}", $v, $message);
+		}
         $data_to_log = date(DATE_ATOM) . ' '. $level . ' ('.$uid.') ['.$sid.'] ' . $message . PHP_EOL;
         file_put_contents($logfile, $data_to_log, FILE_APPEND + LOCK_EX);
     }
@@ -587,7 +651,7 @@ class App extends Component {
     /**
      * Asset manager for distributed packages
      *
-     * First call on an asset package copies the package content from the vendor dir into the asset cache.
+     * The first call on an asset package copies the package content from the vendor dir into the asset cache.
      * The content of the package is kept together.
      * The `patterns` parameter must be specified only at the first call. At subsequent calls it will be ignored.
      *
@@ -595,24 +659,31 @@ class App extends Component {
      *
      * Composer install script clears the asset cache.
      *
-     * @param string $package -- package root directory under the vendor dir
+     * @param string $package -- package root directory relative to the vendor dir or beginning with '/' indicates relative to the project root.
      * @param string $resource -- the resource to return
      * @param array|null $patterns -- optional pattern array (RegEx patterns to select files from the package path), see {@see Asset::matchPattern() }
      * @return string -- the valid url accessible by the client
      * @throws Exception
      */
-    public function asset(string $package, string $resource, ?array $patterns=null) {
-        if(!isset($this->_assets[$package])) {
-            // Create a new asset package (copies files on init)
-            $asset = new Asset([
-                'path' => $package,
-                'patterns' => $patterns,
-            ]);
-            // Register the asset package
-            $this->_assets[$package] = $asset;
-        }
-        else $asset = $this->_assets[$package];
-        return $asset->url($resource);
+    public function linkAssetFile(string $package, string $resource, ?array $patterns=null) {
+        if(!$this->controller) throw new Exception('No controller is executed');
+	    try {
+	        if(!isset($this->controller->assets[$package])) {
+					// Create a new asset package (copies files on init)
+					$asset = new Asset([
+						'path' => $package,
+						'patterns' => $patterns,
+					]);
+					// Register the asset package
+	            $this->controller->registerAsset($asset);
+	        }
+	        else $asset = $this->controller->assets[$package];
+			return $asset->url($resource);
+		}
+		catch(Throwable $e) {
+			App::log('error', "Error in asset '$package' at resource '$resource': {msg}", ['msg'=>$e->getMessage()]);
+			return '/js/error.js?res='.urlencode("$package::$resource");
+		}
     }
 
     /**
@@ -627,12 +698,12 @@ class App extends Component {
         if(array_key_exists($name, $this->_components)) return $this->_components[$name];
         return parent::__get($name);
     }
-    
+
     public function hasComponent($name, $type=Component::class) {
         if(array_key_exists($name, $this->_components) && $this->_components[$name] instanceof $type) return $this->_components[$name];
         return null;
     }
-    
+
     public function getComponents() {
         return $this->_components;
     }
@@ -660,7 +731,7 @@ class App extends Component {
             return -1;
         }
     }
-    
+
     public static function nameSpace() {
         return substr(static::class, 0, strrpos(static::class, '\\'));
     }
@@ -674,23 +745,52 @@ class App extends Component {
         return App::$app->user ? App::$app->user->getUserId() : '';
     }
 
-    /**
-     * This method is only introduced to avoid duplicating explanations in the source code.
-     * When used as shown below, a PHP runtime error will be raised for variables expected by a view that are not passed.
-     * Please note that such an error is automatically raised when the variable is explicitly referenced in the PHP view.
-     * However, in some cases, like when the variable is referenced in the PHP view but only in a JS <script> tag,
-     * the error message is not clear and the server output is messed up without any warning.
-     *     <script>console.log('<?= $undefinedVar ?>');</script>
-     * Therefore, this method helps prevent unnecessary headaches for the developer.
-     *
-     * Usage in a template/view file:
-     *     @var App $this // typehint for $this but any other variable name is fine
+	/**
+	 * This method is only introduced to avoid duplicating explanations in the source code.
+	 * When used as shown below, a PHP runtime error will be raised for variables expected by a view that are not passed.
+	 * Please note that such an error is automatically raised when the variable is explicitly referenced in the PHP view.
+	 * However, in some cases, like when the variable is referenced in the PHP view but only in a JS <script> tag,
+	 * the error message is not clear and the server output is messed up without any warning.
+	 *     <script>console.log('<?= $undefinedVar ?>');</script>
+	 * Therefore, this method helps prevent unnecessary headaches for the developer.
+	 *
+	 * Usage in a template/view file:
+	 *
      *     assert($this->requireVars($var1, ..., $varN), ''); // $var<i> are variables expected by the view
      *                                                        // the use of assert() is to not impact production environment
-     *
-     * @param array $variables -- Variable list of PHP variables
-     */
-    private function requireVars(...$variables) {
-        return true; // for assert() to succeed: see usage in documentation above
-    }
+	 *
+	 * @param array $variables -- Variable list of PHP variables
+	 * @return bool
+	 * @noinspection PhpUnusedParameterInspection
+	 */
+	public function requireVars(...$variables) {
+		return true; // for assert() to succeed: see usage in documentation above
+	}
+
+	/**
+	 * Localizes a messaget text using configured localization (l10n) class.
+	 *
+	 * Category syntax
+	 * - umvc -- framework messages, located in the /vendor/uhi67/umvc/messages dir
+	 * - avendor/alib -- library texts, located in the /vendor/avendor/alib/messages dir
+	 * - avendor/alib/acat -- library category, located in the /vendor/avendor/alib/messages/acat dir
+	 * - any/other -- application categories, depending on current l10n class (e.g. located in the /messages/any/other dir of the application)
+	 * - app -- the default if none specified; depending on current l10n class (e.g. located in the /messages/app dir of the application)
+	 *
+	 * @param string $category
+	 * @param string $message
+	 * @param array $params
+	 * @param string|null $locale
+	 * @return string
+	 * @throws Exception
+	 */
+	public static function l($category, $message, $params=[], $locale=null) {
+		if(!static::$app) throw new Exception('Application is not initialized');
+		if(!static::$app->hasComponent('l10n')) {
+			if($params) $message = Apphelper::substitute($message, $params);
+			return $message;
+		}
+		if(!$locale) $locale = static::$app->locale;
+		return static::$app->l10n->getText($category, $message, $params, $locale);
+	}
 }

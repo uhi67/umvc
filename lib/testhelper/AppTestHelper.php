@@ -2,12 +2,14 @@
 
 namespace Helper;
 
+use Codeception\Lib\Framework;
+use Symfony\Component\BrowserKit\Response;
+use Symfony\Component\DomCrawler\Crawler;
 use uhi67\umvc\App;
 use uhi67\umvc\Model;
 use Codeception\Configuration;
 use Codeception\Exception\ModuleConfigException;
 use Codeception\Exception\ModuleException;
-use Codeception\Lib\Framework;
 use Codeception\PHPUnit\Constraint\JsonContains;
 use Codeception\Step;
 use Codeception\TestInterface;
@@ -15,8 +17,6 @@ use Codeception\Util\Debug;
 use Exception;
 use PHPUnit\Framework\Assert;
 use ReflectionException;
-use Symfony\Component\BrowserKit\Response;
-use Symfony\Component\DomCrawler\Crawler;
 
 /**
  * # Test helper for App
@@ -176,13 +176,13 @@ class AppTestHelper extends Framework {
 	 * @param array $parameters
 	 * @param array $files
 	 * @param array $server
-	 * @param null $content
+	 * @param string|null $content
 	 * @param bool $changeHistory
 	 *
 	 * @return Crawler
 	 * @throws Exception
 	 */
-	protected function clientRequest($method, $uri, array $parameters = [], array $files = [], array $server = [], $content = null, $changeHistory = true)
+	protected function clientRequest($method, $uri, array $parameters = [], array $files = [], array $server = [], $content = null, $changeHistory = true): Crawler
 	{
 		if (is_array($uri)) {
 			$uri = $this->app->createUrl($uri);
@@ -327,7 +327,7 @@ class AppTestHelper extends Framework {
         $key = strtolower($key);
         foreach($this->client->headers as $header) {
             Debug::debug('Header: '.$header);
-            list($k, $v) = explode(' ', $header);
+            [$k, $v] = explode(' ', $header);
             $k = strtolower($k);
             if($k==$key || $k==$key.':') {
                 if(!$value) return;
@@ -392,7 +392,7 @@ class AppTestHelper extends Framework {
      *
      * ```
      *
-     * This method recursively checks if one array can be found inside of another.
+     * This method recursively checks if one array can be found inside another.
      *
      * @param array $json
      */

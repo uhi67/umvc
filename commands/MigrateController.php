@@ -156,7 +156,13 @@ class MigrateController extends Command {
             }
         }
         if($n==0 && $this->verbose) echo "No migrations applied", PHP_EOL;
-        else if($this->verbose) echo PHP_EOL, $n, $n>1 ? " migrations were" : " migration was", " applied.", PHP_EOL;
+        else {
+            // If migrations were applied, the model table metadata cache must be cleared
+            if($this->app->cache) $this->app->cache->clear();
+
+            // Summary
+            if($this->verbose) echo PHP_EOL, $n, $n>1 ? " migrations were" : " migration was", " applied.", PHP_EOL;
+        }
         return 0;
     }
     

@@ -1,7 +1,7 @@
 UMVC framework
 ==============
 
-Version 1.0 -- 2022-05-11
+Version 1.1 -- 2022-08-30
 
 A simple web-application framework implementing model-view-controller (MVC) architectural pattern.
 
@@ -45,3 +45,13 @@ First steps
 
 Change log
 ----------
+
+### Version 1.1 -- 2022-08-30
+
+- Asset registry inprovements (Controller::registerAssets(), etc)
+- Html::img() added
+- Session, Request, FileUpload classes
+- localization (App::l(), App::$locale, L10n, L10nFile, etc)
+- App: default layout parameter
+- render bugfixes
+- SamlAuth::get() fixed

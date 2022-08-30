@@ -1,7 +1,9 @@
 <?php
 namespace uhi67\umvc;
 
+use DateTime;
 use Exception;
+use IntlDateFormatter;
 
 /**
  * Class for various static helper functions for the framework and the application
@@ -135,7 +137,8 @@ class AppHelper {
             }
             return;
         }
-        if(!headers_sent()) http_response_code($responseStatus);
+        $errorMessage = (ENV_DEV || $e instanceof UserException) ? $e->getMessage() : 'Something went wrong';
+        if(!headers_sent()) http_response_code((int)$responseStatus ?? 500);
         echo '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">';
         echo '<html lang="hu">';
         echo "<head><title>$title - UMVC</title>";
@@ -144,7 +147,7 @@ class AppHelper {
         echo "<h1>$responseStatus $title</h1>";
         echo '<p>Oops, the page cannot be displayed :-(</p>';
         $details = sprintf(" in file '%s' at line '%d'", $e->getFile(), $e->getLine());
-        echo '<div><b>'.htmlspecialchars($e->getMessage()).'</b>'.(ENV_DEV ? $details : '').'</div>';
+        echo '<div><b>'.htmlspecialchars($errorMessage).'</b>'.(ENV_DEV ? $details : '').'</div>';
 
         if(ENV_DEV) {
             $basePath = dirname(__DIR__,4);
@@ -152,7 +155,7 @@ class AppHelper {
             echo preg_replace(
                 [
                     '~'.str_replace(['\\', '~'], ['\\\\', '\~'], $basePath).'~',
-                    '/^(#\\d+ [^(]+)(\\\\vendor\\\\uhi67\\\\umvc\\\\[^(]+)(.*)$/m',
+                    '/^(#\\d+ [^(]+)(\\\\vendor\\\\uhi67\\\\)(umvc)(\\\\[^(]+)(.*)$/m',
                     '/^(#\\d+ [^(]+)(\\\\views\\\\[^(]+)(.*)$/m',
                     '/^(#\\d+ [^(]+)(\\\\controllers\\\\[^(]+)(.*)$/m',
                     '/^(#\\d+ [^(]+)(\\\\models\\\\[^(]+)(.*)$/m',
@@ -160,7 +163,7 @@ class AppHelper {
                 ],
                 [
                     '...',
-                    '<span style="color:gray">$1$2$3</span>',
+                    '<span style="color:gray">$1$3</span><span style="color:#333">$4</span><span style="color:gray">$5</span>',
                     '<span style="color:gray">$1</span><span style="color:maroon">$2</span>$3',
                     '<span style="color:gray">$1</span><span style="color:blue">$2</span>$3',
                     '<span style="color:gray">$1</span><span style="color:darkgreen">$2</span>$3',
@@ -194,7 +197,7 @@ class AppHelper {
             if(isset($_POST) && $_SERVER['REQUEST_METHOD'] === 'POST') {
                 $content .= '<h3>POST</h3><table class="table">';
                 foreach($_POST as $key => $value) {
-                    $content .= "<tr><th>$key</th><td>" . print_r($value, true) . "</td></tr>";
+                    $content .= "<tr><th>$key</th><td><pre>" . print_r($value, true) . "</pre></td></tr>";
                 }
                 $content .= '</table>';
             }
@@ -350,4 +353,96 @@ class AppHelper {
 
         return $str;
     }
+
+    /**
+     * Converts JSON string into array.
+     * Useful when dealing with JSON data stored in database as string.
+     *
+     * @param string $data
+     * @return array
+     * @author arlogy
+     */
+    public static function arrayFromJsonString($data) {
+        $data = json_decode($data, true);
+        return is_array($data) ? $data : [];
+    }
+
+    /**
+     * Converts array value into JSON string.
+     * Useful to revert AppHelper::arrayFromJsonString().
+     *
+     * @param mixed $data
+     * @return string
+     * @author arlogy
+     */
+    public static function jsonStringFrom($data) {
+        $data = json_encode($data);
+        return is_string($data) ? $data : '';
+    }
+
+	/**
+	 * Substitutes {$key} patterns of the text to values of associative data
+	 * Used primarily for native language texts, but used for SQL generation where substitution is not based on SQL data syntax.
+	 * If no substitution possible, the pattern remains unchanged without error
+	 * Special cases:
+	 *    - {DMY$var} - convert hungarian date to english (deprecated)
+	 *  - {$var/subvar} - array resolution within array values (using multiple levels possible)
+	 *  - Using special characters if necessary: `{{}` -> `{`, `}` -> `}`
+	 *    - values of DateTime will be substituted as SHORT date of the application's language.
+	 *
+	 * @param string $text
+	 * @param array $data
+	 *
+	 * @return string
+	 */
+	public static function substitute($text, $data) {
+		return preg_replace_callback(/* @lang */'#{(DMY|MDY)?(\\$[a-zA-Z_]+[\\\\/a-zA-Z0-9_-]*)}#', function($mm) use($data) {
+			if($mm[2]=='{') return '{';
+			if(substr($mm[2],0,1)=='$') {
+				// a keyname
+				$subvars = explode('/', substr($mm[2],1));
+				$d = $data;
+				foreach($subvars as $subvar) {
+					if(is_array($d) && array_key_exists($subvar, $d)) $d = $d[$subvar]===null ? '#null#' : $d[$subvar];
+					else return $mm[0];
+				}
+			}
+			else {
+				// Other expression (not implemented)
+				return $mm[0];
+			}
+			if($d instanceof DateTime) $d = static::formatDateTime($d, IntlDateFormatter::SHORT, IntlDateFormatter::NONE);
+			if($mm[1]=='MDY') {
+				$d = static::formatDateTime($d, IntlDateFormatter::SHORT, IntlDateFormatter::NONE, 'en');
+			}
+			if($mm[1]=='DMY') {
+				$d = static::formatDateTime($d, IntlDateFormatter::SHORT, IntlDateFormatter::NONE, 'en-GB');
+			}
+			return $d;
+		}, $text);
+	}
+
+	/**
+	 * formats a DateTime value using given locale
+	 *
+	 * @param DateTime $datetime
+	 * @param int $datetype -- date format as IntlDateFormatter::NONE, type values are 'NONE', 'SHORT', 'MEDIUM', 'LONG', 'FULL'
+	 * @param int $timetype -- time format as IntlDateFormatter::NONE, type values are 'NONE', 'SHORT', 'MEDIUM', 'LONG', 'FULL'
+	 * @param string $locale -- locale in ll-cc format (ISO 639-1 && ISO 3166-1), null to use default
+	 * @return string
+	 */
+	public static function formatDateTime($datetime, $datetype, $timetype, $locale=null) {
+		if(!$locale) $locale = App::$app->locale;
+		if(!$locale) $locale="en-GB";
+		$pattern = null;
+		if(substr($locale, 0,2)=='hu') {
+			if($datetype == IntlDateFormatter::SHORT && $timetype == IntlDateFormatter::SHORT)
+				$pattern = 'yyyy.MM.dd. H:mm';
+			if($datetype == IntlDateFormatter::SHORT && $timetype == IntlDateFormatter::NONE)
+				$pattern = 'yyyy.MM.dd.';
+		}
+		$dateFormatter = new IntlDateFormatter($locale, $datetype, $timetype, null, null, $pattern);
+		return $dateFormatter->format($datetime);
+	}
+
 }

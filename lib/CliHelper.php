@@ -188,24 +188,47 @@ class CliHelper {
 		return $input;
 	}
 
-	/**
-	 * Returns command line arguments with optional associated values
-	 *
-	 * Values may be specified as name=value, returned as name=>value pair.
-	 * Arguments without value returned with numeric index.
-	 *
-	 * @return array
-	 */
-	public static function parseArgs() {
-		$argc = $_SERVER['argc'];
-		$argv = $_SERVER['argv'];
-		$args = [];
-		// Parsing args
-		for($i = 1; $i < $argc; $i++) {
-			if(preg_match('/^(--)?(\w+)=(.*)$/', $argv[$i], $m)) {
-				$args[$m[2]] = $m[3];
-			} else $args[] = $argv[$i];
-		}
-		return $args;
-	}
+    /**
+     * Collects options and option values and rest of parameters from the global $argv array.
+     *
+     * Returns option=>value paris, where option is the long option name,
+     * the value is the associated value or false if no value present.
+     * (Options without possible values always returned with false)
+     *
+     * Options are parsed only at the beginning of the argv array until the first non-option element.
+     *
+     * Option name include ':' or '::' postfix receive mandatory or optional parameter values.
+     * Alias keys also must include the ':' or '::' postfix to receive values.
+     *
+     * Rest of arguments without values are returned with numeric index.
+     *
+     * @param array $longOptions -- option names with optional trailing ':' or '::' indicating parameter or optional parameter
+     * @param array $optionAliases -- short=>long associations. Short options can be used only if long counterpart exist
+     * @return array -- [param, option=>value, ...]
+     */
+    public static function parseArgs(array $longOptions=[], array $optionAliases=[]) {
+        $shortOptions = implode('', array_keys($optionAliases));
+        $options = getopt($shortOptions, array_values($longOptions), $rest);
+
+        // Change keys using alias associations
+        $nakedOptionAliases = array_combine(
+            array_map(function($key) { return trim($key, ':'); }, array_keys($optionAliases)),
+            array_values($optionAliases)
+        );
+        foreach($options as $key=>$value) {
+            if(array_key_exists($key, $nakedOptionAliases)) {
+                $options[$nakedOptionAliases[$key]] = $value;
+                unset($options[$key]);
+            }
+        }
+        $argv = array_slice($_SERVER['argv'], $rest);
+        $argc = count($_SERVER['argv'])-$rest;
+        // Parsing other arguments
+        for($i = 0; $i < $argc; $i++) {
+            if(preg_match('/^(--)?(\w+)=(.*)$/', $argv[$i], $m)) {
+                $options[$m[2]] = $m[3];
+            } else $options[] = $argv[$i];
+        }
+        return $options;
+    }
 }

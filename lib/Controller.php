@@ -9,17 +9,17 @@ use ReflectionMethod;
  * Represents a function in the application.
  * The App dispatcher will run the proper action of the selected Controller class.
  *
- * All main function's path in the application must be mapped to a Controller class named `<function>Controller`
+ * All main function's path in the application must be mapped to a Controller class named `<function>Controller`.
  * The `action<Action>` methods are mapped to the function action, e.g. CRUD action names.
  *
  * **Example:**
  * - Suppose the HTTP request is /user/create
- * - The dispatcher finds the UserController class, and creates an instance of it, and invokes its go() method.
+ * - The dispatcher finds the UserController class, creates an instance of it, and invokes its go() method
  * - The UserController finds the actionCreate() method, based on the remainder of the path ('/create')
  * - The actionCreate() method performs the desired function
  *
  * ### Most important properties and methods:
- * - app: the application instance invoked this controller
+ * - app: the application instance that invoked this controller
  * - path: the path portion passed to the controller (controller name already shifted out)
  * - query: the query part of the original request, as an associative array
  * - beforeAction(): Invoked before each action. if you define it, it must return true to enable the current action.
@@ -41,8 +41,24 @@ class Controller extends Component
     /** @var string|null -- name of the currently executed action (without 'action' prefix) */
     public $action;
 
+    /** @var Asset[] $assets -- registered assets indexed by name */
+    public $assets = [];
+
+    public function init() {
+        $this->registerAssets();
+    }
+
     /**
-     * Execute the request by this controller
+     * Descendant classes must override and register asset packages here.
+     * The default implementation is empty.
+     * @return void
+     */
+    public function registerAssets() {
+        // This function is intentionally empty. Descendants need not call it.
+    }
+
+    /**
+     * Determines and performs the requested action using $this controller
      *
      * @throws Exception if no matching action
      * @return int -- HTTP response status
@@ -102,13 +118,13 @@ class Controller extends Component
      * @throws Exception
      */
     public function actionDefault() {
-        throw new Exception('No default action is defined');
+        throw new Exception('No default action is defined in '.call_user_func([get_called_class(), 'shortName']));
     }
 
     /**
      * Outputs a JSON response
      *
-     * @param array|object $response -- array or object containing the output data. Null is not permitted, use empty array for empty data.
+     * @param array|object $response -- array or object containing the output data. Null is not permitted, use empty array for empty data
      * @param array $headers -- more custom headers to send
      * @return int
      * @throws Exception -- if the response is not a valid data to convert to JSON.
@@ -128,7 +144,7 @@ class Controller extends Component
      * The data must be a 2-dim array containing plain text.
      * If a header line is needed, it must be in the data.
      *
-     * @param array[] $models -- array containing the output data. Null is not permitted, use empty array for empty data.
+     * @param array[] $models -- array containing the output data. Null is not permitted, use empty array for empty data
      * @param array $headers -- more custom headers to send
      * @return int
      * @throws Exception -- if the response is not a valid data to convert to JSON.
@@ -180,16 +196,116 @@ class Controller extends Component
     }
 
     /**
-     * A shortcut for app->render
+     * ## A shortcut for app->render with optional localized view selection.
      *
-     * @param string $viewName -- basename of a php viewfile in the `views` directory, without extension
+     * **Definitions of localized views:**
+     * - default view: the original view path without localization, e.g 'main/index'
+     * - localized view: the view path with locale code, e.g. 'main/en/index' or 'main/en-GB/index' whichever fits better.
+     * - locale can be an ISO 639-1 language code ('en') optionally extended with a ISO 3166-1-a2 region ('en-GB')
+     *
+     * **Rules for locale and language codes**
+     * - If current locale is 'en-GB', the path with 'en-GB' is preferred, otherwise 'en' is used.
+     * - If current locale is 'en', the path with 'en' is used, no any 'en-*' is recognised.
+     * - If current locale is 'en-US', the path with 'en-US' is preferred, but no other 'en-*' is used.
+     *
+     * **Locale selection:**
+     * - true/null: use current locale if the localized view exists, otherwise use the default view
+     * - false: do not use localized view, even if exists. If the default view does not exist, an exception occurs.
+     * - explicit locale: use the specified locale, as defined at 'true' case.
+     *
+     * @param string $viewName -- basename of a php view-file in the `views` directory, without extension and without localization code
      * @param array $params -- parameters to assign to variables used in the view
-     * @param string $layout -- the layout applied to this render after the view rendered. If null, no layout will be applied.
+     * @param string $layout -- the layout applied to this render after the view rendered. If false, no layout will be applied.
+     * @param array $layoutParams -- optional parameters for the layout view
+     * @param string|bool|null $locale -- use localized layout selection (ISO 639-1 language / ISO 3166-1-a2 locale), see above
      *
      * @return false|string
      * @throws Exception
      */
-    public function render($viewName, $params=[], $layout='layout') {
-        return $this->app->render($viewName, $params, $layout);
+    public function render($viewName, $params=[], $layout=null, $layoutParams=[], $locale=null) {
+	    if($locale === null || $locale===true) $locale = $this->app->locale;
+		if($locale) {
+			// Priority order: 1. Localized view (with long or short locale) / 2. untranslated / 3. default-locale view (long/short)
+			$lv = $this->localizedView($viewName, $locale);
+			if(!$lv && !file_exists($this->app->viewFile($viewName))) {
+				$lv = $this->localizedView($viewName, App::$app->source_locale);
+			}
+			if($lv) $viewName = $lv;
+		}
+        return $this->app->render($viewName, $params, $layout, $layoutParams);
     }
+
+	/**
+	 * Returns localized view name using long or short locale. Checks if the view file exists.
+	 * Returns null if none of them exists.
+	 *
+	 * @param string $viewName
+	 * @param string $locale
+	 * @return string|null
+	 */
+	private function localizedView($viewName, $locale) {
+		// Look up view file using full locale
+		$lv = $this->localizedViewName($viewName, $locale);
+		if (file_exists($this->app->viewFile($lv))) return $lv;
+		// Look up view file using short language code
+		$lv = $this->localizedViewName($viewName, substr($locale,0,2));
+		if(file_exists($this->app->viewFile($lv))) return $lv;
+		return null;
+	}
+
+	private function localizedViewName($viewName, $locale) {
+		$p = strrpos($viewName, '/');
+		if($p===false) $p = -1;
+		return substr($viewName,0, $p+1) . $locale . '/'.substr($viewName, $p+1);
+	}
+
+    /**
+     * @param Asset $asset
+     * @return void
+     */
+    public function registerAsset(Asset $asset) {
+        $this->assets[$asset->name] = $asset;
+    }
+
+    /**
+     * Link registered assets (optionally filtered by extensions)
+     *
+     * @param string|string[] $extensions -- extension name(s), e.g. 'css', default is null == all extensions
+     * @return string -- the generated html code
+     * @throws Exception
+     */
+    public function linkAssets($extensions=null) {
+        $html = '';
+        foreach($this->assets as $asset) {
+            foreach((array)$asset->files as $file) {
+                // Iterate file pattern in the cache (use extension filter)
+                Asset::matchPattern($asset->dir, '', $file, function($file) use($asset, $extensions, &$html) {
+                    $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+                    if(!$extensions || in_array($ext, (array)$extensions)) {
+                        switch($ext) {
+                            // Create link based on extension
+                            case 'css':
+                                $html .= Html::link([
+                                    'rel'=>'stylesheet',
+                                    'href'=>$asset->url($file)
+                                ]);
+                                break;
+                            case 'js':
+                                $html .= Html::tag('script', '', [
+                                    'src'=>$asset->url($file)
+                                ]);
+                                break;
+                            default:
+                                throw new Exception("Unknown asset extension `$ext`");
+                        }
+                    }
+                });
+            }
+
+
+        }
+
+        return $html;
+    }
+
 }
