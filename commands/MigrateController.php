@@ -10,6 +10,17 @@ use uhi67\umvc\Connection;
 use uhi67\umvc\Migration;
 use uhi67\umvc\SqlMigration;
 
+/**
+ * Migration command
+ *
+ * Usage
+ * =====
+ *
+ * - run `php app migrate` to migrate up
+ * - New migration can be created by `php app migrate/create <name>`
+ * - use `confirm=yes` switch to avoid interactive confirmations
+ *
+ */
 class MigrateController extends Command {
 
     /**
@@ -19,6 +30,11 @@ class MigrateController extends Command {
     private $confirm, $verbose, $migrationTable, $migrationPath;
 
     /**
+     * Prepares the actual action.
+     *
+     * - Initializes the database connection and global migration parameters
+     * - Reads the common command-line switches (verbose, confirm),
+     *
      * @throws Exception
      */
     public function beforeAction() {
@@ -26,16 +42,17 @@ class MigrateController extends Command {
         if(!$this->connection) throw new Exception('No database connection defined');
         $this->verbose = ArrayHelper::fetchValue($this->query, 'verbose', $verbose ?? 1);
         $this->confirm = ArrayHelper::fetchValue($this->query, 'confirm');
-        // Environment-specific values may be set in the config
+        // Environment-specific values can be set in the config
         $this->migrationTable = $this->connection->migrationTable ?? 'migration';
         $this->migrationPath = $this->connection->migrationPath ?? dirname(__DIR__,4) . '/migrations';
         return true;
     }
 
     public function actionDefault() {
-        
-        echo "The migrate command keeps database changes in sync with source code.", PHP_EOL;
-        echo "Run `php command/migrate.php help` for more details.", PHP_EOL, PHP_EOL;
+        if($this->verbose) {
+	        echo "The migrate command keeps database changes in sync with source code.", PHP_EOL;
+	        echo "Run `php command/migrate.php help` for more details.", PHP_EOL, PHP_EOL;
+        }
         return $this->actionUp();
     }
 
@@ -126,7 +143,6 @@ class MigrateController extends Command {
                     if($success) {
                         if($this->verbose > 1) {
                             echo "Migration " . $name . " has been applied.", PHP_EOL;
-                            throw new Exception("Registering migration " . $n . " failed.");
                         }
 
                         $this->connection->reset();
@@ -170,8 +186,10 @@ class MigrateController extends Command {
         echo "Place plain SQL or PHP migration files into `/migrations/` directory.", PHP_EOL;
         echo "The default action creates the `migration` table which track the changes in your database, and applies all new migrations.", PHP_EOL, PHP_EOL;
         echo "Usage:", PHP_EOL, PHP_EOL;
-        echo "   php app.php migrate verbose=2 -- migrate up with detailed output; verbose=0 for silent operation.", PHP_EOL;
-        echo "   php app.php migrate/create <name> -- create new php migration in the migration directory", PHP_EOL;
+        echo "   `php app.php migrate` -- migrate up. Interactive confirmations will be asked for.", PHP_EOL;
+        echo "   `php app.php migrate verbose=2` -- migrate up with detailed output; `verbose=0` for silent operation.", PHP_EOL;
+        echo "   `php app.php migrate/create <name>` -- create new php migration in the migration directory", PHP_EOL;
+	    echo "   Use `confirm=yes` switch to avoid interactive confirmations", PHP_EOL;
     }
 
     /**
@@ -254,6 +272,9 @@ namespace app\migrations;
 use uhi67\umvc\Migration;
 
 class %className% extends Migration {
+	/**
+	 * @return bool -- must return true on success
+     */
 	public function up() {
 	}
 }
