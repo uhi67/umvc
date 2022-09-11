@@ -145,7 +145,7 @@ class AppTestHelper extends Framework {
      */
 	public function _afterStep(Step $step) {
         Debug::debug('_afterStep');
-        Debug::debug('# Session is '.json_encode($_SESSION));
+        Debug::debug('# Session is '.json_encode($_SESSION ?? null));
     }
 
 
