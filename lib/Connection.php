@@ -196,4 +196,24 @@ abstract class Connection extends Component {
 
     public function setUser($user) { $this->_user = $user; }
     public function setPassword($password) { $this->_password = $password; }
+
+	/**
+	 * Creates a new connection using vendor driver specified in the DSN
+	 * 
+	 * @throws Exception -- if driver is missing for DSN vendor or vendor is not set in the DSN
+	 * @return Connection
+	 */
+	public static function connect($dsn, $user, $password) {
+		if(!$dsn) throw new Exception('DSN is not set');
+		$vendor = AppHelper::substring_before($dsn, ':');
+		if(!$vendor) throw new Exception('Invalid DSN: vendor is not set');
+		$driver = 'app\lib\\'.ucfirst(strtolower($vendor)).'Connection';
+		if(!class_exists($driver)) throw new Exception('No database driver for '.$vendor);
+
+		return new $driver([
+			'dsn' => $dsn,
+			'user' => $user,
+			'password' => $password
+		]);
+	}
 }
