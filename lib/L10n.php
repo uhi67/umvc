@@ -212,7 +212,7 @@ class L10n extends Component {
 	public function getText($category, $source, $params=NULL, $lang=null) {
 		if($category=='umvc') {
 			if(!$lang) $lang = App::$app->locale;
-			$text = static::getTextFile($category, dirname(__DIR__).'/messages', $source, $lang);
+			$text = static::getTextFile($category, dirname(__DIR__).'/messages', $source, $lang, $this->source);
 		} else {
 			// Default is shortcut solution
 			$text = $source;

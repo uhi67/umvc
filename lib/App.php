@@ -2,6 +2,7 @@
 
 namespace uhi67\umvc;
 
+use Codeception\Util\Debug;
 use ErrorException;
 use Exception;
 use Throwable;
@@ -42,12 +43,7 @@ use Throwable;
  * - render: renders a view and applies the layout
  * - renderPartial: renders a partial view without applying layout
  * - sendHeader(): sends put an HTTP header. Use this instead of native function
- *
- * ### Application-specific methods
- *
  * - requireLogin(): redirects to SAML-login or throws an exception if current user is not logged-in
- * - requireAdmin(): throws an exception if current logged-in user is not an admin
- * - requireSuperAdmin(): throws an exception if current logged-in user is not a super-admin
  *
  * @property-read Component[] $components
  * @property-read Connection $db -- the default DB connection
@@ -271,7 +267,7 @@ class App extends Component {
             if(!$this->path) $this->path = parse_url($this->url, PHP_URL_PATH);
             $this->path = $this->path ? explode('/', trim($this->path, '/')) : [];
 
-            //if(ENV_DEV) Debug::debug('[url] '.$this->url);
+            if(ENV_DEV) Debug::debug('[url] '.$this->url);
 
             if($this->path==[''] && $this->mainControllerClass) {
                 // The default action of main page can be called in the short way

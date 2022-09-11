@@ -14,5 +14,6 @@ return [
 	// Model
 	'must be unique' => 'értéke már használatban van',
 	'refers to a non-existing record' => 'nem létező elemre hivatkozik',
-
+	// Html
+	'Disabled' => 'Tiltva',
 ];

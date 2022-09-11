@@ -109,18 +109,25 @@ class Html {
      * Please note that `<a>` elements can be disabled as well, but this is easily achieved with `<button>` elements.
      *
      * @param string|NULL $href The href to return a link button from.
-     * @param string|NULL $enabledText The text to use if the input href is a URL.
-     * @param string|NULL $disabledText The text to use if the input href is not a URL.
+     * @param array $options Optional associative array to configure the link button.
+     * - class: the value to use for the class attribute of the link button; not cleaned.
+     * - enabledText: the text to use if the input href is a URL (and thus enabled); cleaned; defaults to the input href.
+     * - disabledText: the text to use if the input href is not a URL (and thus disabled); cleaned; defaults to 'Disabled'.
      * @return string
      */
-    public static function linkButton($href, $enabledText, $disabledText) {
-        $href = AppHelper::xss_clean($href);
+	public static function linkButton($href, $options=[]) {
+		$href = AppHelper::xss_clean($href);
 
-        return self::isAbsoluteUrl($href) ?
-               sprintf('<a role="button" class="btn btn-secondary btn-sm" target="_blank" href="%s">%s</a>', $href, $enabledText) :
-               sprintf('<button type="button" class="btn btn-secondary btn-sm" disabled>%s</button>', $disabledText)
-        ;
-    }
+		$class = $options['class'] ?? 'btn btn-secondary btn-sm';
+
+		if(self::isAbsoluteUrl($href)) {
+			$enabledText = AppHelper::xss_clean($options['enabledText'] ?? $href);
+			return sprintf('<a role="button" class="%s" target="_blank" href="%s">%s</a>', $class, $href, $enabledText);
+		}
+
+		$disabledText = AppHelper::xss_clean($options['disabledText'] ?? App::l('umvc', 'Disabled'));
+		return sprintf('<button type="button" class="%s" disabled>%s</button>', $class, $disabledText);
+	}
 
     /**
      * Render a `select` HTML tag with options

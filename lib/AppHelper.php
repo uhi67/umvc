@@ -108,6 +108,7 @@ class AppHelper {
      * @param int|null $responseStatus -- HTTP response status, default is 500=HTTP_INTERNAL_SERVER_ERROR
      */
     static function showException($e, $responseStatus=null) {
+	    defined('ENV_DEV') || define('ENV_DEV', 'production');
         $responseStatus = $responseStatus ?: HTTP::HTTP_INTERNAL_SERVER_ERROR;
         $title = HTTP::$statusTexts[$responseStatus] ?? 'Internal application error';
 
@@ -115,23 +116,23 @@ class AppHelper {
 
             $msg = "[$responseStatus] $title: ".$e->getMessage();
             $details = sprintf(" in file '%s' at line '%d'", $e->getFile(), $e->getLine());
-            echo Ansi::color($msg, 'light red'),$details,"\n";
+            echo Ansi::color($msg, 'light red'),$details,PHP_EOL;
             if(ENV_DEV) {
-                $trace = explode("\n", $e->getTraceAsString());
+                $trace = explode(PHP_EOL, $e->getTraceAsString());
                 $baseurl = dirname(__DIR__);
                 foreach($trace as $line) {
                     $basepos = strpos($line, $baseurl);
                     $color = ($basepos > 1 && $basepos < 5) ? 'brown' : 'red';
-                    echo Ansi::color($line, $color), "\n";
+                    echo Ansi::color($line, $color), PHP_EOL;
                 }
 
                 while($e = $e->getPrevious()) {
-                    echo Ansi::color("\n\n".html_entity_decode($e->getMessage()), 'light purple')."\n";
-                    $trace = explode("\n", $e->getTraceAsString());
+                    echo Ansi::color(PHP_EOL.PHP_EOL.html_entity_decode($e->getMessage()), 'light purple').PHP_EOL;
+                    $trace = explode(PHP_EOL, $e->getTraceAsString());
                     foreach($trace as $line) {
                         $basepos = strpos($line, $baseurl);
                         $color = ($basepos > 1 && $basepos < 5) ? 'brown' : 'red';
-                        echo Ansi::color($line, $color), "\n";
+                        echo Ansi::color($line, $color), PHP_EOL;
                     }
                 }
             }
@@ -140,7 +141,7 @@ class AppHelper {
         $errorMessage = (ENV_DEV || $e instanceof UserException) ? $e->getMessage() : 'Something went wrong';
         if(!headers_sent()) http_response_code((int)$responseStatus ?? 500);
         echo '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">';
-        echo '<html lang="hu">';
+        echo '<html lang="en">';
         echo "<head><title>$title - UMVC</title>";
         echo '<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">';
         echo '</head><body>';
@@ -172,7 +173,7 @@ class AppHelper {
                 htmlspecialchars($e->getTraceAsString())
             );
             while ($e = $e->getPrevious()) {
-                echo "\n\n".htmlspecialchars($e->getMessage())."\n";
+                echo PHP_EOL, PHP_EOL, htmlspecialchars($e->getMessage()), PHP_EOL;
                 echo htmlspecialchars($e->getTraceAsString());
             }
             echo '</pre>';
