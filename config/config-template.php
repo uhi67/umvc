@@ -30,7 +30,7 @@ return [
             'admin_password' => '',
             // Must be set to a secure random string
             'secret_salt' => '',
-            // A specific IdP can be configured to login with. If not specified, the discovery service will be called.
+            // A specific IdP can be configured to log in with. If not specified, the discovery service will be called.
             'idp' => null,
             // URL of the discovery service to be used. If not specified, the internal discovery service will be used with predefined IdPs.
             'disco' => null,

@@ -1,4 +1,5 @@
-<?php
+<?php /** @noinspection PhpUnused */
+
 namespace uhi67\umvc;
 
 use Exception;
@@ -107,27 +108,28 @@ class Grid extends Component
         ]);
     }
 
-    /**
-     * Renders the pagination buttons for the paginated view.
-     *
-     * If the number of pages less than 1, no buttons are displayed.
-     * The button row contains:
-     * - a [1] button for the first page (always, but may be the same as the current),
-     * - an optional [...] to indicate skipped pages,
-     * - _distance_ number (or less) of buttons before the current page,
-     * - the current page button with active state (always),
-     * - _distance_ number (or less) of buttons after the current page,
-     * - an optional [...] to indicate skipped pages,
-     * - a numbered button wih last page number (always, but may be the same as the current).
-     *
-     * If the number of pages are not enough to display all the above, some of them are skipped
-     *
-     * @param int $currentPage
-     * @param int $totalPages
-     * @param string $baseUrl
-     * @param int $distance -- Number of buttons displayed before and after the current page
-     * @return string
-     */
+	/**
+	 * Renders the pagination buttons for the paginated view.
+	 *
+	 * If the number of pages less than 1, no buttons are displayed.
+	 * The button row contains:
+	 * - a [1] button for the first page (always, but may be the same as the current),
+	 * - an optional [...] to indicate skipped pages,
+	 * - _distance_ number (or less) of buttons before the current page,
+	 * - the current page button with active state (always),
+	 * - _distance_ number (or less) of buttons after the current page,
+	 * - an optional [...] to indicate skipped pages,
+	 * - a numbered button wih last page number (always, but may be the same as the current).
+	 *
+	 * If the number of pages are not enough to display all the above, some of them are skipped
+	 *
+	 * @param int $currentPage
+	 * @param int $totalPages
+	 * @param string $baseUrl
+	 * @param int $distance -- Number of buttons displayed before and after the current page
+	 * @return string
+	 * @throws Exception
+	 */
     public function paginationLinks($currentPage, $totalPages, $baseUrl=null, $distance = 4) {
         if($totalPages <= 1) { return ''; }
         $listItems = '';

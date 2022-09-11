@@ -1,4 +1,5 @@
-<?php
+<?php /** @noinspection PhpUnused */
+
 namespace uhi67\umvc;
 /**
  * Ansi is a class for print colors and cursor control characters in command-line interfaces
@@ -162,7 +163,6 @@ class Ansi {
 		$h=0;
 		if ($del_max == 0)
 		{
-		  $h = 0;
 		  $s = 0;
 		}
 		else

@@ -49,12 +49,13 @@ abstract class Connection extends Component {
      */
     abstract public function reset();
 
-    /**
-     * Check if a table exists in the current database.
-     *
-     * @param $tableName
-     * @return bool TRUE if table exists, FALSE if no table found.
-     */
+	/**
+	 * Check if a table exists in the current database.
+	 *
+	 * @param $tableName
+	 * @return bool TRUE if table exists, FALSE if no table found.
+	 * @throws Exception
+	 */
     public function tableExists($tableName) {
         $tableName = $this->quoteIdentifier($tableName);
         // Try a select statement against the table

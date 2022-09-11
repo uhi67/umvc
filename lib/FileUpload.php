@@ -1,6 +1,8 @@
 <?php
 namespace uhi67\umvc;
 
+use Exception;
+
 /**
  * # FileUpload
  * Represents an uploaded file of a form
@@ -20,10 +22,11 @@ class FileUpload extends Component {
 	public $saved;
 
 	/**
-	 * @param string $fieldname
-	 * @param string $index -- fieldname if is in an array request variable
+	 * @param string $fieldname -- field name or an array request variable
+	 * @param string|null $index -- field name in the second case
 	 *
 	 * @return FileUpload|null -- the object or null if not found
+	 * @throws Exception
 	 */
 	public static function createFromField($fieldname, $index=null) {
 		if(!isset($_FILES) || !isset($_FILES[$fieldname])) return null;

@@ -241,14 +241,15 @@ class Query extends Component
         return $this;
     }
 
-    /**
-     * Adds fields to the SELECT part of the query.
-     *
-     * (If no fields were defined earlier, all fields of all current models are used)
-     *
-     * @param array|null $expressionList -- Array of literal field-names or other expressions. Single field-name is allowed, but single expression must be wrapped in an array.
-     * @return $this
-     */
+	/**
+	 * Adds fields to the SELECT part of the query.
+	 *
+	 * (If no fields were defined earlier, all fields of all current models are used)
+	 *
+	 * @param array|null $expressionList -- Array of literal field-names or other expressions. Single field-name is allowed, but single expression must be wrapped in an array.
+	 * @return $this
+	 * @throws Exception
+	 */
     public function addSelect($expressionList=null) {
         if($expressionList) {
             if(!$this->_fields) $this->_fields = $this->allModelFields($this->_from);

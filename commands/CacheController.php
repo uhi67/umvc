@@ -1,4 +1,4 @@
-<?php
+<?php /** @noinspection PhpUnused */
 
 namespace uhi67\umvc\commands;
 
@@ -10,8 +10,11 @@ use uhi67\umvc\Command;
  * @property-read App $parent
  */
 class CacheController extends Command {
-    
-    public function beforeAction() {
+
+	/**
+	 * @throws Exception
+	 */
+	public function beforeAction() {
         if(!$this->parent instanceof App) throw new Exception('CacheController must be a component of the App');
         if(!$this->parent->hasComponent('cache')) {
             echo 'No cache is defined. Cache can be defined in the `config/config.php` file, at `components/cache` key if needed. Example:', PHP_EOL;

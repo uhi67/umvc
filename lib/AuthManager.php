@@ -40,7 +40,7 @@ abstract class AuthManager extends Component {
     }
 
     /**
-     * Initializes the already logged in user.
+     * Initializes the already logged-in user.
      * Manages login and logout requests.
      *
      * @return void

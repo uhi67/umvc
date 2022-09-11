@@ -11,14 +11,15 @@ use Throwable;
 use yii\helpers\Html;
 
 /**
- * Using this class needs `composer require "simplesamlphp/simplesamlphp:^1.19.2"`
+ * Using this class needs `composer require "simplesamlphp/simplesamlphp:^1.19.2"` in your application
+ * The dependency is not included in this library, since it's not mandatory for other parts.
  */
 class SamlAuth extends AuthManager {
     // Must be set to a secure password
     public $admin_password;
     // Must be set to a secure random string
     public $secret_salt;
-    // A specific IdP can be configured to login with. If not specified, the discovery service will be called.
+    // A specific IdP can be configured to log in with. If not specified, the discovery service will be called.
     public $idp;
     // URL of the discovery service to be used. If not specified, the internal discovery service will be used with predefined IdPs.
     public $disco;
@@ -232,7 +233,6 @@ class SamlAuth extends AuthManager {
 				$t->getTranslator()->getLanguage()->setLanguage(substr($la, 0, 2), false);
 			}
 			else {
-				/** @noinspection PhpDeprecationInspection */
 				$t->setLanguage(substr($la, 0, 2), false);
 			}
 		}
@@ -240,7 +240,6 @@ class SamlAuth extends AuthManager {
 			$translated = $t->getTranslator()->getAttributeTranslation($attributeName);
 		}
 		else {
-			/** @noinspection PhpDeprecationInspection */
 			$translated = $t->getAttributeTranslation($attributeName);
 		}
 		return $translated;

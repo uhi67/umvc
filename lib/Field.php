@@ -1,4 +1,5 @@
-<?php
+<?php /** @noinspection PhpUnused */
+
 namespace uhi67\umvc;
 
 use DateTime;

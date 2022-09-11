@@ -69,7 +69,7 @@ class Form extends Component {
      *  - icon -- 'glyphicon glyphicon-xxx' or 'fa fa-xxx' -- icon prepended to the label
      *  - value -- the value of the input. Default is $model->fieldName
      *  - items -- only for select, radio, checkboxlist
-     *  - options -- any other HTML attributes for the input tag, e.g readonly, placeholder, disabled, required
+     *  - options -- any other HTML attributes for the input tag, e.g. readonly, placeholder, disabled, required
      *  - divOptions -- any other HTML attributes for the enclosing div tag
      *  - hint -- a helper text under the field input
      *

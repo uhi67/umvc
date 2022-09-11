@@ -158,7 +158,7 @@ class L10n extends Component {
 	public function setUserLocale($locale) {
 		if(!($locale = $this->isSupported($locale))) return null;
 		$this->locale = $locale;
-		$_SESSION['umxc_locale'] = $locale;
+		$_SESSION['umvc_locale'] = $locale;
 		$this->setLanguageCookie($locale);
 		return $locale;
 	}

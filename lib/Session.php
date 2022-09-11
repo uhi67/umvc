@@ -1,4 +1,4 @@
-<?php /** @noinspection PhpIllegalPsrClassPathInspection */
+<?php /** @noinspection PhpUnused */
 
 namespace uhi67\umvc;
 use Exception;
@@ -27,7 +27,7 @@ use Psr\Log\LogLevel;
  */
 class Session extends Component {
 	/** @var string */
-	public $name = 'umxc_app';
+	public $name = 'umvc_app';
 	/** @var int */
 	public $lifetime = 1800;
 	/** @var string */
@@ -38,9 +38,10 @@ class Session extends Component {
 	public $logfile;
 
 	/**
+	 * @throws Exception
 	 */
 	public function prepare() {
-		if($this->cookie_domain === true) $this->cookie_domain = parse_url($this->parent->baseurl, PHP_URL_HOST);
+		if($this->cookie_domain === true && $this->parent instanceof App) $this->cookie_domain = parse_url($this->parent->baseUrl, PHP_URL_HOST);
 		if(php_sapi_name() == "cli") return;
 		ini_set("session.gc_maxlifetime", $this->lifetime + 900);
 		ini_set("session.lifetime", $this->lifetime);
@@ -48,8 +49,8 @@ class Session extends Component {
 		session_set_cookie_params(0, $this->cookie_path, $this->cookie_domain);
 		session_name($this->name);
 		session_cache_limiter('private_no_expire');
-		if(headers_sent($file, $line)) throw new \Exception("Cannot start session, headers already sent in $file:$line");
-		if(session_status() == PHP_SESSION_ACTIVE) throw new \Exception('Session is already active.');
+		if(headers_sent($file, $line)) throw new Exception("Cannot start session, headers already sent in $file:$line");
+		if(session_status() == PHP_SESSION_ACTIVE) throw new Exception('Session is already active.');
 
 		if(!static::is_started() && !session_start()) static::log('Error starting session');
 		else static::log('Session is started');
@@ -153,40 +154,44 @@ class Session extends Component {
 		return $w;
 	}
 
-	public static function getvarvalue(&$s) {
-		#trace("sp_getvarvalue(&$s)"); flush();
-		$t = static::getch($s); // típus
+	/**
+	 * Returns a value from the string (part of session parser)
+	 *
+	 * @param $s --
+	 * @return array|false|string
+	 */
+	private static function getvarvalue(&$s) {
+		$t = static::getch($s); // type
 		switch($t) {
 			case 'N':
 			{
-				static::gettoch($s, ';'); // záró ;
+				static::gettoch($s, ';'); // closing ';'
 				$v = "NULL";
 				break;
 			}
 			case 's':
 			{
-				static::getch($s);           // típuszáró :
-				static::gettoch($s, ':"'); // méret
-				$v = static::gettoch($s, '";');  // érték
+				static::getch($s);           // type-closing ':'
+				static::gettoch($s, ':"'); // size
+				$v = static::gettoch($s, '";');  // value
 				break;
 			}
 			case 'i':
 			{
-				static::getch($s);           // típuszáró :
-				$v = static::gettoch($s, ';');  // érték
+				static::getch($s);           // type-closing ':'
+				$v = static::gettoch($s, ';');  // value
 				break;
 			}
 			case 'a':
 			{
-				static::getch($s);           // típuszáró :
-				$n = static::gettoch($s, ':{'); // méret
-				#trace("Méret: $n; content: $s");
-				// elemek
+				static::getch($s);           // type-closing ':'
+				$n = static::gettoch($s, ':{'); // size
+				// elements
 				$v = [];
 				for($i = 0; $i < $n; $i++) {
 					$v[] = static::getvarvalue($s);
 				}
-				static::gettoch($s, '}');  // maradék
+				static::gettoch($s, '}');  // remainder
 				break;
 			}
 			default:
