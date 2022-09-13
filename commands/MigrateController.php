@@ -364,6 +364,14 @@ EOT;
 		}
 
 		// TODO: drop triggers
+		$triggers = $this->connection->getTriggers();
+
+		// Drop sequences
+		$sequences = $this->connection->getSequences();
+		foreach($sequences as $sequenceName) {
+			$this->connection->dropSequence($sequenceName);
+			if($verbose>1) echo "Sequence $sequenceName dropped.\n";
+		}
 
 		return $success;
 	}

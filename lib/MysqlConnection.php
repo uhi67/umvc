@@ -81,7 +81,8 @@ class MysqlConnection extends Connection {
 
 
 	/**
-	 * Drops the named constraint from the table
+	 * Drops the named constraint from the table.
+	 * Syntax: ALTER TABLE <tableName> DROP FOREIGN KEY <constraintName>
 	 *
 	 * @param string $constraintName
 	 * @param string $tableName
@@ -92,7 +93,6 @@ class MysqlConnection extends Connection {
 	 */
 	public function dropForeignKey($constraintName, $tableName, $schema = null) {
 		if(!$schema) $schema = $this->name;
-		// ALTER TABLE <tableName> DROP FOREIGN KEY <constraintName>
 		if(!strpos($tableName, '.')) $tableName = $this->quoteIdentifier($schema).'.'.$this->quoteIdentifier($tableName);
 		$constraintName = $this->quoteIdentifier($constraintName);
 		return $this->pdo->query(/** @lang text */"ALTER TABLE $tableName DROP FOREIGN KEY $constraintName");
@@ -124,5 +124,9 @@ class MysqlConnection extends Connection {
 
 	public function dropTable($tableName, $schema = null) {
 		// TODO: Implement dropTable() method.
+	}
+
+	public function getTriggers($schema = null) {
+		// TODO: Implement getTriggers() method.
 	}
 }

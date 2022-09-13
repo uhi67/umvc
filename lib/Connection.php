@@ -294,7 +294,7 @@ abstract class Connection extends Component {
 	abstract public function dropSequence($sequenceName, $schema=null);
 
 	/**
-	 * Retuns array with function names followed by parameter list and preceded with routine type from the give schema.
+	 * Returns array with function names followed by parameter list and preceded with routine type from the give schema.
 	 *
 	 * @param string $schema -- default is "public"
 	 * @return string[]
@@ -309,6 +309,14 @@ abstract class Connection extends Component {
 	 * @return resource|false -- success
 	 */
 	abstract public function dropRoutine($routineName, $routineType='FUNCTION', $schema=null);
+
+	/**
+	 * Returns array with trigger names
+	 *
+	 * @param $schema
+	 * @return mixed
+	 */
+	abstract public function getTriggers($schema=null);
 
 	/**
 	 * Determines whether the error message is related to deleting a view or not
