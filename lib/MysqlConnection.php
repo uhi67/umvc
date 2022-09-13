@@ -89,7 +89,7 @@ class MysqlConnection extends Connection {
 	 * Syntax: ALTER TABLE <tableName> DROP FOREIGN KEY <constraintName>
 	 *
 	 * @param string $constraintName
-	 * @param string $tableName
+	 * @param string $tableName (unqualified)
 	 * @param string|null $schema
 	 *
 	 * @return false|PDOStatement
