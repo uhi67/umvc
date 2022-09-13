@@ -1,4 +1,5 @@
-<?php
+<?php /** @noinspection PhpUnused */
+
 namespace uhi67\umvc\commands;
 
 use Exception;
@@ -18,6 +19,7 @@ use uhi67\umvc\SqlMigration;
  *
  * - run `php app migrate` to migrate up
  * - New migration can be created by `php app migrate/create <name>`
+ * - `php app migrate/reset` -- delete database and migrate up from the beginning
  * - use `confirm=yes` switch to avoid interactive confirmations
  *
  */
@@ -186,10 +188,13 @@ class MigrateController extends Command {
         echo "Place plain SQL or PHP migration files into `/migrations/` directory.", PHP_EOL;
         echo "The default action creates the `migration` table which track the changes in your database, and applies all new migrations.", PHP_EOL, PHP_EOL;
         echo "Usage:", PHP_EOL, PHP_EOL;
-        echo "   `php app.php migrate` -- migrate up. Interactive confirmations will be asked for.", PHP_EOL;
-        echo "   `php app.php migrate verbose=2` -- migrate up with detailed output; `verbose=0` for silent operation.", PHP_EOL;
-        echo "   `php app.php migrate/create <name>` -- create new php migration in the migration directory", PHP_EOL;
-	    echo "   Use `confirm=yes` switch to avoid interactive confirmations", PHP_EOL;
+        echo "   `php app migrate` -- migrate up. Interactive confirmations will be asked for.", PHP_EOL;
+        echo "   `php app migrate/up verbose=2` -- migrate up with detailed output; `verbose=0` for silent operation.", PHP_EOL;
+        echo "   `php app migrate/create <name>` -- create new php migration in the migration directory", PHP_EOL;
+	    echo "   `php app migrate/reset` -- delete database and migrate up from the beginning", PHP_EOL, PHP_EOL;
+		echo "Options:", PHP_EOL, PHP_EOL;
+	    echo "   - `confirm=yes` to avoid interactive confirmations", PHP_EOL;
+	    echo "   - `verbose=0` for silent operation, 1 for normal, 2 for detailed output", PHP_EOL;
     }
 
     /**
@@ -287,4 +292,79 @@ EOT;
         echo "New migration created successfully.", PHP_EOL;
         return 0;
     }
+
+	/**
+	 * Delete the database and migrate up from the beginning
+	 *
+	 * @return int -- error status
+	 * @throws Exception
+	 */
+	public function actionReset() {
+		if($this->confirm!='yes' && !CliHelper::confirm('Are you sure to delete the whole database?')) return 1;
+		$name = $this->connection->schemaName;
+		if($this->verbose) echo "Deleting database '$name'...\n";
+		if(!$this->truncateDatabase()) {
+			echo "Error truncating database", PHP_EOL;
+			return 2;
+		}
+		if(!$this->createMigrationTable()) return 3;
+		return $this->actionUp();
+	}
+
+	/**
+	 * Drop all object from the database
+	 *
+	 * @param int $verbose
+	 * @return bool -- success
+	 * @throws Exception
+	 */
+	public function truncateDatabase($verbose=0) {
+		$schemas = $this->connection->schemaMetadata;
+		$success = true;
+
+		// First drop all foreign keys,
+		foreach ($schemas as $tableName=>$schema) {
+			$foreignKeys = $this->connection->getForeignKeys($tableName);
+			if($foreignKeys) {
+				foreach ($foreignKeys as $name => $foreignKey) {
+					$this->connection->dropForeignKey($name, $tableName);
+					if($verbose>1) echo "Foreign key $name dropped.\n";
+					$success = false;
+				}
+			}
+		}
+
+		// drop the tables:
+		foreach ($schemas as $tableName => $schema) {
+			try {
+				$this->connection->dropTable($tableName);
+				if($verbose>1) echo "Table $tableName dropped.\n";
+			} catch (Exception $e) {
+				if ($this->connection->isViewRelated($message = $e->getMessage())) {
+					$this->connection->dropView($tableName);
+					if($verbose>1) echo "View $tableName dropped.\n";
+				} else {
+					echo "Cannot drop table '$tableName': $message .\n";
+					$success = false;
+				}
+			}
+		}
+
+		// Drop functions from public schema (exclude pg_catalog)
+		$functions = $this->connection->getRoutines();
+		foreach($functions as $functionName) {
+			if($verbose>1) echo "Dropping $functionName\n";
+			if($this->connection->dropRoutine($functionName)) {
+				if($verbose>1) echo "$functionName dropped.\n";
+			}
+			else {
+				echo "Cannot drop '$functionName'.\n";
+				$success = false;
+			}
+		}
+
+		// TODO: drop triggers
+
+		return $success;
+	}
 }

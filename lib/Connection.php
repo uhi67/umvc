@@ -23,6 +23,8 @@ use PDO;
  * @property-write $password
  *
  * @property-read $lastError -- "ANSI-code; driver-code; driver-message"
+ * @property-read $schemaName
+ * @property-read $schemaMetadata
  *
  * @package UMVC Simple Application Framework
  */
@@ -216,5 +218,114 @@ abstract class Connection extends Component {
 			'user' => $user,
 			'password' => $password
 		]);
+	}
+
+	/**
+	 * Returns foreign keys information of the table as
+	 *
+	 * 	[
+	 * 		'constraint_name' => [
+	 * 			'column_name' => 'columnName',
+	 * 			'foreign_schema' => 'schemaName',
+	 * 			'foreign_table' => 'tableName'
+	 * 			'foreign_column' => 'columnName'
+	 * 		],
+	 * 		...
+	 *  ]
+	 *
+	 * @param string $tableName -- may contain schema prefix
+	 * @param string|null $schema -- optional (table prefix overrides; default is current schema)
+	 *
+	 * @return array|bool
+	 */
+	abstract public function getForeignKeys($tableName, $schema=null);
+	/**
+	 * Returns remote foreign keys referred to this table (reverse foreign key)
+	 *
+	 * 	[
+	 * 		'constraint_name' => [
+	 * 			'remote_schema' => 'schemaName',
+	 * 			'remote_table' => 'tableName'
+	 * 			'remote_column' => 'columnName'
+	 * 			'table_schema' => 'columnName',
+	 * 			'table_name' => 'columnName',
+	 * 			'column_name' => 'columnName',
+	 * 		],
+	 * 		...
+	 *  ]
+	 * @param string $tablename -- may contain schema prefix
+	 * @param string|null $schema -- optional (table prefix overrides; default is current schema)
+	 *
+	 * @return array|bool
+	 */
+	abstract public function getReferrerKeys($tablename, $schema=null);
+
+	/**
+	 * @param string $tableName
+	 * @param string|null $schema
+	 *
+	 * @return false|resource
+	 */
+	abstract public function dropTable($tableName, $schema=null);
+
+	/**
+	 * @param string $tableName
+	 * @param string|null $schema
+	 *
+	 * @return false|resource
+	 */
+	abstract public function dropView($tableName, $schema=null);
+
+	/**
+	 * Returns sequence names
+	 *
+	 * @param string|null $schema
+	 *
+	 * @return false|resource
+	 */
+	abstract public function getSequences($schema=null);
+
+	/**
+	 * @param string $sequenceName
+	 * @param string|null $schema
+	 *
+	 * @return false|resource
+	 */
+	abstract public function dropSequence($sequenceName, $schema=null);
+
+	/**
+	 * Retuns array with function names followed by parameter list and preceded with routine type from the give schema.
+	 *
+	 * @param string $schema -- default is "public"
+	 * @return string[]
+	 */
+	abstract public function getRoutines($schema=null);
+
+	/**
+	 * @param string $routineName
+	 * @param string $routineType
+	 * @param string|null $schema
+	 *
+	 * @return resource|false -- success
+	 */
+	abstract public function dropRoutine($routineName, $routineType='FUNCTION', $schema=null);
+
+	/**
+	 * Determines whether the error message is related to deleting a view or not
+	 * @param string $errorMessage
+	 * @return bool
+	 */
+	public function isViewRelated($errorMessage) {
+		$dropViewErrors = [
+			'DROP VIEW to delete view', // SQLite
+			'SQLSTATE[42S02]', // MySQL
+		];
+
+		foreach ($dropViewErrors as $dropViewError) {
+			if (strpos($errorMessage, $dropViewError) !== false) {
+				return true;
+			}
+		}
+		return false;
 	}
 }
