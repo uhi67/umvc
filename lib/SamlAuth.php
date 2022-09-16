@@ -8,7 +8,6 @@ use SimpleSAML\Configuration;
 use SimpleSAML\Session;
 use SimpleXMLElement;
 use Throwable;
-use yii\helpers\Html;
 
 /**
  * Using this class needs `composer require "simplesamlphp/simplesamlphp:^1.19.2"` in your application

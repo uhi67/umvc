@@ -2,6 +2,7 @@
 
 namespace uhi67\umvc\commands;
 
+use Codeception\Util\Debug;
 use Exception;
 use Throwable;
 use uhi67\umvc\ArrayHelper;
@@ -68,6 +69,7 @@ class MigrateController extends Command {
         if (!$this->createMigrationTable()) exit(1);
         if (!$this->createMigrationPath()) exit(2);
         // Collect new migration files
+	    if($this->verbose>2) echo "Migrating from path '$this->migrationPath'", PHP_EOL;
         $dh = opendir($this->migrationPath);
         if(!$dh) throw new Exception("Invalid dir ".$this->migrationPath);
         $new = [];
@@ -84,7 +86,7 @@ class MigrateController extends Command {
         // List new migrations
         if(empty($new)) {
             if($this->verbose) echo "Everything is up to date!", PHP_EOL;
-            exit;
+            return 0;
         }
         sort($new);
         if($this->verbose) {
@@ -170,13 +172,14 @@ class MigrateController extends Command {
             }
             catch(Throwable $e) {
                 $this->connection->pdo->rollBack();
+				if(ENV_DEV) Debug::debug(sprintf("Exception in migration: '%s' in file '%s' at line '%d'", $e->getMessage(), $e->getFile(), $e->getLine()));
                 throw new Exception("Applying migration '". $name."' caused an exception", 500, $e);
             }
         }
         if($n==0 && $this->verbose) echo "No migrations applied", PHP_EOL;
         else {
             // If migrations were applied, the model table metadata cache must be cleared
-            if($this->app->cache) $this->app->cache->clear();
+            if($this->app->hasComponent('cache')) $this->app->cache->clear();
 
             // Summary
             if($this->verbose) echo PHP_EOL, $n, $n>1 ? " migrations were" : " migration was", " applied.", PHP_EOL;
@@ -319,23 +322,22 @@ EOT;
 	 * @throws Exception
 	 */
 	public function truncateDatabase($verbose=0) {
-		$schemas = $this->connection->schemaMetadata;
+		$metadata = $this->connection->schemaMetadata;
 		$success = true;
 
 		// First drop all foreign keys,
-		foreach ($schemas as $tableName=>$schema) {
+		foreach ($metadata as $tableName=>$tableData) {
 			$foreignKeys = $this->connection->getForeignKeys($tableName);
 			if($foreignKeys) {
 				foreach ($foreignKeys as $name => $foreignKey) {
-					$this->connection->dropForeignKey($name, $tableName);
+					if(!$this->connection->dropForeignKey($foreignKey['constraint_name'], $foreignKey['table_name'])) $success=false;
 					if($verbose>1) echo "Foreign key $name dropped.\n";
-					$success = false;
 				}
 			}
 		}
 
 		// drop the tables:
-		foreach ($schemas as $tableName => $schema) {
+		foreach ($metadata as $tableName => $schema) {
 			try {
 				$this->connection->dropTable($tableName);
 				if($verbose>1) echo "Table $tableName dropped.\n";
@@ -364,7 +366,7 @@ EOT;
 		}
 
 		// TODO: drop triggers
-		$triggers = $this->connection->getTriggers();
+		// $triggers = $this->connection->getTriggers();
 
 		// Drop sequences
 		$sequences = $this->connection->getSequences();

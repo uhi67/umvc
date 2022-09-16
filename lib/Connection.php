@@ -24,7 +24,12 @@ use PDO;
  *
  * @property-read $lastError -- "ANSI-code; driver-code; driver-message"
  * @property-read $schemaName
- * @property-read $schemaMetadata
+ * @property-read $schemaMetadata -- metadata array indexed by table names
+ * @property-read array[]|bool $foreignKeys
+ * @property-read string[] $routines
+ * @property-read string[] $sequences
+ * @property-read string[] $tables
+ * @property-read string[] $triggers -- trigger names as schema.name
  *
  * @package UMVC Simple Application Framework
  */
@@ -79,10 +84,10 @@ abstract class Connection extends Component {
      * Encloses into double quotes, inner "-s are replaced by _
      * May be overridden in vendor-specific way.
      *
-     * @param $fieldName
+     * @param string $fieldName
      * @return string
      */
-    public function quoteIdentifier($fieldName) {
+    public function quoteIdentifier(string $fieldName) {
         if(!$fieldName) throw new Exception('Empty fieldname');
         if($fieldName[0]=='"' && substr($fieldName, -1) == '"') $fieldName = substr($fieldName,1,-1);
         return '"'.str_replace('"', '_', $fieldName).'"';
@@ -239,6 +244,7 @@ abstract class Connection extends Component {
 	 * @return array|bool
 	 */
 	abstract public function getForeignKeys($tableName, $schema=null);
+
 	/**
 	 * Returns remote foreign keys referred to this table (reverse foreign key)
 	 *
@@ -250,15 +256,17 @@ abstract class Connection extends Component {
 	 * 			'table_schema' => 'columnName',
 	 * 			'table_name' => 'columnName',
 	 * 			'column_name' => 'columnName',
+	 *          'constraint_name' => 'constraint_name',
 	 * 		],
 	 * 		...
 	 *  ]
-	 * @param string $tablename -- may contain schema prefix
+	 *
+	 * @param string $tableName -- may contain schema prefix
 	 * @param string|null $schema -- optional (table prefix overrides; default is current schema)
 	 *
 	 * @return array|bool
 	 */
-	abstract public function getReferrerKeys($tablename, $schema=null);
+	abstract public function getReferrerKeys($tableName=null, $schema=null);
 
 	/**
 	 * @param string $tableName
@@ -269,12 +277,12 @@ abstract class Connection extends Component {
 	abstract public function dropTable($tableName, $schema=null);
 
 	/**
-	 * @param string $tableName
+	 * @param string $viewName
 	 * @param string|null $schema
 	 *
 	 * @return false|resource
 	 */
-	abstract public function dropView($tableName, $schema=null);
+	abstract public function dropView($viewName, $schema=null);
 
 	/**
 	 * Returns sequence names
@@ -314,7 +322,7 @@ abstract class Connection extends Component {
 	 * Returns array with trigger names
 	 *
 	 * @param $schema
-	 * @return mixed
+	 * @return string[] -- trigger names as schema.name
 	 */
 	abstract public function getTriggers($schema=null);
 
