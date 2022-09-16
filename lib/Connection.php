@@ -207,6 +207,8 @@ abstract class Connection extends Component {
 
 	/**
 	 * Creates a new connection using vendor driver specified in the DSN
+	 *
+	 * Note: this method is not suitable for configuration array, only to create ad-hoc connections.
 	 * 
 	 * @throws Exception -- if driver is missing for DSN vendor or vendor is not set in the DSN
 	 * @return Connection
