@@ -19,7 +19,7 @@ interface UserInterface {
      * Must update the User object using the attributes provided by login process
      *
      * @param array $attributes
-     * @return mixed -- uid
+     * @return mixed|false -- uid on success, false on failure
      */
     public function updateUser($attributes);
 

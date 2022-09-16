@@ -75,9 +75,10 @@ abstract class AuthManager extends Component {
     }
 
     /**
-     * Makes the user logged in within the application
+     * Makes the user logged in within the application.
+     * Called automatically
      *
-     * @param UserInterface|string $user
+     * @param UserInterface|string $user -- user ID or User model
      * @return UserInterface|null -- the user object logged in on success or null on failure
      * @throws Exception
      */

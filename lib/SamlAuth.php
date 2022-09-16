@@ -186,7 +186,11 @@ class SamlAuth extends AuthManager {
                 /** @var UserInterface $user */
                 $user = $this->userModel::findUser($uid);
                 if($user) {
-                    $user->updateUser($this->attributes);
+	                if(!isset($_SESSION['uid']) || $_SESSION['uid'] != $user->getUserId()) {
+		                if(!$user->updateUser($this->attributes)) {
+							return null;
+		                }
+	                }
                     $this->login($user);
                     return $user;
                 }
