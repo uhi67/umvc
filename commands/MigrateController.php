@@ -1,6 +1,8 @@
-<?php
+<?php /** @noinspection PhpUnused */
+
 namespace uhi67\umvc\commands;
 
+use Codeception\Util\Debug;
 use Exception;
 use Throwable;
 use uhi67\umvc\ArrayHelper;
@@ -18,6 +20,7 @@ use uhi67\umvc\SqlMigration;
  *
  * - run `php app migrate` to migrate up
  * - New migration can be created by `php app migrate/create <name>`
+ * - `php app migrate/reset` -- delete database and migrate up from the beginning
  * - use `confirm=yes` switch to avoid interactive confirmations
  *
  */
@@ -66,6 +69,7 @@ class MigrateController extends Command {
         if (!$this->createMigrationTable()) exit(1);
         if (!$this->createMigrationPath()) exit(2);
         // Collect new migration files
+	    if($this->verbose>2) echo "Migrating from path '$this->migrationPath'", PHP_EOL;
         $dh = opendir($this->migrationPath);
         if(!$dh) throw new Exception("Invalid dir ".$this->migrationPath);
         $new = [];
@@ -82,7 +86,7 @@ class MigrateController extends Command {
         // List new migrations
         if(empty($new)) {
             if($this->verbose) echo "Everything is up to date!", PHP_EOL;
-            exit;
+            return 0;
         }
         sort($new);
         if($this->verbose) {
@@ -168,13 +172,14 @@ class MigrateController extends Command {
             }
             catch(Throwable $e) {
                 $this->connection->pdo->rollBack();
+				if(ENV_DEV) Debug::debug(sprintf("Exception in migration: '%s' in file '%s' at line '%d'", $e->getMessage(), $e->getFile(), $e->getLine()));
                 throw new Exception("Applying migration '". $name."' caused an exception", 500, $e);
             }
         }
         if($n==0 && $this->verbose) echo "No migrations applied", PHP_EOL;
         else {
             // If migrations were applied, the model table metadata cache must be cleared
-            if($this->app->cache) $this->app->cache->clear();
+            if($this->app->hasComponent('cache')) $this->app->cache->clear();
 
             // Summary
             if($this->verbose) echo PHP_EOL, $n, $n>1 ? " migrations were" : " migration was", " applied.", PHP_EOL;
@@ -186,10 +191,13 @@ class MigrateController extends Command {
         echo "Place plain SQL or PHP migration files into `/migrations/` directory.", PHP_EOL;
         echo "The default action creates the `migration` table which track the changes in your database, and applies all new migrations.", PHP_EOL, PHP_EOL;
         echo "Usage:", PHP_EOL, PHP_EOL;
-        echo "   `php app.php migrate` -- migrate up. Interactive confirmations will be asked for.", PHP_EOL;
-        echo "   `php app.php migrate verbose=2` -- migrate up with detailed output; `verbose=0` for silent operation.", PHP_EOL;
-        echo "   `php app.php migrate/create <name>` -- create new php migration in the migration directory", PHP_EOL;
-	    echo "   Use `confirm=yes` switch to avoid interactive confirmations", PHP_EOL;
+        echo "   `php app migrate` -- migrate up. Interactive confirmations will be asked for.", PHP_EOL;
+        echo "   `php app migrate/up verbose=2` -- migrate up with detailed output; `verbose=0` for silent operation.", PHP_EOL;
+        echo "   `php app migrate/create <name>` -- create new php migration in the migration directory", PHP_EOL;
+	    echo "   `php app migrate/reset` -- delete database and migrate up from the beginning", PHP_EOL, PHP_EOL;
+		echo "Options:", PHP_EOL, PHP_EOL;
+	    echo "   - `confirm=yes` to avoid interactive confirmations", PHP_EOL;
+	    echo "   - `verbose=0` for silent operation, 1 for normal, 2 for detailed output", PHP_EOL;
     }
 
     /**
@@ -287,4 +295,86 @@ EOT;
         echo "New migration created successfully.", PHP_EOL;
         return 0;
     }
+
+	/**
+	 * Delete the database and migrate up from the beginning
+	 *
+	 * @return int -- error status
+	 * @throws Exception
+	 */
+	public function actionReset() {
+		if($this->confirm!='yes' && !CliHelper::confirm('Are you sure to delete the whole database?')) return 1;
+		$name = $this->connection->schemaName;
+		if($this->verbose) echo "Deleting database '$name'...\n";
+		if(!$this->truncateDatabase()) {
+			echo "Error truncating database", PHP_EOL;
+			return 2;
+		}
+		if(!$this->createMigrationTable()) return 3;
+		return $this->actionUp();
+	}
+
+	/**
+	 * Drop all object from the database
+	 *
+	 * @param int $verbose
+	 * @return bool -- success
+	 * @throws Exception
+	 */
+	public function truncateDatabase($verbose=0) {
+		$metadata = $this->connection->schemaMetadata;
+		$success = true;
+
+		// First drop all foreign keys,
+		foreach ($metadata as $tableName=>$tableData) {
+			$foreignKeys = $this->connection->getForeignKeys($tableName);
+			if($foreignKeys) {
+				foreach ($foreignKeys as $name => $foreignKey) {
+					if(!$this->connection->dropForeignKey($foreignKey['constraint_name'], $foreignKey['table_name'])) $success=false;
+					if($verbose>1) echo "Foreign key $name dropped.\n";
+				}
+			}
+		}
+
+		// drop the tables:
+		foreach ($metadata as $tableName => $schema) {
+			try {
+				$this->connection->dropTable($tableName);
+				if($verbose>1) echo "Table $tableName dropped.\n";
+			} catch (Exception $e) {
+				if ($this->connection->isViewRelated($message = $e->getMessage())) {
+					$this->connection->dropView($tableName);
+					if($verbose>1) echo "View $tableName dropped.\n";
+				} else {
+					echo "Cannot drop table '$tableName': $message .\n";
+					$success = false;
+				}
+			}
+		}
+
+		// Drop functions from public schema (exclude pg_catalog)
+		$functions = $this->connection->getRoutines();
+		foreach($functions as $functionName) {
+			if($verbose>1) echo "Dropping $functionName\n";
+			if($this->connection->dropRoutine($functionName)) {
+				if($verbose>1) echo "$functionName dropped.\n";
+			}
+			else {
+				echo "Cannot drop '$functionName'.\n";
+				$success = false;
+			}
+		}
+
+		// TODO: drop triggers
+		// $triggers = $this->connection->getTriggers();
+
+		// Drop sequences
+		$sequences = $this->connection->getSequences();
+		foreach($sequences as $sequenceName) {
+			$this->connection->dropSequence($sequenceName);
+			if($verbose>1) echo "Sequence $sequenceName dropped.\n";
+		}
+
+		return $success;
+	}
 }

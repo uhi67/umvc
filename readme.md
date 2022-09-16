@@ -45,6 +45,16 @@ First steps
 
 Change log
 ----------
+### Next
+
+- bugfixes, phpdoc fixes 
+- linkButton signature has changed
+- Connection::connect
+- Connection information methods 
+- MysqlConnection dropXXX methods
+- migrate/reset command
+- unit tests, test app
+- showException previous message fixed
 
 ### Version 1.1 -- 2022-08-30
 

@@ -574,7 +574,7 @@ class App extends Component {
     public function cached($key, $compute, $refresh=false) {
         $ttl = is_int($refresh) ? $refresh : null;
         $refresh = is_int($refresh) ? false : $refresh;
-        return $this->cache && $key!==null ? $this->cache->cache($key, $compute, $ttl, $refresh) : $compute();
+        return $this->hasComponent('cache') && $key!==null ? $this->cache->cache($key, $compute, $ttl, $refresh) : $compute();
     }
 
     /**
