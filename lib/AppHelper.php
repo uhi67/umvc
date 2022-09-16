@@ -127,7 +127,8 @@ class AppHelper {
                 }
 
                 while($e = $e->getPrevious()) {
-                    echo Ansi::color(PHP_EOL.PHP_EOL.html_entity_decode($e->getMessage()), 'light purple').PHP_EOL;
+	                $message = sprintf("%s in file '%s' at line '%d'", html_entity_decode($e->getMessage()), $e->getFile(), $e->getLine());
+                    echo Ansi::color(PHP_EOL.PHP_EOL.$message, 'light purple').PHP_EOL;
                     $trace = explode(PHP_EOL, $e->getTraceAsString());
                     foreach($trace as $line) {
                         $basepos = strpos($line, $baseurl);
@@ -173,7 +174,8 @@ class AppHelper {
                 htmlspecialchars($e->getTraceAsString())
             );
             while ($e = $e->getPrevious()) {
-                echo PHP_EOL, PHP_EOL, htmlspecialchars($e->getMessage()), PHP_EOL;
+	            $message = sprintf("<b>%s</b> in file '%s' at line '%d'", htmlspecialchars($e->getMessage()), $e->getFile(), $e->getLine());
+                echo PHP_EOL, PHP_EOL, $message, PHP_EOL;
                 echo htmlspecialchars($e->getTraceAsString());
             }
             echo '</pre>';

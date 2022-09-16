@@ -174,21 +174,17 @@ class SamlAuth extends AuthManager {
         if($this->auth->isAuthenticated()) {
             $this->attributes = $this->auth->getAttributes();
             if(!isset($this->attributes[$this->idAttribute])) {
-                App::addFlash("Login failed: '$this->idAttribute' attribute is missing", 'failure');
                 $_SESSION['uid'] = $this->uid = static::INVALID_USER;
-                return null;
+	            throw new Exception("Required attribute '$this->idAttribute' is missing");
             }
             else {
                 $uid = $this->attributes[$this->idAttribute][0];
                 // Prevent the user save error to cause an endless loop of errors
                 if(isset($_SESSION['uid']) && $_SESSION['uid']==static::INVALID_USER) return null;
-                /** @var UserInterface $user */
                 $user = $this->userModel::findUser($uid);
                 if($user) {
 	                if(!isset($_SESSION['uid']) || $_SESSION['uid'] != $user->getUserId()) {
-		                if(!$user->updateUser($this->attributes)) {
-							return null;
-		                }
+		                if(!$user->updateUser($this->attributes)) throw new Exception("User record cannot be saved ($uid)");
 	                }
                     $this->login($user);
                     return $user;
@@ -197,7 +193,7 @@ class SamlAuth extends AuthManager {
                     try {
                         $user = $this->userModel::createUser($uid, $this->attributes);
                         if(!$user) {
-                            throw new Exception('User not created');
+                            throw new Exception("User not created");
                         }
                         $_SESSION['uid'] = $this->uid = $user->getUserId();
                         return $user;
@@ -205,7 +201,7 @@ class SamlAuth extends AuthManager {
                     catch(Throwable $e) {
                         // -1 indicates that SAML login is successful, but the application login failed. Prevents endless loop.
                         $_SESSION['uid'] = $this->uid = static::INVALID_USER;
-                        throw new Exception("Login failed: user record cannot be created", HTTP::HTTP_INTERNAL_SERVER_ERROR, $e);
+                        throw new Exception("User record cannot be created ($uid)", HTTP::HTTP_INTERNAL_SERVER_ERROR, $e);
                     }
                 }
             }
