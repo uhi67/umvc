@@ -16,4 +16,6 @@ return [
 	'refers to a non-existing record' => 'nem létező elemre hivatkozik',
 	// Html
 	'Disabled' => 'Tiltva',
+	// SamlAuth
+	'Required attribute {$attribute} is missing' => 'A kötelező "{$attribute}" attribútum hiányzik',
 ];

@@ -179,7 +179,7 @@ class SamlAuth extends AuthManager {
         if($this->auth->isAuthenticated()) {
             if(!isset($this->attributes[$this->idAttribute])) {
                 $_SESSION['uid'] = $this->uid = static::INVALID_USER;
-	            throw new Exception("Required attribute '$this->idAttribute' is missing");
+	            throw new Exception(App::l('umvc', 'Required attribute {$attribute} is missing', ['attribute'=>$this->idAttribute]));
             }
             else {
                 $uid = $this->attributes[$this->idAttribute][0];
