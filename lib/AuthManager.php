@@ -18,6 +18,7 @@ use Exception;
  *      ...
  * ],
  * ```
+ * @property-read array $attributes
  */
 abstract class AuthManager extends Component {
     // If uid holds this value, the login partially failed
@@ -28,7 +29,7 @@ abstract class AuthManager extends Component {
     /** @var string|UserInterface $userModel -- the model identifies a user */
     public $userModel;
 
-    /**
+	/**
      * Initializes the auth module.
      *
      * @return void
@@ -126,4 +127,5 @@ abstract class AuthManager extends Component {
      * @return UserInterface|null
      */
     abstract public function requireLogin($returnTo=null);
+	abstract public function getAttributes();
 }

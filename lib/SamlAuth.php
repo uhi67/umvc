@@ -6,6 +6,7 @@ use Exception;
 use SimpleSAML\Auth\Simple;
 use SimpleSAML\Configuration;
 use SimpleSAML\Session;
+use SimpleSAML\XHTML\Template;
 use SimpleXMLElement;
 use Throwable;
 
@@ -29,8 +30,10 @@ class SamlAuth extends AuthManager {
 
     /** @var Simple -- the SAML auth source */
     public $auth;
-    /** @var array|null $attr -- The attributes of the logged-in user or null */
-    public $attributes;
+
+	/** @var array|null $attr -- The cached attributes of the logged-in user or null */
+    private $_attributes = null;
+	private static $_template;
 
     /**
      * Magic method for retrieving SAML attribute values
@@ -79,7 +82,7 @@ class SamlAuth extends AuthManager {
         if(is_array($value)) $value = $value[0];
         if($this->idAttribute == 'eduPersonTargetedID') {
             $eptid = new SimpleXMLElement($value);
-            $value = $eptid['NameQualifier'] . '!' . $eptid['SPNameQualifier'] . '!' . (string)$eptid;
+            $value = $eptid['NameQualifier'] . '!' . $eptid['SPNameQualifier'] . '!' . $eptid;
         }
         return $value;
     }
@@ -141,8 +144,10 @@ class SamlAuth extends AuthManager {
         else if(method_exists('SimpleSAML_Session', 'getInstance')) {
             // SimpleSamlPhp Older than 1.9 version
             /** @var Session $session */
-            $session = Session::getInstance();
-            $idp = $session->getIdP();
+	        /** @noinspection PhpUndefinedMethodInspection */
+	        $session = Session::getInstance();
+	        /** @noinspection PhpUndefinedMethodInspection */
+	        $idp = $session->getIdP();
         }
         return $idp;
     }
@@ -172,7 +177,6 @@ class SamlAuth extends AuthManager {
 
         // Phase 2
         if($this->auth->isAuthenticated()) {
-            $this->attributes = $this->auth->getAttributes();
             if(!isset($this->attributes[$this->idAttribute])) {
                 $_SESSION['uid'] = $this->uid = static::INVALID_USER;
 	            throw new Exception("Required attribute '$this->idAttribute' is missing");
@@ -228,10 +232,12 @@ class SamlAuth extends AuthManager {
 		else {
 			$globalConfig = Configuration::getInstance();
 			$t = (static::$_template = new Template($globalConfig, 'status.php', 'attributes'));
+
 			if(method_exists('\SimpleSAML\Locale\Language', 'setLanguage')) {
 				$t->getTranslator()->getLanguage()->setLanguage(substr($la, 0, 2), false);
 			}
 			else {
+				/** @noinspection PhpDeprecationInspection */
 				$t->setLanguage(substr($la, 0, 2), false);
 			}
 		}
@@ -239,6 +245,7 @@ class SamlAuth extends AuthManager {
 			$translated = $t->getTranslator()->getAttributeTranslation($attributeName);
 		}
 		else {
+			/** @noinspection PhpDeprecationInspection */
 			$translated = $t->getAttributeTranslation($attributeName);
 		}
 		return $translated;
@@ -251,15 +258,19 @@ class SamlAuth extends AuthManager {
 	 * @param string|array $values -- multiple values can be passed in array
 	 *
 	 * @return string
+	 * @noinspection PhpDocMissingThrowsInspection
 	 */
 	public static function formatAttribute($attributeName, $values) {
 		if (!is_array($values)) $values = [$values];
 		if (count($values) == 0) return '';
 		if (count($values) == 1) return static::formatValue($attributeName, $values[0]);
+		/** @noinspection PhpUnhandledExceptionInspection */
 		return Html::tag('ul', implode('', array_map(function ($v) use($attributeName) {
+			/** @noinspection PhpUnhandledExceptionInspection */
 			return Html::tag('li', static::formatValue($attributeName, $v));
 		}, $values)));
 	}
+
 	/**
 	 * Html-formats a single value of attribute, depending on attribute name
 	 *
@@ -267,12 +278,23 @@ class SamlAuth extends AuthManager {
 	 * @param string $value
 	 *
 	 * @return string
+	 * @noinspection PhpDocMissingThrowsInspection
 	 */
 	public static function formatValue($attributeName, $value) {
-		if($attributeName == 'jpegPhoto') return Html::tag('img', '', ['src' => 'data:image/jpeg;base64,'. $value]);
+		if($attributeName == 'jpegPhoto') {
+			/** @noinspection PhpUnhandledExceptionInspection */
+			return Html::tag('img', '', ['src' => 'data:image/jpeg;base64,' . $value]);
+		}
 		if(is_array($value)) return '['. implode(', ', array_map(function($k,$v) use($attributeName) {
 				return (is_integer($k) ? '' : $k . ': ') . self::formatValue($attributeName.'.'.$k, $v);
 			}, array_keys($value), array_values($value))). ']';
 		return $value;
+	}
+
+	public function getAttributes() {
+		if(!$this->_attributes && $this->auth && $this->auth->isAuthenticated()) {
+			$this->_attributes = $this->auth->getAttributes();
+		}
+		return $this->_attributes;
 	}
 }

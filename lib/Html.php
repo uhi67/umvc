@@ -32,7 +32,7 @@ class Html {
 	 * @param $content -- not cleaned to allow embed HTML structures
 	 * @param $options -- cleaned. Options without value (null or false) will be omitted. Boolean `true` results an attribute present without value.
 	 * @return string
-	 * @throws Exception
+	 * @throws Exception -- if an attribute (option) value is not scalar
 	 */
     public static function tag($tag, $content, $options=[]) {
         $tag = AppHelper::toNameID($tag);
