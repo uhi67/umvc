@@ -42,7 +42,6 @@ First steps
 
 ...
 
-
 Change log
 ----------
 ### Next
@@ -65,3 +64,7 @@ Change log
 - App: default layout parameter
 - render bugfixes
 - SamlAuth::get() fixed
+
+#### Upgrade notes for version 1.1
+
+- App::asset() calls must be replaced by App::linkAssetFile() calls (using same arguments)
