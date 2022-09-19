@@ -1,7 +1,7 @@
 UMVC framework
 ==============
 
-Version 1.1 -- 2022-08-30
+Version 1.2 -- 2022-09-19
 
 A simple web-application framework implementing model-view-controller (MVC) architectural pattern.
 
@@ -60,16 +60,19 @@ This repository contains a built-in test application for internal codeception un
 
 Change log
 ----------
-### Next
+### Version 1.2 -- 2022-09-19
 
 - bugfixes, phpdoc fixes 
 - linkButton signature has changed
-- Connection::connect
-- Connection information methods 
+- Connection::connect is back
+- Connection information methods (getTables(), etc) 
 - MysqlConnection dropXXX methods
 - migrate/reset command
 - unit tests, test app
 - showException previous message fixed
+- Model primary key check
+- Samlauth: update user record only at login
+- Version file creation removed 
 
 ### Version 1.1 -- 2022-08-30
 
