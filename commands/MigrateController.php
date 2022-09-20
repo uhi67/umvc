@@ -326,25 +326,29 @@ EOT;
 		$success = true;
 
 		// First drop all foreign keys,
+		if($verbose>1) echo "Dropping foreign keys...\n";
 		foreach ($metadata as $tableName=>$tableData) {
 			$foreignKeys = $this->connection->getForeignKeys($tableName);
 			if($foreignKeys) {
 				foreach ($foreignKeys as $name => $foreignKey) {
+					if($verbose>2) echo "Dropping foreign key '$name'\n";
 					if(!$this->connection->dropForeignKey($foreignKey['constraint_name'], $foreignKey['table_name'])) $success=false;
-					if($verbose>1) echo "Foreign key $name dropped.\n";
+					elseif($verbose>1) echo "Foreign key $name dropped.\n";
 				}
 			}
 		}
 
 		// drop the tables:
+		if($verbose>1) echo "Dropping tables and views...\n";
 		foreach ($metadata as $tableName => $schema) {
+			if($verbose>2) echo "Dropping table/view '$tableName'\n";
 			try {
 				$this->connection->dropTable($tableName);
 				if($verbose>1) echo "Table $tableName dropped.\n";
 			} catch (Exception $e) {
 				if ($this->connection->isViewRelated($message = $e->getMessage())) {
-					$this->connection->dropView($tableName);
-					if($verbose>1) echo "View $tableName dropped.\n";
+					if(!$this->connection->dropView($tableName)) $success=false;
+					elseif($verbose>1) echo "View $tableName dropped.\n";
 				} else {
 					echo "Cannot drop table '$tableName': $message .\n";
 					$success = false;
@@ -354,8 +358,9 @@ EOT;
 
 		// Drop functions from public schema (exclude pg_catalog)
 		$functions = $this->connection->getRoutines();
+		if($verbose>1 && $functions) echo "Dropping functions and routines\n";
 		foreach($functions as $functionName) {
-			if($verbose>1) echo "Dropping $functionName\n";
+			if($verbose>2) echo "Dropping $functionName\n";
 			if($this->connection->dropRoutine($functionName)) {
 				if($verbose>1) echo "$functionName dropped.\n";
 			}
@@ -368,11 +373,13 @@ EOT;
 		// TODO: drop triggers
 		// $triggers = $this->connection->getTriggers();
 
-		// Drop sequences
+		// Drop sequences // Note: MySQL does not use explicit sequences, this is for future compatibility (e.g. PostgreSQL)
 		$sequences = $this->connection->getSequences();
+		if($verbose>1 && $sequences) echo "Dropping sequences...\n";
 		foreach($sequences as $sequenceName) {
-			$this->connection->dropSequence($sequenceName);
-			if($verbose>1) echo "Sequence $sequenceName dropped.\n";
+			if($verbose>2) echo "Dropping sequence $sequenceName\n";
+			if(!$this->connection->dropSequence($sequenceName)) $success=false;
+			elseif($verbose>1) echo "Sequence $sequenceName dropped.\n";
 		}
 
 		return $success;

@@ -25,7 +25,7 @@ class AppConnector extends AbstractBrowser {
     use PhpSuperGlobalsConverter;
 
     /** @var array the config array of App application */
-    public array $appConfig;
+    public $appConfig;
 
     /** @var string $sapi -- Framework module sets to 'cli' for unit suite based on yml */
     public $sapi;
