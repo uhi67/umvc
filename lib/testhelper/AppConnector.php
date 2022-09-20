@@ -25,7 +25,7 @@ class AppConnector extends AbstractBrowser {
     use PhpSuperGlobalsConverter;
 
     /** @var array the config array of App application */
-    public $appConfig;
+    public array $appConfig;
 
     /** @var string $sapi -- Framework module sets to 'cli' for unit suite based on yml */
     public $sapi;
@@ -75,7 +75,13 @@ class AppConnector extends AbstractBrowser {
 	 * @throws Exception
 	 */
 	public function startApp($sapi = 'apache') {
-        putenv('SIMPLESAMLPHP_CONFIG_DIR='.dirname(__DIR__, 5).'/config/saml/config');
+		if(!getenv('SIMPLESAMLPHP_CONFIG_DIR')) {
+			$dirs = [dirname(__DIR__, 5).'/config/saml/config', dirname(__DIR__, 2).'/tests/_data/testapp/config/saml/config'];
+			foreach($dirs as $dir) if(file_exists($dir.'/config.php')) {
+				putenv('SIMPLESAMLPHP_CONFIG_DIR='.$dir);
+				break;
+			}
+		}
         putenv('SERVER_PORT=80');
         $_SERVER['HTTP_HOST'] = 'mvc.test';
 

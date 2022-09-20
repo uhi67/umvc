@@ -30,7 +30,6 @@ class MysqlConnectionTest extends Unit
 	 * @throws Exception
 	 */
 	public function testMigrate() {
-	    $this->assertEquals(str_replace('\\', '/', dirname(__DIR__).'/_data/testapp/migrations'), $this->app->db->migrationPath);
 	    $this->assertEquals( 200, $this->app->runController(MigrateController::class, [], [
 			'confirm'=>'yes',
 		    'verbose'=>3,

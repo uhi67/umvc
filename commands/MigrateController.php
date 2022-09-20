@@ -47,7 +47,7 @@ class MigrateController extends Command {
         $this->confirm = ArrayHelper::fetchValue($this->query, 'confirm');
         // Environment-specific values can be set in the config
         $this->migrationTable = $this->connection->migrationTable ?? 'migration';
-        $this->migrationPath = $this->connection->migrationPath ?? dirname(__DIR__,4) . '/migrations';
+        $this->migrationPath = $this->connection->migrationPath ?? $this->app->basePath . '/migrations';
         return true;
     }
 

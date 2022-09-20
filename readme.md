@@ -42,6 +42,22 @@ First steps
 
 ...
 
+Development information
+-----------------------
+### Installation standalone and internal unit tests
+
+**Warning: This part is under construction.**
+
+This repository contains a built-in test application for internal codeception unit tests.
+
+#### Installation steps:
+
+- `git clone`
+- `composer install`
+- Create `tests/_data/test-config.php` based on the template
+- Create the `umvc-test` database in sync with the configuration above
+- run `codecept run unit` for unit tests
+
 Change log
 ----------
 ### Next

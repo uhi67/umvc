@@ -1,18 +1,21 @@
 <?php
+namespace unit;
 
 use app\models\User;
 use Codeception\Test\Unit;
+use Exception;
 use uhi67\umvc\App;
 use uhi67\umvc\commands\MigrateController;
+use UnitTester;
 
 class MigrateTest extends Unit
 {
     /**
      * @var UnitTester
      */
-    protected $tester;
+    protected UnitTester $tester;
 	/** @var App $app */
-	public $app;
+	public App $app;
 
 	protected function _before()
     {
@@ -31,7 +34,6 @@ class MigrateTest extends Unit
 	 * @throws Exception
 	 */
 	public function testMigrate() {
-	    $this->assertEquals(str_replace('\\', '/', dirname(__DIR__).'/_data/testapp/migrations'), $this->app->db->migrationPath);
 	    $this->assertEquals( 200, $this->app->runController(MigrateController::class, [], [
 			'confirm'=>'yes',
 		    'verbose'=>3,

@@ -27,7 +27,7 @@ class FileCache extends Component implements CacheInterface {
      * @throws Exception
      */
     public function init() {
-		if(!$this->path) $this->path = App::$app->basePath.'/runtime/cache';
+		if(!$this->path) $this->path = App::$app->runtimePath.'/cache';
         if(!file_exists($this->path)) if(!mkdir($this->path)) throw new Exception("Cannot create cache directory ".$this->path);
         if(!$this->ttl) $this->ttl = 900; // 15 minutes
 	}
