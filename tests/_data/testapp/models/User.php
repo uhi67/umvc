@@ -11,7 +11,7 @@ use Exception;
 /**
  * @property int $id                int(10) primary key, autoincrement
  * @property string $uid            varchar(128) unique
- * @property string $name    varchar(255)
+ * @property string $name           varchar(255)
  * @property string $created_at     timestamp
  */
 class User extends Model implements UserInterface {
