@@ -60,7 +60,7 @@ abstract class Connection extends Component {
 	 * Check if a table exists in the current database.
 	 *
 	 * @param $tableName
-	 * @return bool TRUE if table exists, FALSE if no table found.
+	 * @return bool -- TRUE if table exists, FALSE if no table found.
 	 * @throws Exception
 	 */
     public function tableExists($tableName) {

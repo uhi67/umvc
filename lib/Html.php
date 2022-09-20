@@ -116,7 +116,7 @@ class Html {
 	 * Returns the HTML string of a button-like `<a>` element or a disabled `<button>`.
 	 * Please note that `<a>` elements can be disabled as well, but this is easily achieved with `<button>` elements.
 	 *
-	 * @param string|NULL $href The href to return a link button from.
+	 * @param string|NULL $href -- The href to return a link button from; cleaned
 	 * @param array $options Optional associative array to configure the link button.
 	 * - class: the value to use for the class attribute of the link button; not cleaned.
 	 * - enabledText: the text to use if the input href is a URL (and thus enabled); cleaned; defaults to the input href.
