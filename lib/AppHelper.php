@@ -73,7 +73,7 @@ class AppHelper {
      *                       truncating can occur.
      * @param string $break The breakpoint string for truncating.
      * @param string $pad The padding string.
-     * @return string|string
+     * @return string
      */
     public static function truncate($string, $threshold, $break='.', $pad='...') {
         if($string === null) return '';
@@ -108,6 +108,7 @@ class AppHelper {
      * @param int|null $responseStatus -- HTTP response status, default is 500=HTTP_INTERNAL_SERVER_ERROR
      */
     static function showException($e, $responseStatus=null) {
+	    defined('ENV_DEV') || define('ENV_DEV', 'production');
         $responseStatus = $responseStatus ?: HTTP::HTTP_INTERNAL_SERVER_ERROR;
         $title = HTTP::$statusTexts[$responseStatus] ?? 'Internal application error';
 
@@ -115,23 +116,24 @@ class AppHelper {
 
             $msg = "[$responseStatus] $title: ".$e->getMessage();
             $details = sprintf(" in file '%s' at line '%d'", $e->getFile(), $e->getLine());
-            echo Ansi::color($msg, 'light red'),$details,"\n";
+            echo Ansi::color($msg, 'light red'),$details,PHP_EOL;
             if(ENV_DEV) {
-                $trace = explode("\n", $e->getTraceAsString());
+                $trace = explode(PHP_EOL, $e->getTraceAsString());
                 $baseurl = dirname(__DIR__);
                 foreach($trace as $line) {
                     $basepos = strpos($line, $baseurl);
                     $color = ($basepos > 1 && $basepos < 5) ? 'brown' : 'red';
-                    echo Ansi::color($line, $color), "\n";
+                    echo Ansi::color($line, $color), PHP_EOL;
                 }
 
                 while($e = $e->getPrevious()) {
-                    echo Ansi::color("\n\n".html_entity_decode($e->getMessage()), 'light purple')."\n";
-                    $trace = explode("\n", $e->getTraceAsString());
+	                $message = sprintf("%s in file '%s' at line '%d'", html_entity_decode($e->getMessage()), $e->getFile(), $e->getLine());
+                    echo Ansi::color(PHP_EOL.PHP_EOL.$message, 'light purple').PHP_EOL;
+                    $trace = explode(PHP_EOL, $e->getTraceAsString());
                     foreach($trace as $line) {
                         $basepos = strpos($line, $baseurl);
                         $color = ($basepos > 1 && $basepos < 5) ? 'brown' : 'red';
-                        echo Ansi::color($line, $color), "\n";
+                        echo Ansi::color($line, $color), PHP_EOL;
                     }
                 }
             }
@@ -140,7 +142,7 @@ class AppHelper {
         $errorMessage = (ENV_DEV || $e instanceof UserException) ? $e->getMessage() : 'Something went wrong';
         if(!headers_sent()) http_response_code((int)$responseStatus ?? 500);
         echo '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">';
-        echo '<html lang="hu">';
+        echo '<html lang="en">';
         echo "<head><title>$title - UMVC</title>";
         echo '<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">';
         echo '</head><body>';
@@ -172,7 +174,8 @@ class AppHelper {
                 htmlspecialchars($e->getTraceAsString())
             );
             while ($e = $e->getPrevious()) {
-                echo "\n\n".htmlspecialchars($e->getMessage())."\n";
+	            $message = sprintf("<b>%s</b> in file '%s' at line '%d'", htmlspecialchars($e->getMessage()), $e->getFile(), $e->getLine());
+                echo PHP_EOL, PHP_EOL, $message, PHP_EOL;
                 echo htmlspecialchars($e->getTraceAsString());
             }
             echo '</pre>';
@@ -219,42 +222,42 @@ class AppHelper {
         return strtr(ucwords(strtr($id, ['_' => ' ', '.' => '_ ', '\\' => '_ ', '-' => ' '])), [' ' => '']);
     }
 
-    /**
-     * Converts a string to human-readable form, e.g. for an auto-generated field label
-     *
-     * Redundant '_id' or 'Id' postfix will be eliminated.
-     *
-     * @return string|null The camelized string
-     */
-    public static function humanize($id): ?string {
-        if(is_null($id)) return null;
-        return static::mb_ucwords(preg_replace('~[_.-]~', ' ', preg_replace('/_id$/', '', static::underscore(static::camelize($id)))));
-    }
+	/**
+	 * Converts a string to human-readable form, e.g. for an auto-generated field label
+	 *
+	 * Redundant '_id' or 'Id' postfix will be eliminated.
+	 *
+	 * @return string|null The camelized string
+	 */
+	public static function humanize($id): ?string {
+		if(is_null($id)) return null;
+		return static::mb_ucwords(preg_replace('~[_.-]~', ' ', preg_replace('/_id$/', '', static::underscore(static::camelize($id)))));
+	}
 
-    /**
-     * Converts a (camelized) string to underscore format.
-     * Existing underscore ($separator) will be converted to '.'.
-     * Replaces all non-name character to _.
-     *
-     * The result string should be appropriate for a filename or a Model attribute name (using _)
-     *
-     * Example: 'MyClass' --> 'my_class'
-     * But: 'MyClass_id' --> 'my_class.id'
-     *
-     * If you want to keep existing separators, call camelize first.
-     *
-     * @param string|null $id -- an identifier in CamelCase
-     * @param string $separator -- the separator character to be used between words, default is '_'
-     * @return string|null The underscored string, e.g camel_case
-     */
-    public static function underscore(?string $id, string $separator='_'): ?string {
-        if(is_null($id)) return null;
-        $id = preg_replace('/[^A-Za-z\d.'.$separator.']+/', $separator, $id);
-        $id = preg_replace(['/([A-Z]+)([A-Z][a-z\d])/', '/([a-z\d])([A-Z])/'], ['\\1'.$separator.'\\2', '\\1'.$separator.'\\2'], $id);
-        return strtolower($id);
-    }
+	/**
+	 * Converts a (camelized) string to underscore format.
+	 * Existing underscore ($separator) will be converted to '.'.
+	 * Replaces all non-name character to _.
+	 *
+	 * The result string should be appropriate for a filename or a Model attribute name (using _)
+	 *
+	 * Example: 'MyClass' --> 'my_class'
+	 * But: 'MyClass_id' --> 'my_class.id'
+	 *
+	 * If you want to keep existing separators, call camelize first.
+	 *
+	 * @param string|null $id -- an identifier in CamelCase
+	 * @param string $separator -- the separator character to be used between words, default is '_'
+	 * @return string|null The underscored string, e.g. camel_case
+	 */
+	public static function underscore(?string $id, string $separator='_'): ?string {
+		if(is_null($id)) return null;
+		$id = preg_replace('/[^A-Za-z\d.'.$separator.']+/', $separator, $id);
+		$id = preg_replace(['/([A-Z]+)([A-Z][a-z\d])/', '/([a-z\d])([A-Z])/'], ['\\1'.$separator.'\\2', '\\1'.$separator.'\\2'], $id);
+		return strtolower($id);
+	}
 
-    /**
+	/**
      * unicode-safe capitalize first letter of all words
      *
      * @param string $string
@@ -272,7 +275,7 @@ class AppHelper {
     }
 
     /**
-     * unicode-safecapitalize the fist letter
+     * unicode-safe capitalize the fist letter
      *
      * @param string $string the string to be proceeded
      * @return string

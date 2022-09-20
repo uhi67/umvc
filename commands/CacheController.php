@@ -1,4 +1,4 @@
-<?php
+<?php /** @noinspection PhpUnused */
 
 namespace uhi67\umvc\commands;
 
@@ -10,8 +10,11 @@ use uhi67\umvc\Command;
  * @property-read App $parent
  */
 class CacheController extends Command {
-    
-    public function beforeAction() {
+
+	/**
+	 * @throws Exception
+	 */
+	public function beforeAction() {
         if(!$this->parent instanceof App) throw new Exception('CacheController must be a component of the App');
         if(!$this->parent->hasComponent('cache')) {
             echo 'No cache is defined. Cache can be defined in the `config/config.php` file, at `components/cache` key if needed. Example:', PHP_EOL;
@@ -24,14 +27,14 @@ class CacheController extends Command {
     
     public function actionDefault() {
         echo "The `cache` command operates the cache configured to the application.", PHP_EOL;
-        echo "Run `php command/cache.php help` for more details.", PHP_EOL, PHP_EOL;
+        echo "Run `php app cache help` for more details.", PHP_EOL, PHP_EOL;
         return 0;
     }
     
     public function actionHelp() {
         echo "Usage:", PHP_EOL, PHP_EOL;
-        echo "   php command/cache.php cleanup -- Delete the expired data from the cache.", PHP_EOL;
-        echo "   php command/cache.php clear -- Delete all data from the cache.", PHP_EOL;
+        echo "   php app cache cleanup -- Delete the expired data from the cache.", PHP_EOL;
+        echo "   php app cache clear -- Delete all data from the cache.", PHP_EOL;
         return 0;
     }
     

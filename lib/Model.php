@@ -303,6 +303,7 @@ class Model extends BaseModel implements JsonSerializable {
         $values = $this->getDirtyAttributes($attributeNames);
         if($values===array()) return 0;
         $condition = $this->getOldPrimaryKey(true);
+		if(!$condition) throw new Exception("No primary key: ", json_encode($this->attributes));
         $success = static::updateAll($values, $condition, $this->connection, $this->lastQuery);
 
         if($success) {

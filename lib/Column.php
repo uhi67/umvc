@@ -1,4 +1,5 @@
-<?php
+<?php /** @noinspection PhpUnused */
+
 namespace uhi67\umvc;
 
 use Exception;
@@ -45,7 +46,7 @@ class Column extends Component
     public $value;
     /** @var bool|string -- the column is filtered, or custom filter cell content */
     public $filter=true;
-    /** @var bool|string -- the column is ordered, or custom order clauses separated by ; and ASC is the first. Default is ordered. Set to false to disable ordering. */
+    /** @var bool|string -- the column is ordered, or custom order clauses separated by ; and ASC is the first. Default is ordered. Set to 'false' to disable ordering. */
     public $order=true;
     /** @var bool|string $searchIcon -- search icon to display before search input in the search lane. Default is none. True = built-in magnifier icon. */
     public $searchIcon;
@@ -109,17 +110,18 @@ class Column extends Component
         if($this->emptyValue===false) $this->emptyValue = '';
     }
 
-    /**
-     * Renders the search cell
-     *
-     * - boolean: display default filter input or none
-     * - string: display in filter cell as it is
-     * - array: display a selection
-     *
-     * @param array|BaseModel $search -- the search Model or an array with actual search values indexed by field names
-     *
-     * @return string
-     */
+	/**
+	 * Renders the search cell
+	 *
+	 * - boolean: display default filter input or none
+	 * - string: display in filter cell as it is
+	 * - array: display a selection
+	 *
+	 * @param array|BaseModel $search -- the search Model or an array with actual search values indexed by field names
+	 *
+	 * @return string
+	 * @throws Exception
+	 */
     public function renderSearch($search) {
         $searchModel = 'search';
         $fieldName = $searchModel.'['.$this->searchField.']';
@@ -164,15 +166,16 @@ class Column extends Component
         return Html::tag('td', $content, $options);
     }
 
-    /**
-     * Renders the table header cell. Using priority multiple orders can be applied.
-     *
-     * $orders is the $actualColumnOrder values by field names.
-     * $actualColumnOrder is null, or actual order direction, with an optional priority postfix separated by ;
-     * Example: ['id'=>null, 'name'=>'ASC;1', ...]
-     *
-     * @param array|null $orders
-     */
+	/**
+	 * Renders the table header cell. Using priority multiple orders can be applied.
+	 *
+	 * $orders is the $actualColumnOrder values by field names.
+	 * $actualColumnOrder is null, or actual order direction, with an optional priority postfix separated by ;
+	 * Example: ['id'=>null, 'name'=>'ASC;1', ...]
+	 *
+	 * @param array|null $orders
+	 * @throws Exception
+	 */
     public function renderHeader($orders) {
         $class = $this->order ? 'header-ordered' : '';
         if($this->headerClass) $class .= ($class ? ' ': '') . $this->headerClass;

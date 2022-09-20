@@ -2,6 +2,7 @@
 
 namespace uhi67\umvc;
 
+use Codeception\Util\Debug;
 use ErrorException;
 use Exception;
 use Throwable;
@@ -42,12 +43,7 @@ use Throwable;
  * - render: renders a view and applies the layout
  * - renderPartial: renders a partial view without applying layout
  * - sendHeader(): sends put an HTTP header. Use this instead of native function
- *
- * ### Application-specific methods
- *
  * - requireLogin(): redirects to SAML-login or throws an exception if current user is not logged-in
- * - requireAdmin(): throws an exception if current logged-in user is not an admin
- * - requireSuperAdmin(): throws an exception if current logged-in user is not a super-admin
  *
  * @property-read Component[] $components
  * @property-read Connection $db -- the default DB connection
@@ -67,6 +63,8 @@ class App extends Component {
 
     /** @var string -- base path of the application */
     public $basePath;
+	/** @var string -- path of the runtime directory, default is $basePath.'/runtime' */
+	public $runtimePath;
     /** @var string -- URL of the current page without query parameters */
     public $baseUrl;
     /** @var UserInterface|Model|null $user -- The logged-in user or null */
@@ -128,17 +126,22 @@ class App extends Component {
         if(!static::$app) static::$app = $this;
         if(!$this->sapi) $this->sapi = PHP_SAPI;
         error_reporting(E_ALL);
-        $this->basePath = dirname(__DIR__, 4);
 
         // Other configurable settings
-        $conf = ['title', 'mainControllerClass', 'layout'];
+	    $conf = ['title', 'mainControllerClass', 'layout', 'basePath', 'runtimePath'];
         foreach($conf as $key) {
             if(array_key_exists($key, $this->config)) $this->$key = $this->config[$key];
         }
+	    if(!$this->basePath) $this->basePath = dirname(__DIR__, 4);
+		if(!$this->runtimePath) $this->runtimePath = $this->basePath.'/runtime';
 
-        if($this->sapi != 'cli') {
+	    if($this->sapi != 'cli') {
             $this->baseUrl = isset($_SERVER['REQUEST_URI']) ? parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) : null;
-            if(!is_dir($logDir = $this->basePath.'/runtime/logs')) mkdir($logDir);
+		    if(!is_dir($logDir = $this->runtimePath.'/logs')) {
+			    if(!@mkdir($logDir, 0774, true)) {
+				    throw new Exception("Failed to create dir `$logDir`");
+			    }
+		    }
             if(!$this->request) $this->request = new Request();
             if(!$this->session) $this->session = new Session();
         }
@@ -271,7 +274,7 @@ class App extends Component {
             if(!$this->path) $this->path = parse_url($this->url, PHP_URL_PATH);
             $this->path = $this->path ? explode('/', trim($this->path, '/')) : [];
 
-            //if(ENV_DEV) Debug::debug('[url] '.$this->url);
+            if(ENV_DEV) Debug::debug('[url] '.$this->url);
 
             if($this->path==[''] && $this->mainControllerClass) {
                 // The default action of main page can be called in the short way
@@ -578,7 +581,7 @@ class App extends Component {
     public function cached($key, $compute, $refresh=false) {
         $ttl = is_int($refresh) ? $refresh : null;
         $refresh = is_int($refresh) ? false : $refresh;
-        return $this->cache && $key!==null ? $this->cache->cache($key, $compute, $ttl, $refresh) : $compute();
+        return $this->hasComponent('cache') && $key!==null ? $this->cache->cache($key, $compute, $ttl, $refresh) : $compute();
     }
 
     /**
@@ -590,15 +593,15 @@ class App extends Component {
      * @param string $message -- string only
      */
     public static function log($level, $message, $params=[]) {
-        $logfile = self::$app->basePath . '/runtime/logs/app.log';
-        $sid = session_id();
-        $uid = App::$app->getUserId();
-		if(!is_string($message)) $message = json_encode($message);
-		if($params) {
-			foreach($params as $k=>$v) $message = str_replace("{$k}", $v, $message);
-		}
-        $data_to_log = date(DATE_ATOM) . ' '. $level . ' ('.$uid.') ['.$sid.'] ' . $message . PHP_EOL;
-        file_put_contents($logfile, $data_to_log, FILE_APPEND + LOCK_EX);
+	    $logfile = self::$app->runtimePath . '/logs/app.log';
+	    $sid = session_id();
+	    $uid = App::$app->getUserId();
+	    if(!is_string($message)) $message = json_encode($message);
+	    if($params) {
+		    foreach($params as $k=>$v) $message = str_replace("\{$k\}", $v, $message);
+	    }
+	    $data_to_log = date(DATE_ATOM) . ' '. $level . ' ('.$uid.') ['.$sid.'] ' . $message . PHP_EOL;
+	    file_put_contents($logfile, $data_to_log, FILE_APPEND + LOCK_EX);
     }
 
     /**

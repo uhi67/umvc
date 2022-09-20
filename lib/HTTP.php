@@ -363,7 +363,7 @@ class HTTP {
 	/**
 	 * Retrieve the port number from $_SERVER environment variables.
 	 *
-	 * @return string The port number prepended by a colon, if it is different than the default port for the protocol
+	 * @return string The port number prepended by a colon, if it is different from the default port for the protocol
 	 *     (80 for HTTP, 443 for HTTPS), or an empty string otherwise.
 	 *
 	 * @author Olav Morken, UNINETT AS <olav.morken@uninett.no>

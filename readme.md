@@ -1,7 +1,7 @@
 UMVC framework
 ==============
 
-Version 1.1 -- 2022-08-30
+Version 1.2 -- 2022-09-20
 
 A simple web-application framework implementing model-view-controller (MVC) architectural pattern.
 
@@ -42,12 +42,41 @@ First steps
 
 ...
 
+Development information
+-----------------------
+### Installation standalone and internal unit tests
+
+**Warning: This part is under construction.**
+
+This repository contains a built-in test application for internal codeception unit tests.
+
+#### Installation steps:
+
+- `git clone`
+- `composer install`
+- Create `tests/_data/test-config.php` based on the template
+- Create the `umvc-test` database in sync with the configuration above
+- run `codecept run unit` for unit tests
+
 Change log
 ----------
+### Version 1.2 -- 2022-09-20
+
+- bugfixes, phpdoc fixes 
+- linkButton signature has changed
+- Connection::connect is back
+- Connection information methods (getTables(), etc) 
+- MysqlConnection dropXXX methods
+- migrate/reset command
+- unit tests, test app (draft)
+- showException previous message fixed
+- Model primary key check
+- SamlAuth: update user record only at login
+- Version file creation removed 
 
 ### Version 1.1 -- 2022-08-30
 
-- Asset registry inprovements (Controller::registerAssets(), etc)
+- Asset registry improvements (Controller::registerAssets(), etc)
 - Html::img() added
 - Session, Request, FileUpload classes
 - localization (App::l(), App::$locale, L10n, L10nFile, etc)

@@ -12,7 +12,6 @@ class Install {
 	 * 1. create runtime dir
      * 2. Empty cache
      * 3. Empty assets cache
-     * 4. Version number
      *
 	 * @throws Exception
 	 */
@@ -55,13 +54,6 @@ class Install {
         catch (Exception $e) {
             echo "Failed to clear the asset cache. ".$e->getMessage(), PHP_EOL;
         }
-        // 4. Version number
-		$version = trim(exec('git describe --tags --abbrev=1'));
-		if($version) {
-		    $versionOutputFilename = dirname(__DIR__, 4).'/version.txt';
-		    file_put_contents($versionOutputFilename, $version);
-		    echo "Application version is $version (logged into $versionOutputFilename)\n\n";
-		}
 
         // File owners. Runs only if www-data user exists.
         shell_exec('bash -c "if id -u www-data &>/dev/null; then chown www-data:www-data .env ; chown -R www-data:www-data runtime ; fi"');

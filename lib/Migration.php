@@ -11,7 +11,7 @@ use Exception;
  *
  * ### Create descendant migration classes in the migration directory using CLI:
  *
- * 		php command/migrate.php create <name>
+ * 		php app migrate create <name>
  *
  * Then, fill in the 'up()' method with the migration job. You may access the database through $this->connection property.
  *
@@ -43,7 +43,7 @@ use Exception;
  *
  * ### 2. php format
  *
- * A php class extending Migration. May be created by `php command/migrate.php create name` command.
+ * A php class extending Migration. May be created by `php app migrate create name` command.
  * The class must have a public function `up()`. This function performs a migration to current state.
  * The migration is enclosed in a mySQL transaction, therefore if any part of it fails, the entire migration step will be rolled back.
  *
