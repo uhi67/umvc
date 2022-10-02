@@ -56,15 +56,7 @@ abstract class AuthManager extends Component {
 
         // Manage login request
         if(array_key_exists('login', $_REQUEST)) {
-            if(isset($_REQUEST['ReturnTo'])) {
-                $returnTo = $_REQUEST['ReturnTo'];
-            }
-            else {
-                $request = $_GET;
-                unset($request['login']);
-                $returnTo = $this->parent->createUrl($request);
-            }
-            $this->parent->user = $this->requireLogin($returnTo);
+			$this->actionLogin();
         }
 
         // Manage already logged-in user
@@ -74,6 +66,33 @@ abstract class AuthManager extends Component {
             if($user) $this->login($user);
         }
     }
+
+	/**
+	 * Login action with user-defined return URL
+	 *
+	 * Usage example (in a Controller):
+	 *
+	 * ```
+	 * public function actionLogin() {
+	 *     $this->app->auth->actionLogin('/');
+	 * }
+	 * ```
+	 *
+	 * @param string|null $returnTo -- return URL after login or null if none
+	 * @throws Exception
+	 */
+	public function actionLogin($returnTo = null) {
+		if($returnTo===null) {
+			if(isset($_REQUEST['ReturnTo'])) {
+				$returnTo = $_REQUEST['ReturnTo'];
+			} else {
+				$request = $_GET;
+				unset($request['login']);
+				$returnTo = $this->parent->createUrl($request);
+			}
+		}
+		$this->parent->user = $this->requireLogin($returnTo);
+	}
 
     /**
      * Makes the user logged in within the application.
