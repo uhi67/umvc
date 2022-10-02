@@ -1,7 +1,7 @@
 UMVC framework
 ==============
 
-Version 1.2 -- 2022-09-20
+Version 1.2.1 -- 2022-10-02
 
 A simple web-application framework implementing model-view-controller (MVC) architectural pattern.
 
@@ -60,6 +60,11 @@ This repository contains a built-in test application for internal codeception un
 
 Change log
 ----------
+### Version 1.2.1 -- 2022-10-02
+
+- twig/twig < 2.15.3 vulnerability fix (composer.lock)
+- AuthManager::actionLogin() added to fix default login return issue
+
 ### Version 1.2 -- 2022-09-20
 
 - bugfixes, phpdoc fixes 
