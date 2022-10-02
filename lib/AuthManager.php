@@ -28,6 +28,8 @@ abstract class AuthManager extends Component {
     public $uid;
     /** @var string|UserInterface $userModel -- the model identifies a user */
     public $userModel;
+	/** @var bool $autoUrl -- true to detect and perform ?login and ?logout in the REQUEST URL automatically */
+	public $autoUrl = true;
 
 	/**
      * Initializes the auth module.
@@ -49,23 +51,35 @@ abstract class AuthManager extends Component {
      */
     public function prepare()
     {
-        // Manage logout request
-        if(array_key_exists('logout', $_REQUEST)) {
-            $this->logout();
-        }
+		if($this->autoUrl) {
+			// Manage logout request
+			if(array_key_exists('logout', $_REQUEST)) {
+				$this->logout();
+			}
 
-        // Manage login request
-        if(array_key_exists('login', $_REQUEST)) {
-			$this->actionLogin();
-        }
+			// Manage login request
+			if(array_key_exists('login', $_REQUEST)) {
+				$this->actionLogin();
+			}
+		}
 
-        // Manage already logged-in user
-        $this->uid = $_SESSION['uid'] ?? null;
-        if($this->uid && $this->uid!=static::INVALID_USER) {
-            $user = $this->userModel::findUser($this->uid);
-            if($user) $this->login($user);
-        }
+		$this->prepareUser();
     }
+
+	/**
+	 * Manage already logged-in user
+	 *
+	 * @return UserInterface|null
+	 * @throws Exception
+	 */
+	public function prepareUser() {
+		$this->uid = $_SESSION['uid'] ?? null;
+		if($this->uid && $this->uid!=static::INVALID_USER) {
+			$user = $this->userModel::findUser($this->uid);
+			if($user) return $this->login($user);
+		}
+		return null;
+	}
 
 	/**
 	 * Login action with user-defined return URL
@@ -79,6 +93,7 @@ abstract class AuthManager extends Component {
 	 * ```
 	 *
 	 * @param string|null $returnTo -- return URL after login or null if none
+	 * @return UserInterface|null
 	 * @throws Exception
 	 */
 	public function actionLogin($returnTo = null) {
@@ -92,6 +107,8 @@ abstract class AuthManager extends Component {
 			}
 		}
 		$this->parent->user = $this->requireLogin($returnTo);
+
+		return $this->prepareUser();
 	}
 
     /**
@@ -105,16 +122,17 @@ abstract class AuthManager extends Component {
     public function login($user) {
         if(is_string($user)) {
             if(!$this->userModel || !is_a($this->userModel, UserInterface::class, true)) throw new Exception('UserModel must be a class implementing UserInterface');
-            $user = $this->userModel::findUser($user);
-            if(!$user) return null;
+            $userModel = $this->userModel::findUser($user);
+            if(!$userModel) return null;
         } else {
             if(!is_a($user, UserInterface::class)) throw new Exception('User object must implement UserInterface');
+	        $userModel = $user;
         }
         if(!$this->parent instanceof App) throw new Exception('AuthManager must be a component of the App');
-        $this->parent->user = $user;
-        if(!$user) return null;
-        $_SESSION['uid'] = $user->getUserId();
-        return $user;
+        $this->parent->user = $userModel;
+        if(!$userModel) return null;
+        $_SESSION['uid'] = $userModel->getUserId();
+        return $userModel;
     }
 
     /**

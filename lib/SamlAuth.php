@@ -158,7 +158,7 @@ class SamlAuth extends AuthManager {
      * Returns a valid user on successful login or null on failure.
      * Side-effect: sets `$_SESSION['uid']` and `$this->uid`
      *
-     * @param string|null $returnTo
+     * @param string|null|false $returnTo -- null to auto-detect, false to disable
      * @return UserInterface|null
      * @throws Exception
      */
@@ -167,7 +167,7 @@ class SamlAuth extends AuthManager {
         if($returnTo) {
             $params['ReturnTo'] = $returnTo;
         }
-        else {
+        elseif($returnTo===null) {
             $request = $_GET;
             unset($request['login']);
             $returnTo = App::$app->createUrl($request);
