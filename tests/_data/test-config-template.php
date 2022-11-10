@@ -14,8 +14,7 @@ use uhi67\umvc\L10nFile;
 require __DIR__.'/testapp/models/User.php';
 
 return [
-    // Must be set to "production" on production site
-    'application_env' => 'development',
+    'application_env' => 'local',
 	'basePath' => __DIR__.'/testapp',
 	'runtimePath' => dirname(__DIR__).'/_output/runtime',
 

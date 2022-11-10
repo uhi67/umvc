@@ -6,8 +6,8 @@
  * The configuration should be version-controlled with your code, and use secrets from environment variables or other external source.
  */
 return [
-    // Must be set to "production" on production site
-    'application_env' => 'development',
+    // Can be set to "development" or "local" on development site
+    'application_env' => 'production',
 
     // Must be set to 'on' if site is behind a reverse proxy terminating the HTTPS connection and forwarding HTTP.
     'https' => 'off',
