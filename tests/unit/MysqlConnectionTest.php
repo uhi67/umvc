@@ -47,7 +47,9 @@ class MysqlConnectionTest extends Unit
 	    $this->assertEquals(['course', 'migration', 'user'], array_keys($db->schemaMetadata));
 	    $this->assertEquals(['course', 'migration', 'user'], $db->getTables());
 	    $this->assertEquals(['course.id', 'user.id'], $db->getSequences());
-	    $this->assertEquals(['umvc-test.course.fk_course_teacher', 'umvc-test.course.fk_course_created', 'umvc-test.course.fk_course_updated'], array_keys($db->foreignKeys));
+	    $this->assertEqualsCanonicalizing(['umvc-test.course.fk_course_teacher', 'umvc-test.course.fk_course_created', 'umvc-test.course.fk_course_updated'],
+		    array_keys($db->foreignKeys)
+	    );
 	    $this->assertEquals([], $db->getForeignKeys('user'));
 	    $this->assertEquals(['umvc-test.course.fk_course_teacher', 'umvc-test.course.fk_course_created', 'umvc-test.course.fk_course_updated'], array_keys($db->getReferrerKeys('user')));
 	    $this->assertEquals([], $db->getRoutines());

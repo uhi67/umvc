@@ -335,7 +335,7 @@ EOT;
 			if($foreignKeys) {
 				foreach ($foreignKeys as $name => $foreignKey) {
 					if($verbose>2) echo "Dropping foreign key '$name'\n";
-					if(!$this->connection->dropForeignKey($foreignKey['constraint_name'], $foreignKey['table_name'])) $success=false;
+					if(!$this->connection->dropForeignKey($foreignKey['CONSTRAINT_NAME'], $foreignKey['TABLE_NAME'])) $success=false;
 					elseif($verbose>1) echo "Foreign key $name dropped.\n";
 				}
 			}

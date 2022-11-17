@@ -45,6 +45,9 @@ class MigrateTest extends Unit
 	 * @throws Exception
 	 */
 	public function testReset() {
+		$test1 = User::findUser('test1@umvc-test.test');
+		if($test1) User::deleteAll(['uid'=>'test1@umvc-test.test']);
+
 		$user = new User(['uid'=>'test1@umvc-test.test', 'name'=>'Test1']);
 		$user->save();
 		$test1 = User::findUser('test1@umvc-test.test');
