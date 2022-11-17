@@ -39,6 +39,6 @@ class AssetTest extends \Codeception\Test\Unit
         Asset::matchPattern(dirname(__DIR__,2).'/views', '', '*/_*', function($fileName) use(&$result) {
             $result[] = $fileName;
         });
-        $this->assertEquals(['_form/_field.php', '_form/_field_horizontal.php', '_form/_notice.php', ], $result);
+        $this->assertEqualsCanonicalizing(['_form/_field.php', '_form/_field_horizontal.php', '_form/_notice.php', ], $result);
     }
 }
