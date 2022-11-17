@@ -27,7 +27,7 @@ use uhi67\umvc\SqlMigration;
 class MigrateController extends Command {
 
     /**
-     * @var Connection|null 
+     * @var Connection|null
      */
     private $connection;
     private $confirm, $verbose, $migrationTable, $migrationPath;
@@ -61,7 +61,7 @@ class MigrateController extends Command {
 
     /**
      * Migrate up the database to the current state
-     * 
+     *
      * @return int
      * @throws Exception
      */
@@ -102,6 +102,7 @@ class MigrateController extends Command {
         // Execute new migrations
         $n = 0;
         foreach($new as $file) {
+            $this->connection->reset();
             $this->connection->pdo->beginTransaction();
             $name = pathinfo($file, PATHINFO_FILENAME);
             $ext = pathinfo($file, PATHINFO_EXTENSION);
@@ -135,21 +136,19 @@ class MigrateController extends Command {
                         else $n++;
                     } else {
                         echo "Applying migration '" . $name . "' failed", PHP_EOL;
-                        $this->connection->pdo->rollBack();
+                        if($this->connection->pdo->inTransaction()) $this->connection->pdo->rollBack();
                         break;
                     }
                 }
                 else {
                     // SQL-type migration
-                    $migration = new SqlMigration(['connection'=>$this->connection, 'filename'=>$filename]);
+                    $migration = new SqlMigration(['connection'=>$this->connection, 'filename'=>$filename, 'verbose'=>$this->verbose]);
                     $success = $migration->up();
 
                     if($success) {
                         if($this->verbose > 1) {
                             echo "Migration " . $name . " has been applied.", PHP_EOL;
                         }
-
-                        $this->connection->reset();
 
                         // Insert into database
                         $migrationDone = new \uhi67\umvc\models\Migration([
@@ -164,15 +163,19 @@ class MigrateController extends Command {
                     } else {
                         echo "Applying migration '" . $name . "' failed", PHP_EOL;
                         echo $this->connection->lastError;
-                        $this->connection->pdo->rollBack();
+                        if($this->connection->pdo->inTransaction()) $this->connection->pdo->rollBack();
                         break;
                     }
                 }
-                $this->connection->pdo->commit();
+				// Note: MySQL auto-commits transactions on DDL statements. Therefore we may find our transaction already gone
+	            if($this->connection->pdo->inTransaction()) {
+					$this->connection->pdo->commit();
+	            }
             }
             catch(Throwable $e) {
-                $this->connection->pdo->rollBack();
+                if($this->connection->pdo->inTransaction()) $this->connection->pdo->rollBack();
 				if(ENV_DEV) Debug::debug(sprintf("Exception in migration: '%s' in file '%s' at line '%d'", $e->getMessage(), $e->getFile(), $e->getLine()));
+                printf("Exception: %s in file %s at line %d\n", $e->getMessage(), $e->getFile(), $e->getLine());
                 throw new Exception("Applying migration '". $name."' caused an exception", 500, $e);
             }
         }
@@ -186,7 +189,7 @@ class MigrateController extends Command {
         }
         return 0;
     }
-    
+
     public function actionHelp() {
         echo "Place plain SQL or PHP migration files into `/migrations/` directory.", PHP_EOL;
         echo "The default action creates the `migration` table which track the changes in your database, and applies all new migrations.", PHP_EOL, PHP_EOL;

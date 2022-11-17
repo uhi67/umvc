@@ -4,6 +4,7 @@ namespace uhi67\umvc;
 
 use DateTime;
 use Exception;
+use JsonSerializable;
 use ReflectionClass;
 use ReflectionException;
 use ReflectionProperty;
@@ -22,7 +23,7 @@ use ReflectionProperty;
  * @property-read array $errors -- field-name indexed array of numeric indexed error messages
  * @package UMVC Simple Application Framework
  */
-class BaseModel extends Component
+class BaseModel extends Component implements JsonSerializable
 {
     // These constants are used in validators
     const VALID_EMAIL = '/^\w+[\w\-.]*@\w+[\w\-.]+$/';
@@ -726,10 +727,10 @@ class BaseModel extends Component
     /**
      * Serializes model data for json_encode
      *
-     * @return array
+     * @return mixed
      * @throws ReflectionException
      */
-    public function jsonSerialize() {
+    public function jsonSerialize(): mixed {
         return $this->toArray();
     }
 

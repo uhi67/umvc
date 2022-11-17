@@ -130,7 +130,7 @@ abstract class Migration extends Component {
             echo "Migration SQL file '$filename' is missing", PHP_EOL;
             return false;
         }
-		if($this->verbose > 1) echo "Executing SQL file '$filename'";
+		if($this->verbose > 1) echo "Executing SQL file '$filename", PHP_EOL;
 
         // Executing separated by ;
         // Multiline comments are not supported!

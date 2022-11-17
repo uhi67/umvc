@@ -4,7 +4,6 @@ namespace uhi67\umvc;
 
 use DateTime;
 use Exception;
-use JsonSerializable;
 use PDO;
 use ReflectionException;
 use Throwable;
@@ -25,7 +24,7 @@ use Throwable;
  * @property Connection $connection;
  * @package UMVC Simple Application Framework
  */
-class Model extends BaseModel implements JsonSerializable {
+class Model extends BaseModel {
     /** @var Query -- the last executed Query */
     public $lastQuery;
 
