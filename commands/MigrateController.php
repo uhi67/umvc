@@ -5,6 +5,7 @@ namespace uhi67\umvc\commands;
 use Codeception\Util\Debug;
 use Exception;
 use Throwable;
+use uhi67\umvc\AppHelper;
 use uhi67\umvc\ArrayHelper;
 use uhi67\umvc\CliHelper;
 use uhi67\umvc\Command;
@@ -102,7 +103,6 @@ class MigrateController extends Command {
         // Execute new migrations
         $n = 0;
         foreach($new as $file) {
-            $this->connection->reset();
             $this->connection->pdo->beginTransaction();
             $name = pathinfo($file, PATHINFO_FILENAME);
             $ext = pathinfo($file, PATHINFO_EXTENSION);
@@ -335,7 +335,9 @@ EOT;
 			if($foreignKeys) {
 				foreach ($foreignKeys as $name => $foreignKey) {
 					if($verbose>2) echo "Dropping foreign key '$name'\n";
-					if(!$this->connection->dropForeignKey($foreignKey['CONSTRAINT_NAME'], $foreignKey['TABLE_NAME'])) $success=false;
+					$constraint_name = $foreignKey['CONSTRAINT_NAME']??$foreignKey['constraint_name'];
+					$table_name = $foreignKey['TABLE_NAME']??$foreignKey['table_name'];
+					if(!$this->connection->dropForeignKey($constraint_name, $table_name)) $success=false;
 					elseif($verbose>1) echo "Foreign key $name dropped.\n";
 				}
 			}
@@ -386,5 +388,34 @@ EOT;
 		}
 
 		return $success;
+	}
+
+	/**
+	 * Waits for database (container) to be ready for connection
+	 *
+	 * @param int $timeout -- seconds to giving up
+	 * @param int $interval -- seconds between connection attempts
+	 * @return int -- 0 on success, 1 otherwise
+	 */
+	public function actionWait($timeout=60, $interval=5) {
+		$result = AppHelper::waitFor(function() use ($interval) {
+			try {
+				echo "Trying to connect...\n";
+				sleep($interval);
+				//$this->app->db->connectNow(); // TODO
+				//echo "Connected\n";
+				return true;
+			}
+			catch(Throwable $e) {
+				echo $e->getMessage()."\n";
+				return false;
+			}
+				/** @noinspection PhpWrongCatchClausesOrderInspection */
+			catch(Exception $e) {
+				echo $e->getMessage()."\n";
+				return false;
+			}
+		}, $timeout, $interval);
+		return $result ? 0 : 1;
 	}
 }

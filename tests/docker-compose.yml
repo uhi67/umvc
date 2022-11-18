@@ -1,0 +1,55 @@
+version: "3.3"
+# This stack is for codecept-testing the UMVC library in different environments.
+# 1. configure the needed database version here or php version in docker/Dockerfile
+# 2. edit .env (ports, urls)
+# 3. build the stack using `docker composer up --build -d`
+# 4. run unit tests with `docker exec -it umvc-php-1 php vendor/bin/codecept run unit`
+name: umvc
+services:
+  php:
+    build: ./docker
+    depends_on:
+      - test-db
+    volumes:
+      - ..:/app
+    ports:
+      - "${HTTP_PORT}:80"
+    hostname: umvc.local
+    environment:
+      TZ: $TIMEZONE
+      TIMEZONE: $TIMEZONE
+      HTTPS: off
+      APPLICATION_ENV: $APPLICATION_ENV
+      SERVER_NAME: $SERVER_NAME
+      APP_NAME: umvc
+      APP_BASEURL: http://educportal.local
+      APACHE_LOG_DIR: $APACHE_LOG_DIR
+
+      DB_DSN: mysql:host=test-db;dbname=umvc-test
+      DB_NAME: umvc-test
+      DB_USER: umvc-test
+      DB_PASSWORD: umvc-test123
+
+      SIMPLESAMLPHP_CONFIG_DIR: /app/tests/_data/testapp/config/saml/config
+      SAML_ADMIN_PASSWORD: kalap
+      SAML_SECRET_SALT: reitn23li4v
+      SAML_TECHNICALCONTACT_NAME: umvc.test
+      SAML_TECHNICALCONTACT_EMAIL: umvc.test@umvc.test
+  test-db:
+    image: mysql/mysql-server:8.0
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=UTF8MB4 --collation-server=utf8mb4_general_ci
+    volumes:
+      - mysql_data_8:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: kalap123
+      MYSQL_USER: umvc-test
+      MYSQL_PASSWORD: umvc-test123
+      MYSQL_DATABASE: umvc-test
+      TZ: $TIMEZONE
+    ports:
+      # Optional. Disable if outer MYSQL_PORT is not defined
+      - "${MYSQL_PORT}:3306"
+volumes:
+  mysql_data:
+  mysql_data_8:
+  composer_vendor:

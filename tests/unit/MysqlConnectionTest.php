@@ -1,9 +1,12 @@
 <?php
+namespace unit;
 
 use Codeception\Test\Unit;
+use Exception;
 use uhi67\umvc\App;
 use uhi67\umvc\commands\MigrateController;
 use uhi67\umvc\Connection;
+use UnitTester;
 
 class MysqlConnectionTest extends Unit
 {
@@ -51,7 +54,7 @@ class MysqlConnectionTest extends Unit
 		    array_keys($db->foreignKeys)
 	    );
 	    $this->assertEquals([], $db->getForeignKeys('user'));
-	    $this->assertEquals(['umvc-test.course.fk_course_teacher', 'umvc-test.course.fk_course_created', 'umvc-test.course.fk_course_updated'], array_keys($db->getReferrerKeys('user')));
+	    $this->assertEqualsCanonicalizing(['umvc-test.course.fk_course_teacher', 'umvc-test.course.fk_course_created', 'umvc-test.course.fk_course_updated'], array_keys($db->getReferrerKeys('user')));
 	    $this->assertEquals([], $db->getRoutines());
 	    $this->assertEquals([], $db->getTriggers());
     }

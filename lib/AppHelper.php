@@ -1,6 +1,8 @@
-<?php
+<?php /** @noinspection PhpUnused */
+
 namespace uhi67\umvc;
 
+use Closure;
 use DateTime;
 use Exception;
 use IntlDateFormatter;
@@ -446,6 +448,26 @@ class AppHelper {
 		}
 		$dateFormatter = new IntlDateFormatter($locale, $datetype, $timetype, null, null, $pattern);
 		return $dateFormatter->format($datetime);
+	}
+
+	/**
+	 * Waits for a test to satisfy
+	 *
+	 * @param Closure $test -- test to run. Must return true on success.
+	 * @param int $timeout -- timeout in sec
+	 * @param int $interval -- test interval in sec
+	 * @return bool -- true if test succeeded within timeout, false otherwise
+	 */
+	public static function waitFor($test, $timeout=60, $interval=1) {
+		$startTime = time();
+		do {
+			$lastTry = time();
+			if($test()) return true;
+			/** @noinspection PhpStatementHasEmptyBodyInspection */
+			while(time()>$lastTry+$interval);
+		}
+		while(time() < $startTime+$timeout);
+		return false;
 	}
 
 }

@@ -41,7 +41,8 @@
       "uhi67\\umvc\\commands\\": "commands",
       "uhi67\\umvc\\models\\": "models",
       "uhi67\\umvc\\": "lib",
-      "Helper\\": "lib/testhelper"
+      "Helper\\": "lib/testhelper",
+      "testapp\\": "tests/_data/testapp"
     }
   },
   "config": {
