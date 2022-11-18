@@ -50,13 +50,26 @@ Development information
 
 This repository contains a built-in test application for internal codeception unit tests.
 
-#### Installation steps:
+#### Standalone installation steps:
 
 - `git clone`
-- `composer install`
+- `composer update`
 - Create `tests/_data/test-config.php` based on the template
 - Create the `umvc-test` database in sync with the configuration above
 - run `codecept run unit` for unit tests
+
+## Testing in docker
+
+A built-in dockerized testing environment can be used to test with different php and database versions. 
+
+**Steps:**
+
+1. configure the needed database version in tests/docker-compose.yml (make clones of this template file)  
+2. configure the php version in tests/docker/Dockerfile (extension installation steps may change)
+3. configure the used ports and base-url in tests/.env
+4. build the stack using `docker composer up --build -d`
+5. your php container is now should be 'umvc-php-1'
+6. run unit tests with `docker exec -it umvc-php-1 php vendor/bin/codecept run unit`
 
 Change log
 ----------

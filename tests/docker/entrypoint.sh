@@ -48,12 +48,7 @@ git describe --tags --abbrev=1 > /app/version
 echo "Starting apache"
 echo "---------------"
 
-# enable ssl module and enable the ssl site
-a2enmod ssl
 if [ "$HTTP_PORT" != '' ]; then
   a2ensite app-http
-fi
-if [ "$HTTPS_PORT" != '' ]; then
-  a2ensite app-https
 fi
 a2enmod rewrite
