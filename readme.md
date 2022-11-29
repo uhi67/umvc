@@ -1,7 +1,7 @@
 UMVC framework
 ==============
 
-Version 1.2.1 -- 2022-10-02
+Version 1.3 -- 2022-11-29
 
 A simple web-application framework implementing model-view-controller (MVC) architectural pattern.
 
@@ -73,7 +73,7 @@ A built-in dockerized testing environment can be used to test with different php
 
 Change log
 ----------
-### next -- 
+### Version 1.3 -- 2022-11-29
 
 - Migration SQL transaction issues
 - mySQL 8.0 compatibility, keeping 5.7 compatibility
@@ -81,8 +81,8 @@ Change log
 - cli config check
 - AppHelper::waitFor()
 - unit test fix
-- A simple dockerized test application is included
-- Docker: waiting for database container initialization (simple approach) with testing guide
+- A simple dockerized test application with testing guide is included
+- Docker: waiting for database container initialization (simple approach) 
 
 ### Version 1.2.1 -- 2022-10-02
 
