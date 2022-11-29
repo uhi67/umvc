@@ -73,6 +73,17 @@ A built-in dockerized testing environment can be used to test with different php
 
 Change log
 ----------
+### next -- 
+
+- Migration SQL transaction issues
+- mySQL 8.0 compatibility, keeping 5.7 compatibility
+- App: view path fixed
+- cli config check
+- AppHelper::waitFor()
+- unit test fix
+- A simple dockerized test application is included
+- Docker: waiting for database container initialization (simple approach) with testing guide
+
 ### Version 1.2.1 -- 2022-10-02
 
 - twig/twig < 2.15.3 vulnerability fix (composer.lock)
