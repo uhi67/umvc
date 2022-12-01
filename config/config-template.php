@@ -6,20 +6,23 @@
  * The configuration should be version-controlled with your code, and use secrets from environment variables or other external source.
  */
 return [
-    // Can be set to "development" or "local" on development site
+	\uhi67\umvc\App::class, // Can be an application-specific descendant
+	// Can be set to "development" or "local" on development site
     'application_env' => 'production',
+	'mainControllerClass' => '\app\controllers\MainController', // A user class derived from \uhi67\umvc\Controller
+	'layout'=>'layouts/main',
 
     // Must be set to 'on' if site is behind a reverse proxy terminating the HTTPS connection and forwarding HTTP.
     'https' => 'off',
 
-    'modules' => [
+    'components' => [
         // ---- DATABASE CONFIGURATION
         'db' => [
             \uhi67\umvc\MysqlConnection::class,
             'dsn' => "mysql:host=localhost;dbname=",
+	        'name' => "",
             'user' => "",
             'password' => "",
-            'name' => "",
         ],
 
         //---- Authentication module
