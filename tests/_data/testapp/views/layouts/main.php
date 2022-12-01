@@ -6,7 +6,7 @@ use uhi67\umvc\Html;
 
 /** @var $content string */
 
-$versionFile = '/app/version';
+$versionFile = dirname(__DIR__,5).'/version';
 $versionStr = file_exists($versionFile) ? file_get_contents($versionFile) : '';
 $versionMsg = 'UMVC Version ' . ($versionStr ?: 'failed to read');
 ?>
