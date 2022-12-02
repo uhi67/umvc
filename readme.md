@@ -55,8 +55,8 @@ This repository contains a built-in test application for internal codeception un
 - `git clone`
 - `composer update`
 - Create `tests/_data/test-config.php` based on the template
-- Create the `umvc-test` database in sync with the configuration above
-- run `codecept run unit` for unit tests
+- Create the `umvc-test` database according to the database settings in `tests/_data/test-config.php`
+- run `php vendor/bin/codecept run unit` for unit tests
 
 ## Testing in docker
 
