@@ -84,6 +84,8 @@ First steps to build your application using UMVC
 - Logging
 - Basic structure to update a Model using Form
 - Grid pagination and filtering
+- Model validation
+- Helpers (Classes with static methods only) 
 
 ...
 
