@@ -1,7 +1,6 @@
 <?php /** @noinspection PhpUnhandledExceptionInspection */
 
 use uhi67\umvc\App;
-use uhi67\umvc\AppHelper;
 use uhi67\umvc\Html;
 
 /** @var $content string */

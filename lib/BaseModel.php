@@ -727,10 +727,10 @@ class BaseModel extends Component implements JsonSerializable
     /**
      * Serializes model data for json_encode
      *
-     * @return mixed
+     * @return array
      * @throws ReflectionException
      */
-    public function jsonSerialize(): mixed {
+    public function jsonSerialize() {
         return $this->toArray();
     }
 

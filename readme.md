@@ -117,7 +117,7 @@ A built-in dockerized testing environment can be used to test with different php
 2. configure the php version in `tests/docker/Dockerfile` (extension installation steps may change)
 3. configure the used ports and base-url in `tests/.env`
 4. build the stack using `docker compose up --build -d` (in the tests dir)
-5. your php container is now should be 'umvc-php-1'
+5. your php container should now be 'umvc-php-1'
 6. run unit tests with `docker exec -it umvc-php-1 php vendor/bin/codecept run unit`
 
 Change log
