@@ -397,7 +397,7 @@ EOT;
 	 * @param int $interval -- seconds between connection attempts
 	 * @return int -- 0 on success, 1 otherwise
 	 */
-	public function actionWait($timeout=60, $interval=2) {
+	public function actionWait($timeout=60, $interval=5) {
 		$result = AppHelper::waitFor(function() use ($interval) {
 			try {
 				echo "Trying to connect...\n";

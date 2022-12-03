@@ -3,8 +3,6 @@
 echo "initializing the container"
 echo "=========================="
 
-set -o
-
 APPDIR=/app/tests/_data/testapp
 RUNTIMEDIR=/app/tests/_output
 

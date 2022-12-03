@@ -50,12 +50,13 @@ abstract class Connection extends Component {
     protected $_user, $_password;
 
     /**
-     * Must reset the connection to the standard state (e.g. Quote mode)
+     * Must reset the connection to the standard state (e.g. Quote mode).
+     * Must use `_pdo` property instead of `pdo`.
      *
      * @return bool
      * @throws Exception
      */
-    abstract public function reset();
+    abstract protected function reset();
 
 	/**
 	 * Check if a table exists in the current database.
@@ -359,9 +360,14 @@ abstract class Connection extends Component {
 	 */
 	public function getPdo() {
 		if(!$this->_pdo) {
-			$this->_pdo = new PDO($this->dsn, $this->_user, $this->_password);
-			$this->_pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-			$this->reset();
+			try {
+				$this->_pdo = new PDO($this->dsn, $this->_user, $this->_password);
+				$this->_pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+				$this->reset();
+			}
+			catch(\Throwable $e) {
+				throw new Exception('Connection failed', 0, $e);
+			}
 		}
 		return $this->_pdo;
 	}

@@ -18,13 +18,13 @@ class MysqlConnection extends Connection {
 
     /**
      * Resets the connection to standard mode.
-     * Set MySQL to SQL-92 standard tableName/fieldName quoting. The backtick quoting is still valid
+     * Set MySQL to SQL-92 standard tableName/fieldName quoting. The backtick quoting is still valid.
      *
      * @throws Exception on failure
      */
-    public function reset() {
-        $status = $this->pdo->query("SET SQL_MODE='ANSI_QUOTES,NO_AUTO_VALUE_ON_ZERO'");
-        if($status===false) throw new Exception("Error resetting the connection. ".implode(';', $this->pdo->errorInfo()));
+    protected function reset() {
+        $status = $this->_pdo->query("SET SQL_MODE='ANSI_QUOTES,NO_AUTO_VALUE_ON_ZERO'");
+        if($status===false) throw new Exception("Error resetting the connection. ".implode(';', $this->_pdo->errorInfo()));
         return true;
     }
 
