@@ -14,10 +14,11 @@ use uhi67\umvc\L10nFile;
 require __DIR__.'/testapp/models/User.php';
 
 return [
-    // Must be set to "production" on production site
     'application_env' => 'development',
 	'basePath' => __DIR__.'/testapp',
 	'runtimePath' => dirname(__DIR__).'/_output/runtime',
+	'mainControllerClass' => \testapp\controllers\MainController::class,
+	'layout'=>'layouts/main',
 
     // Must be set to 'on' if site is behind a reverse proxy terminating the HTTPS connection and forwarding HTTP.
     'https' => 'off',

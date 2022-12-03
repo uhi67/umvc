@@ -85,7 +85,7 @@ class Ansi {
 	 *
 	 * @param string $string -- the message to color
 	 * @param string $fg -- foreground color name
-	 * @param string $bg -- background color name (default is unchanged)
+	 * @param string|null $bg -- background color name (default is unchanged)
 	 * @param bool $close -- restore color after the message
 	 * @return string -- string with pre- and appended ansi color commands
 	 */
@@ -93,7 +93,7 @@ class Ansi {
 		if(!$fg) $fg = $bg=='white' ? 'black' : 'white';
 		if(!is_string($fg)) return $string.'*'; //throw new InternalException('fg must be string');
 		$color = self::$colors[trim(strtolower($fg))] ?? '0';
-		$bg = self::$backgrounds[trim(strtolower($bg))] ?? '0';
+		$bg = $bg ? (self::$backgrounds[trim(strtolower($bg))] ?? '0'): '';
 		$bgx = $bg ? "\033[{$bg}m" : '';
 		return "\033[{$color}m$bgx" . $string . ($close ? "\033[0m" : '');
 	}

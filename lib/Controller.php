@@ -227,7 +227,7 @@ class Controller extends Component
 		if($locale) {
 			// Priority order: 1. Localized view (with long or short locale) / 2. untranslated / 3. default-locale view (long/short)
 			$lv = $this->localizedView($viewName, $locale);
-			if(!$lv && !file_exists($this->app->viewFile($viewName))) {
+			if(!$lv && !($this->app->viewFile($viewName) && file_exists($this->app->viewFile($viewName)))) {
 				$lv = $this->localizedView($viewName, App::$app->source_locale);
 			}
 			if($lv) $viewName = $lv;
@@ -246,10 +246,10 @@ class Controller extends Component
 	private function localizedView($viewName, $locale) {
 		// Look up view file using full locale
 		$lv = $this->localizedViewName($viewName, $locale);
-		if (file_exists($this->app->viewFile($lv))) return $lv;
+		if ($this->app->viewFile($lv) && file_exists($this->app->viewFile($lv))) return $lv;
 		// Look up view file using short language code
 		$lv = $this->localizedViewName($viewName, substr($locale,0,2));
-		if(file_exists($this->app->viewFile($lv))) return $lv;
+		if($this->app->viewFile($lv) && file_exists($this->app->viewFile($lv))) return $lv;
 		return null;
 	}
 

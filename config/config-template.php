@@ -5,21 +5,25 @@
  * Create the configuration file for your application in the /config directory based on this template.
  * The configuration should be version-controlled with your code, and use secrets from environment variables or other external source.
  */
+
 return [
-    // Must be set to "production" on production site
-    'application_env' => 'development',
+	\uhi67\umvc\App::class, // Can be an application-specific descendant
+	// Can be set to "development" or "local" on development site
+    'application_env' => 'production',
+	'mainControllerClass' => '\app\controllers\MainController', // A user class derived from \uhi67\umvc\Controller
+	'layout'=>'layouts/main',
 
     // Must be set to 'on' if site is behind a reverse proxy terminating the HTTPS connection and forwarding HTTP.
     'https' => 'off',
 
-    'modules' => [
+    'components' => [
         // ---- DATABASE CONFIGURATION
         'db' => [
             \uhi67\umvc\MysqlConnection::class,
             'dsn' => "mysql:host=localhost;dbname=",
+	        'name' => "",
             'user' => "",
             'password' => "",
-            'name' => "",
         ],
 
         //---- Authentication module
@@ -35,7 +39,8 @@ return [
             // URL of the discovery service to be used. If not specified, the internal discovery service will be used with predefined IdPs.
             'disco' => null,
             // Refers to the proper SAML auth-source config element in the `config/saml/config/authsource.php` file
-            'auth_source' => '',
+            'authSource' => '',
+	        'userModel' => '', // Must be set to your `\uhi67\umvc\Model` class of users, implementing `\uhi67\umvc\UserInterface`
         ],
 
         // The cache used (for accelerating database operations). May be omitted in development environment.

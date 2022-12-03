@@ -382,7 +382,8 @@ class App extends Component {
 	 * @return string|null
 	 */
 	public function viewFile($viewName) {
-		$viewPath = dirname(__DIR__,4).'/views';
+		$viewPath = $this->basePath.'/views';
+		if(!is_dir($viewPath)) throw new Exception("View path '$viewPath' does not exist");
 		$viewFile = $viewPath . '/' . $viewName.'.php';
 		// If view not found in the app, look up in the framework
 		if(!file_exists($viewFile)) {
@@ -713,6 +714,7 @@ class App extends Component {
 
     public static function cli($configFile) {
         try {
+			if(!file_exists($configFile)) throw new Exception("Configfile at '$configFile' is missing.");
             $config = include $configFile;
             defined('ENV') || define('ENV', $config['application_env'] ?? 'production');
             defined('ENV_DEV') || define('ENV_DEV', ENV != 'production');

@@ -5,6 +5,7 @@ namespace uhi67\umvc\commands;
 use Codeception\Util\Debug;
 use Exception;
 use Throwable;
+use uhi67\umvc\AppHelper;
 use uhi67\umvc\ArrayHelper;
 use uhi67\umvc\CliHelper;
 use uhi67\umvc\Command;
@@ -27,7 +28,7 @@ use uhi67\umvc\SqlMigration;
 class MigrateController extends Command {
 
     /**
-     * @var Connection|null 
+     * @var Connection|null
      */
     private $connection;
     private $confirm, $verbose, $migrationTable, $migrationPath;
@@ -61,7 +62,7 @@ class MigrateController extends Command {
 
     /**
      * Migrate up the database to the current state
-     * 
+     *
      * @return int
      * @throws Exception
      */
@@ -135,21 +136,19 @@ class MigrateController extends Command {
                         else $n++;
                     } else {
                         echo "Applying migration '" . $name . "' failed", PHP_EOL;
-                        $this->connection->pdo->rollBack();
+                        if($this->connection->pdo->inTransaction()) $this->connection->pdo->rollBack();
                         break;
                     }
                 }
                 else {
                     // SQL-type migration
-                    $migration = new SqlMigration(['connection'=>$this->connection, 'filename'=>$filename]);
+                    $migration = new SqlMigration(['connection'=>$this->connection, 'filename'=>$filename, 'verbose'=>$this->verbose]);
                     $success = $migration->up();
 
                     if($success) {
                         if($this->verbose > 1) {
                             echo "Migration " . $name . " has been applied.", PHP_EOL;
                         }
-
-                        $this->connection->reset();
 
                         // Insert into database
                         $migrationDone = new \uhi67\umvc\models\Migration([
@@ -164,15 +163,19 @@ class MigrateController extends Command {
                     } else {
                         echo "Applying migration '" . $name . "' failed", PHP_EOL;
                         echo $this->connection->lastError;
-                        $this->connection->pdo->rollBack();
+                        if($this->connection->pdo->inTransaction()) $this->connection->pdo->rollBack();
                         break;
                     }
                 }
-                $this->connection->pdo->commit();
+				// Note: MySQL auto-commits transactions on DDL statements. Therefore we may find our transaction already gone
+	            if($this->connection->pdo->inTransaction()) {
+					$this->connection->pdo->commit();
+	            }
             }
             catch(Throwable $e) {
-                $this->connection->pdo->rollBack();
+                if($this->connection->pdo->inTransaction()) $this->connection->pdo->rollBack();
 				if(ENV_DEV) Debug::debug(sprintf("Exception in migration: '%s' in file '%s' at line '%d'", $e->getMessage(), $e->getFile(), $e->getLine()));
+                printf("Exception: %s in file %s at line %d\n", $e->getMessage(), $e->getFile(), $e->getLine());
                 throw new Exception("Applying migration '". $name."' caused an exception", 500, $e);
             }
         }
@@ -186,7 +189,7 @@ class MigrateController extends Command {
         }
         return 0;
     }
-    
+
     public function actionHelp() {
         echo "Place plain SQL or PHP migration files into `/migrations/` directory.", PHP_EOL;
         echo "The default action creates the `migration` table which track the changes in your database, and applies all new migrations.", PHP_EOL, PHP_EOL;
@@ -332,7 +335,9 @@ EOT;
 			if($foreignKeys) {
 				foreach ($foreignKeys as $name => $foreignKey) {
 					if($verbose>2) echo "Dropping foreign key '$name'\n";
-					if(!$this->connection->dropForeignKey($foreignKey['constraint_name'], $foreignKey['table_name'])) $success=false;
+					$constraint_name = $foreignKey['CONSTRAINT_NAME']??$foreignKey['constraint_name'];
+					$table_name = $foreignKey['TABLE_NAME']??$foreignKey['table_name'];
+					if(!$this->connection->dropForeignKey($constraint_name, $table_name)) $success=false;
 					elseif($verbose>1) echo "Foreign key $name dropped.\n";
 				}
 			}
@@ -383,5 +388,34 @@ EOT;
 		}
 
 		return $success;
+	}
+
+	/**
+	 * Waits for database (container) to be ready for connection
+	 *
+	 * @param int $timeout -- seconds to giving up
+	 * @param int $interval -- seconds between connection attempts
+	 * @return int -- 0 on success, 1 otherwise
+	 */
+	public function actionWait($timeout=60, $interval=5) {
+		$result = AppHelper::waitFor(function() use ($interval) {
+			try {
+				echo "Trying to connect...\n";
+				sleep($interval);
+				//$this->app->db->connectNow(); // TODO
+				//echo "Connected\n";
+				return true;
+			}
+			catch(Throwable $e) {
+				echo $e->getMessage()."\n";
+				return false;
+			}
+				/** @noinspection PhpWrongCatchClausesOrderInspection */
+			catch(Exception $e) {
+				echo $e->getMessage()."\n";
+				return false;
+			}
+		}, $timeout, $interval);
+		return $result ? 0 : 1;
 	}
 }

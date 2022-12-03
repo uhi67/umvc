@@ -77,7 +77,7 @@ class MysqlConnection extends Connection {
 		if(empty($rows)) return [];
 		$rr = [];
 		foreach($rows as $r) {
-			$index = $r['table_schema'].'.'.$r['table_name'].'.'.$r['constraint_name'];
+			$index = ($r['TABLE_SCHEMA']??$r['table_schema']).'.'.($r['TABLE_NAME']??$r['table_name']).'.'.($r['CONSTRAINT_NAME']??$r['constraint_name']);
 			$rr[$index] = $r;
 		}
 		return $rr;
@@ -123,7 +123,7 @@ class MysqlConnection extends Connection {
 		if(empty($rows)) return [];
 		$rr = [];
 		foreach($rows as $r) {
-			$index = $r['table_schema'].'.'.$r['table_name'].'.'.$r['constraint_name'];
+			$index = ($r['TABLE_SCHEMA']??$r['table_schema']).'.'.($r['TABLE_NAME']??$r['table_name']).'.'.($r['CONSTRAINT_NAME']??$r['constraint_name']);
 			$rr[$index] = $r;
 		}
 		return $rr;

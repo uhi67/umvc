@@ -2,7 +2,9 @@
 
 namespace uhi67\umvc;
 
+use Codeception\Util\Debug;
 use Exception;
+use Throwable;
 
 /**
  * Base class for php migrations, and helper for migrate command.
@@ -78,6 +80,7 @@ abstract class Migration extends Component {
 	 * @param int $line -- source line where this SQL command begins
 	 * @return bool -- success
 	 * @throws Exception
+	 * @throws Throwable
 	 */
 	private function execSingle($cmd, $replacements, $filename, $line) {
 		if(!empty($replacements) && is_array($replacements)) {
@@ -100,7 +103,13 @@ abstract class Migration extends Component {
 			}
 		}
 		if($this->verbose > 2) echo "--- Executing SQL command at line $line:", PHP_EOL, $cmd, PHP_EOL;
-		$stmt = $this->connection->pdo->query($cmd);
+		try {
+			$stmt = $this->connection->pdo->query($cmd);
+		}
+		catch(Throwable $e) {
+			if(ENV_DEV) Debug::debug("\nSQL in file $filename at line $line was:\n$cmd");
+			throw $e;
+		}
 		if($stmt===false) {
             $error = $this->connection->lastError;
             echo "SQL Command: $cmd", PHP_EOL;
@@ -130,7 +139,7 @@ abstract class Migration extends Component {
             echo "Migration SQL file '$filename' is missing", PHP_EOL;
             return false;
         }
-		if($this->verbose > 1) echo "Executing SQL file '$filename'";
+		if($this->verbose > 1) echo "Executing SQL file '$filename", PHP_EOL;
 
         // Executing separated by ;
         // Multiline comments are not supported!

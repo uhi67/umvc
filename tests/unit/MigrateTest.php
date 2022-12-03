@@ -13,9 +13,9 @@ class MigrateTest extends Unit
     /**
      * @var UnitTester
      */
-    protected UnitTester $tester;
+    protected $tester;
 	/** @var App $app */
-	public App $app;
+	public $app;
 
 	protected function _before()
     {
@@ -38,13 +38,16 @@ class MigrateTest extends Unit
 			'confirm'=>'yes',
 		    'verbose'=>3,
 	    ]));
-		$this->assertEquals(['course', 'migration', 'user'], $this->app->connection->getTables());
+		$this->assertEqualsCanonicalizing(['course', 'migration', 'user'], $this->app->connection->getTables());
     }
 
 	/**
 	 * @throws Exception
 	 */
 	public function testReset() {
+		$test1 = User::findUser('test1@umvc-test.test');
+		if($test1) User::deleteAll(['uid'=>'test1@umvc-test.test']);
+
 		$user = new User(['uid'=>'test1@umvc-test.test', 'name'=>'Test1']);
 		$user->save();
 		$test1 = User::findUser('test1@umvc-test.test');
@@ -56,7 +59,7 @@ class MigrateTest extends Unit
 			'confirm'=>'yes',
 			'verbose'=>3,
 		]));
-		$this->assertEquals(['course', 'migration', 'user'], $this->app->connection->getTables());
+		$this->assertEqualsCanonicalizing(['course', 'migration', 'user'], $this->app->connection->getTables());
 		$test1 = User::findUser('test1@umvc-test.test');
 		$this->assertNull($test1);
     }
