@@ -456,6 +456,8 @@ class AppHelper {
 	 * Note: `$interval` timeout is checked before `$timeout` timeout, so the latter will not be detected until the first one takes place
 	 * (e.g. when `$interval` is greater than `$timeout`)
 	 *
+	 * Warning: this function is experimental, usage example and unit test is coming soon
+	 *
 	 * @param Closure $test -- test to run. Must return truthy value on success
 	 * @param int $timeout -- seconds to giving up waiting
 	 * @param int $interval -- seconds between retry attempts
