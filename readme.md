@@ -40,42 +40,42 @@ First steps to build your application using UMVC
 
 **Warning: This part is under construction.**
 
-1. Create `composer.json` of your application, and include `uh67/umvc`, e.g `composer init --name myname/myapp --require uhi67/umvc:*`
-2. Run `composer update`
+1. Create `composer.json` of your application, and include `uh67/umvc`, e.g `composer init --name myname/myapp --require uhi67/umvc:*`.
+2. Run `composer update`.
 3. Copy `vendor/uh67/umvc/app` to your application's root. This is the launcher of the CLI commands. 
 4. Copy `vendor/uh67/umvc/www/index.php` and `.htaccess` to your application's www directory. This is the router of the web interface. 
-5. Create your application's config in the `config/config.php` file, see template in `vendor/uh67/umvc/config/config-template.php`
+5. Create your application's config in the `config/config.php` file, see template in `vendor/uh67/umvc/config/config-template.php`.
 6. Create a `runtime` directory writable by the webserver to place temporary files.
 7. Create the `www/assets` directory writable by the webserver to place cached asset files of various components.
 
 #### Build your application using MVC pattern
 
-1. Create your controllers in the `controllers` dir, using `\app\controllers` namespace, and derive them from `uhi67\umvc\Controller`
-2. Create the views in the `views` dir, in simple PHTML format, and organize them `views/controller/action.php` structure.
-3. Create your models in the `models` directory. Database models are `\uhi67\umvc\Model`, database-less models are `\uhi67\umvc\BaseModel`
+1. Create your controllers in the `controllers` dir, using `\app\controllers` namespace, and derive them from `uhi67\umvc\Controller`.
+2. Create the views in the `views` dir, in simple PHTML format, and organize them according to `views/controller/action.php` structure.
+3. Create your models in the `models` directory. Database models are `\uhi67\umvc\Model`, database-less models are `\uhi67\umvc\BaseModel`.
                                          
 #### Other basic principles
 
-1. Migrations are for keeping database changes in sync with your source code in the VC. Place migration steps into `migrations` directory.
+1. Migrations are for versioning and recording database changes in source code. Place migration steps into `migrations` directory.
 2. Layout is a special view to embed all other views within. Place layouts in `views/layouts` directory. Views can call other partial views.
 3. You can define CLI commands in `commands` directory, deriving from `\uhi67\umvc\Command` class. There are some built-in command in the framework. `php app` command lists all available commands, both built-in and custom ones.
 4. A simple file-based localization support is built-in. Place your translations into `messges/la.php` files where "la" is the language you want to translate to.
 
-#### Built in components
+#### Built-in components
 
-1. `MySqlConnection` -- to connect to database. Includes SQL query builder. Currently the only implementation of `Connection`
-2. `FileCache` -- the only implementation of `CacheInterface`
-3. `SamlAuth` -- the only implementation for `AuthManager`
+1. `MySqlConnection` -- to connect to database. Includes SQL query builder. Currently the only implementation of `Connection`.
+2. `FileCache` -- the only implementation of `CacheInterface`.
+3. `SamlAuth` -- the only implementation for `AuthManager`.
 4. `L10n` -- simple localization, default auto-included, translates UMVC messages only.
-5. `L10nFile` -- the file based localization to translate messages of your application.
+5. `L10nFile` -- the file-based localization to translate messages of your application.
 
 #### Other basic classes you can use
 
 1. `Form` -- a widget with built-in view to display and process HTML forms using your Models.
 2. `Grid` (widget, but the built-in view is still missing) -- to display paginated, filtered lists of Models.
 3. `Query` -- Represents a parametrized and flexible SQL query in php structure. SQL command can be built from it.
-4. `Request` -- Represents the HTTP request, can be used to fetch GET and POST parameters
-5. `Session` -- Represents the current PHP session, can be used to get and set variables
+4. `Request` -- Represents the HTTP request, can be used to fetch GET and POST parameters.
+5. `Session` -- Represents the current PHP session, can be used to get and set variables.
     
 #### Other topics (coming soon)
 
@@ -103,7 +103,7 @@ The only purpose of the test app in the `tests` directory is to be able to run u
 - `composer update`
 - Create `tests/_data/test-config.php` based on the template
 - Create the `umvc-test` database according to the database settings in `tests/_data/test-config.php`
-- run `php vendor/bin/codecept run unit` for unit tests
+- Run `php vendor/bin/codecept run unit` for unit tests
 
 More unit tests are coming...
 
