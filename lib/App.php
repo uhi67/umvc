@@ -714,7 +714,7 @@ class App extends Component {
 
     public static function cli($configFile) {
         try {
-			if(!file_exists($configFile)) throw new Exception("Configfile at '$configFile' is missing.");
+			if(!file_exists($configFile)) throw new Exception("Config file at '$configFile' is missing.");
             $config = include $configFile;
             defined('ENV') || define('ENV', $config['application_env'] ?? 'production');
             defined('ENV_DEV') || define('ENV_DEV', ENV != 'production');

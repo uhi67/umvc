@@ -6,6 +6,7 @@ use Codeception\Test\Unit;
 use Exception;
 use uhi67\umvc\App;
 use uhi67\umvc\commands\MigrateController;
+use uhi67\umvc\MysqlConnection;
 use UnitTester;
 
 class MigrateTest extends Unit
@@ -34,6 +35,19 @@ class MigrateTest extends Unit
 	 * @throws Exception
 	 */
 	public function testMigrate() {
+		$this->assertInstanceOf(MysqlConnection::class, $this->app->connection);
+		$this->assertTrue(method_exists($this->app->connection, 'getPdo'));
+		$this->assertInstanceOf(\PDO::class, $this->app->connection->pdo);
+		$migrationTable = $this->app->connection->migrationTable ?: 'migration';
+		if($this->app->connection->tableExists($migrationTable)) {
+			// Run migrate/reset command
+			$this->assertEquals( 200, $this->app->runController(MigrateController::class, [], [
+				'action'=>'reset',
+				'confirm'=>'yes',
+				'verbose'=>3,
+			]));
+		}
+		// Run migrate command (default action)
 	    $this->assertEquals( 200, $this->app->runController(MigrateController::class, [], [
 			'confirm'=>'yes',
 		    'verbose'=>3,

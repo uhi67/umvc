@@ -32,8 +32,7 @@ fi
 cd $APPDIR
 
 echo "Waiting for database container to be ready..."
-sleep 5
-#php app migrate/wait || echo "Timeout connecting to database." # TODO
+php app migrate/wait || echo "Timeout connecting to database."
 
 echo "Migrating database"
 php app migrate confirm=yes

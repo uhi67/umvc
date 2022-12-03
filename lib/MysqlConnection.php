@@ -14,16 +14,6 @@ use PDOStatement;
  * @package UMVC Simple Application Framework
  */
 class MysqlConnection extends Connection {
-
-    /**
-     * @throws Exception
-     */
-    public function init() {
-        $this->pdo = new PDO($this->dsn, $this->_user, $this->_password);
-        $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $this->reset();
-    }
-
     public function supportsOrderNullsLast() { return false; }
 
     /**

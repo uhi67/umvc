@@ -1277,8 +1277,7 @@ class Query extends Component
      *
      * @return string
      * @throws Exception
-     * @see buildExpression
-     *
+     * @see Query::buildExpression
      */
     public function buildWhere($alias=null) {
         $condition = $this->_where;

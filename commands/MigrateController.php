@@ -397,13 +397,12 @@ EOT;
 	 * @param int $interval -- seconds between connection attempts
 	 * @return int -- 0 on success, 1 otherwise
 	 */
-	public function actionWait($timeout=60, $interval=5) {
+	public function actionWait($timeout=60, $interval=2) {
 		$result = AppHelper::waitFor(function() use ($interval) {
 			try {
 				echo "Trying to connect...\n";
-				sleep($interval);
-				//$this->app->db->connectNow(); // TODO
-				//echo "Connected\n";
+				if(!$this->app->db->pdo) return false;
+				echo "Connected\n";
 				return true;
 			}
 			catch(Throwable $e) {
