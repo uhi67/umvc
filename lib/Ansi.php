@@ -85,7 +85,7 @@ class Ansi {
 	 *
 	 * @param string $string -- the message to color
 	 * @param string $fg -- foreground color name
-	 * @param string $bg -- background color name (default is unchanged)
+	 * @param string|null $bg -- background color name (default is unchanged)
 	 * @param bool $close -- restore color after the message
 	 * @return string -- string with pre- and appended ansi color commands
 	 */

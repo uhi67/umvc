@@ -17,7 +17,7 @@ if [ ! -f "/app/tests/_data/test-config.php" ]; then
 fi
 
 NODEV=""
-if [ "APPLICATION_ENV" = "production" ]; then
+if [ "$APPLICATION_ENV" = "production" ]; then
     NODEV="--no-dev"
 fi
 

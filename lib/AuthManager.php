@@ -39,7 +39,7 @@ abstract class AuthManager extends Component {
      */
     public function init() {
         if(!$this->userModel || !is_a($this->userModel, UserInterface::class, true))
-			throw new Exception("userModel must be a class implementing UserInterface. Given '$this->userModel'");
+			throw new Exception("userModel must be a class implementing Model and UserInterface. Given '$this->userModel'");
     }
 
     /**
