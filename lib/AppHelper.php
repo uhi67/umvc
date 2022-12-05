@@ -456,12 +456,14 @@ class AppHelper {
 	 * See usage example in {@see MigrateController::actionWait()}
 	 *
 	 * @param Closure $test -- test to run. Must return truthy value on success
-	 * @param int $timeout -- seconds to giving up waiting
-	 * @param int $interval -- seconds between retry attempts
+	 * @param int $timeout -- seconds to giving up waiting, the minimum allowed value is 1
+	 * @param int $interval -- seconds between retry attempts, the minimum allowed value is 1
 	 * @return bool -- true if test succeeded within timeout, false otherwise
 	 */
 	public static function waitFor($test, $timeout=60, $interval=1) {
 		$startTime = time();
+		$interval = max(1, $interval);
+		$timeout = max(1, $timeout);
 		$timeoutPassed = $startTime+$timeout;
 		do {
 			$lastTry = time();

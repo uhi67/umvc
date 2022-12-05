@@ -44,6 +44,8 @@ class AppHelperTest extends \Codeception\Test\Unit
 			// $timeout, $interval, $length, $success, $attempts, $elapsed
 			[10, 1, 3, true, 4, 3],
 			[3, 2, 4, false, 2, 3],
+			[3, 10, 4, false, 1, 3],
+			[0, 0, 4, false, 1, 1],
 		];
 	}
 }
