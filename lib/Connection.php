@@ -2,8 +2,10 @@
 
 namespace uhi67\umvc;
 
+use Codeception\Util\Debug;
 use Exception;
 use PDO;
+use Throwable;
 
 /**
  * Low-level database functions, based on PDO.
@@ -31,6 +33,7 @@ use PDO;
  * @property-read string[] $tables
  * @property-read string[] $triggers -- trigger names as schema.name
  * @property-read PDO $pdo -- the PDO connection (calling it connects immediately)
+ * @property-read bool $isConnected -- is already connected to the database (the PDO connection exists)
  *
  * @package UMVC Simple Application Framework
  */
@@ -44,8 +47,8 @@ abstract class Connection extends Component {
     /** @var string|null $migrationTable -- name of the migration table if not the default (`migration`) */
     public $migrationTable;
 
-    /** @var PDO|null $_pdo -- the original PDO connection */
-    public $_pdo = null;
+    /** @var PDO|null $_pdo -- the original PDO connection. Empty if not yet connected.  */
+    protected $_pdo = null; // Note: must be protected, because descendant classes must use it in the reset() method.
 
     protected $_user, $_password;
 
@@ -83,7 +86,7 @@ abstract class Connection extends Component {
 	/**
 	 * Make table or fieldName safe from SQL injections (SQL-92 standard)
 	 * Works on a single identifier. To handle schema.table.field constructs, see {@see Query::quoteFieldName()}
-	 * Encloses into double quotes, inner double quotes are replaced by _
+	 * Returns fieldName enclosed into double quotes, while inner double quotes are replaced by _
 	 * May be overridden in vendor-specific way.
 	 *
 	 * @param string $fieldName
@@ -365,10 +368,14 @@ abstract class Connection extends Component {
 				$this->_pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 				$this->reset();
 			}
-			catch(\Throwable $e) {
+			catch(Throwable $e) {
 				throw new Exception('Connection failed', 0, $e);
 			}
 		}
 		return $this->_pdo;
+	}
+
+	public function getIsConnected() {
+		return !!$this->_pdo;
 	}
 }

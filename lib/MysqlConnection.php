@@ -23,6 +23,7 @@ class MysqlConnection extends Connection {
      * @throws Exception on failure
      */
     protected function reset() {
+		// Note: _pdo must be used here, because reset() is used within pdo getter.
         $status = $this->_pdo->query("SET SQL_MODE='ANSI_QUOTES,NO_AUTO_VALUE_ON_ZERO'");
         if($status===false) throw new Exception("Error resetting the connection. ".implode(';', $this->_pdo->errorInfo()));
         return true;
