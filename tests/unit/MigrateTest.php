@@ -36,8 +36,6 @@ class MigrateTest extends Unit
 	 */
 	public function testMigrate() {
 		$this->assertInstanceOf(MysqlConnection::class, $this->app->connection);
-		$this->assertTrue(method_exists($this->app->connection, 'getPdo'));
-		$this->assertInstanceOf(\PDO::class, $this->app->connection->pdo);
 		$migrationTable = $this->app->connection->migrationTable ?: 'migration';
 		if($this->app->connection->tableExists($migrationTable)) {
 			// Run migrate/reset command
