@@ -462,12 +462,13 @@ class AppHelper {
 	 */
 	public static function waitFor($test, $timeout=60, $interval=1) {
 		$startTime = time();
+		$timeoutPassed = $startTime+$timeout;
 		do {
 			$lastTry = time();
 			if($test()) return true;
-			while(time() < $lastTry+$interval && time() < $startTime+$timeout) sleep(1);
+			sleep(min($timeoutPassed - time(), $lastTry+$interval - time()));
 		}
-		while(time() < $startTime+$timeout);
+		while(time() < $timeoutPassed);
 		return false;
 	}
 
