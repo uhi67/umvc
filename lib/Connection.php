@@ -1,9 +1,11 @@
-<?php
+<?php /** @noinspection PhpUnused */
 
 namespace uhi67\umvc;
 
+use Codeception\Util\Debug;
 use Exception;
 use PDO;
+use Throwable;
 
 /**
  * Low-level database functions, based on PDO.
@@ -30,6 +32,8 @@ use PDO;
  * @property-read string[] $sequences
  * @property-read string[] $tables
  * @property-read string[] $triggers -- trigger names as schema.name
+ * @property-read PDO $pdo -- the PDO connection (calling it connects immediately)
+ * @property-read bool $isConnected -- is already connected to the database (the PDO connection exists)
  *
  * @package UMVC Simple Application Framework
  */
@@ -39,22 +43,23 @@ abstract class Connection extends Component {
     /** @var string $name -- database name (redundant, but mandatory) */
     public $name;
     /** @var string|null $migrationPath -- directory of migration files if not the default (`/migrations`)*/
-    public $migrationPath;
+    public $migrationPath = null;
     /** @var string|null $migrationTable -- name of the migration table if not the default (`migration`) */
     public $migrationTable;
 
-    /** @var PDO $pdo -- the original PDO connection */
-    public $pdo;
+    /** @var PDO|null $_pdo -- the original PDO connection. Empty if not yet connected.  */
+    protected $_pdo = null; // Note: must be protected, because descendant classes must use it in the reset() method.
 
     protected $_user, $_password;
 
     /**
-     * Must reset the connection to the standard state (e.g. Quote mode)
+     * Must reset the connection to the standard state (e.g. Quote mode).
+     * Must use `_pdo` property instead of `pdo`.
      *
      * @return bool
      * @throws Exception
      */
-    abstract public function reset();
+    abstract protected function reset();
 
 	/**
 	 * Check if a table exists in the current database.
@@ -78,17 +83,19 @@ abstract class Connection extends Component {
         return $result !== FALSE;
     }
 
-    /**
-     * Make table or fieldName safe from SQL injections (SQL-92 standard)
-     * Works on a single identifier. To handle schema.table.field constructs, @see Query::quoteFieldName()
-     * Encloses into double quotes, inner "-s are replaced by _
-     * May be overridden in vendor-specific way.
-     *
-     * @param string $fieldName
-     * @return string
-     */
+	/**
+	 * Make table or fieldName safe from SQL injections (SQL-92 standard)
+	 * Works on a single identifier. To handle schema.table.field constructs, see {@see Query::quoteFieldName()}
+	 * Returns fieldName enclosed into double quotes, while inner double quotes are replaced by _
+	 * May be overridden in vendor-specific way.
+	 *
+	 * @param string $fieldName
+	 * @return string
+	 *
+	 * @throws Exception
+	 */
     public function quoteIdentifier(string $fieldName) {
-        if(!$fieldName) throw new Exception('Empty fieldname');
+        if(!$fieldName) throw new Exception('Empty field-name');
         if($fieldName[0]=='"' && substr($fieldName, -1) == '"') $fieldName = substr($fieldName,1,-1);
         return '"'.str_replace('"', '_', $fieldName).'"';
     }
@@ -156,15 +163,16 @@ abstract class Connection extends Component {
         return array_column($rows, 0);
     }
 
-    /**
-     * Returns metadata of the table
-     *
-     * (Associative to field names)
-     * Vendor-specific, this implementation is for MySQL only.
-     *
-     * @param string $table
-     * @return array|boolean -- returns false if table does not exist
-     */
+	/**
+	 * Returns metadata of the table
+	 *
+	 * (Associative to field names)
+	 * Vendor-specific, this implementation is for MySQL only.
+	 *
+	 * @param string $table
+	 * @return array|boolean -- returns false if table does not exist
+	 * @throws Exception
+	 */
     public function tableMetadata($table) {
         $table = $this->quoteIdentifier($table);
         $stmt = $this->pdo->query('show fields from '.$table);
@@ -208,10 +216,10 @@ abstract class Connection extends Component {
 	/**
 	 * Creates a new connection using vendor driver specified in the DSN
 	 *
-	 * Note: this method is not suitable for configuration array, only to create ad-hoc connections.
+	 * Note: this method is not suitable for configuration array, only to create new ad-hoc connections.
 	 *
 	 * @throws Exception -- if driver is missing for DSN vendor or vendor is not set in the DSN
-	 * @return Connection
+	 * @return Connection -- the new Connection created
 	 */
 	public static function connect($dsn, $user, $password) {
 		if(!$dsn) throw new Exception('DSN is not set');
@@ -345,5 +353,29 @@ abstract class Connection extends Component {
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * Returns the current PDO connection. Will be created now if it is not yet connected.
+	 *
+	 * @return PDO -- A PDO object if connected
+	 * @throws Exception -- If connection failed
+	 */
+	public function getPdo() {
+		if(!$this->_pdo) {
+			try {
+				$this->_pdo = new PDO($this->dsn, $this->_user, $this->_password);
+				$this->_pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+				$this->reset();
+			}
+			catch(Throwable $e) {
+				throw new Exception('Connection failed', 0, $e);
+			}
+		}
+		return $this->_pdo;
+	}
+
+	public function getIsConnected() {
+		return !!$this->_pdo;
 	}
 }

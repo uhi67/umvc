@@ -453,24 +453,24 @@ class AppHelper {
 	/**
 	 * Waits for a test to satisfy (i.e. to return a truthy value)
 	 *
-	 * Note: `$interval` timeout is checked before `$timeout` timeout, so the latter will not be detected until the first one takes place
-	 * (e.g. when `$interval` is greater than `$timeout`)
-	 *
-	 * Warning: this function is experimental, usage example and unit test is coming soon
+	 * See usage example in {@see MigrateController::actionWait()}
 	 *
 	 * @param Closure $test -- test to run. Must return truthy value on success
-	 * @param int $timeout -- seconds to giving up waiting
-	 * @param int $interval -- seconds between retry attempts
+	 * @param int $timeout -- seconds to giving up waiting, the minimum allowed value is 1
+	 * @param int $interval -- seconds between retry attempts, the minimum allowed value is 1
 	 * @return bool -- true if test succeeded within timeout, false otherwise
 	 */
 	public static function waitFor($test, $timeout=60, $interval=1) {
 		$startTime = time();
+		$interval = max(1, $interval);
+		$timeout = max(1, $timeout);
+		$timeoutPassed = $startTime+$timeout;
 		do {
 			$lastTry = time();
 			if($test()) return true;
-			while(time() < $lastTry+$interval) sleep(1);
+			sleep(min($timeoutPassed - time(), $lastTry+$interval - time()));
 		}
-		while(time() < $startTime+$timeout);
+		while(time() < $timeoutPassed);
 		return false;
 	}
 

@@ -401,9 +401,8 @@ EOT;
 		$result = AppHelper::waitFor(function() use ($interval) {
 			try {
 				echo "Trying to connect...\n";
-				sleep($interval);
-				//$this->app->db->connectNow(); // TODO
-				//echo "Connected\n";
+				if(!$this->app->db->pdo) return false;
+				echo "Connected\n";
 				return true;
 			}
 			catch(Throwable $e) {
