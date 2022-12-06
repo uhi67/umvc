@@ -393,6 +393,8 @@ EOT;
 	/**
 	 * Waits for database (container) to be ready for connection
 	 *
+	 * See also: tests/docker/readme.md
+	 *
 	 * @param int $timeout -- seconds to giving up
 	 * @param int $interval -- seconds between connection attempts
 	 * @return int -- 0 on success, 1 otherwise

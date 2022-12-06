@@ -1,4 +1,7 @@
 Example of docker container initialization log, how `php app migrate/wait` in `entrypoint.sh` affects the startup.
+
+This logfile illustrates several trial/failure attempts to connect to the database until success, so that migrations can be run if any. 
+This explains why migrate/wait should be used with docker to wait for database container initialization before running migrations.
 ```
 2022-12-03 18:50:44 umvc-php-1      | initializing the container
 2022-12-03 18:50:44 umvc-php-1      | ==========================
