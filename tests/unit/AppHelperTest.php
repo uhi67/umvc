@@ -48,4 +48,30 @@ class AppHelperTest extends \Codeception\Test\Unit
 			[0, 0, 4, false, 1, 1],
 		];
 	}
+
+	/**
+	 * @dataProvider provPathIsAbsolute
+	 * @return void
+	 */
+	public function testPathIsAbsolute($path, $expected) {
+		$this->assertEquals($expected, AppHelper::pathIsAbsolute($path));
+	}
+	public function provPathIsAbsolute() {
+		return [
+			['.', false],
+			['', false],
+			['../', false],
+			['./any', false],
+			['alma', false],
+			['/', true],
+			['/alma', true],
+			['\\alma', true],
+			['C:\\alma', true],
+			['eee:\\alma', true],
+			['_:\\alma', true],
+			['D:alma', true],
+			['http://alma', true],
+			['mailto:info@umvc.test', true],
+		];
+	}
 }

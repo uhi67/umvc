@@ -344,31 +344,112 @@ class App extends Component {
         return $this->_connection;
     }
 
+	/**
+	 *##  Returns rendered contents of the view
+	 *
+	 * **Definitions of localized views:**
+	 * - default view: the original view path without localization, e.g 'main/index'
+	 * - localized view: the view path with locale code, e.g. 'main/en/index' or 'main/en-GB/index' whichever fits better.
+	 * - locale can be an ISO 639-1 language code ('en') optionally extended with a ISO 3166-1-a2 region ('en-GB')
+	 *
+	 * **Rules for locale and language codes**
+	 * - If current locale is 'en-GB', the path with 'en-GB' is preferred, otherwise 'en' is used. No other 'en-*' is used
+	 * - If current locale is 'en', the path with 'en' is used, no any 'en-*' is recognised.
+	 *
+	 * **Locale selection:**
+	 * - true: use current locale if the localized view exists, otherwise use the default view
+	 * - false: do not use localized view, even if exists. If the unlocalized view does not exist, an exception occurs.
+	 * - explicit locale: use the specified locale, as defined at 'true' case.
+	 *
+	 * Note: returns an error message rendered as a string on internal rendering errors or Exception
+	 *
+	 * @param string $viewName -- basename of a php view-file in the `views` directory, without extension and without localization code
+	 * @param array $params -- parameters to assign to variables used in the view
+	 * @param string $layout -- the layout applied to this render after the view rendered. If false, no layout will be applied.
+	 * @param array $layoutParams -- optional parameters for the layout view
+	 * @param string|bool|null $locale -- use localized layout selection (ISO 639-1 language / ISO 3166-1-a2 locale), see above
+	 *
+	 * @return null|string -- null if view file does not exist
+	 * @throws Exception -- if view path does not exist
+	 */
+	public function render($viewName, $params=[], $layout=null, $layoutParams=[], $locale=true) {
+		if($locale === null || $locale===true) $locale = $this->locale;
+		if($locale) {
+			// Priority order: 1. Localized view (with long or short locale) / 2. untranslated / 3. default-locale view (long/short)
+			$viewFile = $this->localizedViewFile($viewName, $locale);
+			if(!$viewFile) $viewFile = $this->viewFile($viewName);
+			if(!$viewFile) $viewFile = $this->localizedViewFile($viewName, App::$app->source_locale);
+		} else {
+			$viewFile = $this->viewFile($viewName);
+		}
+		return $this->renderFile($viewFile, $params, $layout, $layoutParams);
+	}
+
+	/**
+	 * Returns best localized view filename using long or short locale. Checks if the view file exists.
+	 * Returns null if none of them exists.
+	 *
+	 * @param string $viewName
+	 * @param string $locale
+	 * @return string|null
+	 * @throws Exception -- if view path does not exist
+	 */
+	private function localizedViewFile($viewName, $locale) {
+		// 1. Look up view file using full locale
+		$lv = $this->localizedViewName($viewName, $locale);
+		$viewFile = $this->viewFile($lv);
+		if(!$viewFile) {
+			// 2. Look up view file using short language code
+			$lv = $this->localizedViewName($viewName, substr($locale, 0, 2));
+			$viewFile = $this->viewFile($lv);
+		}
+		return $viewFile;
+	}
+
+	/**
+	 * Returns view name completed with location path.
+	 *
+	 * Examples:
+	 *
+	 * - 'view1', 'la' => 'la/view1'
+	 * - 'controller/action', 'la' => 'controller/la/action'
+	 *
+	 * The result of invalid $viewName or $locale is undefined!
+	 *
+	 * @param string $viewName
+	 * @param string $locale
+	 * @return string
+	 */
+	private function localizedViewName($viewName, $locale) {
+		$p = strrpos($viewName, '/');
+		if($p===false) $p = -1;
+		return substr($viewName,0, $p+1) . $locale . '/'.substr($viewName, $p+1);
+	}
     /**
-     * Returns rendered contents of the view
+     * Returns rendered contents of the view using a $viewFile
      *
      * If layout is null (or omitted), the default layout is applied.
      *
-     * @param string $viewName -- basename of a php view-file in the `views` directory, without extension
+     * @param string $viewFile -- a php view-file with absolute path or relative to the `views` directory
      * @param array $params -- parameters to assign to variables used in the view
      * @param string|bool $layout -- the layout applied to this render after the view rendered. If false, no layout will be applied.
      * @param array $layoutParams -- optional parameters for the layout view
      *
-     * @return false|string
-     * @throws Exception
+     * @return null|string
+     * @throws Exception -- if file does not exist
      */
-    public function render($viewName, $params=[], $layout=null, $layoutParams=[]) {
+    public function renderFile($viewFile, $params=[], $layout=null, $layoutParams=[]) {
 	    try {
 		    if($layout === null) $layout = $this->layout;
-		    $viewFile = $this->viewFile($viewName);
-			if(!$viewFile) throw new Exception("View file for view '$viewName' does not exist", HTTP::HTTP_NOT_FOUND);
-			$content = $this->renderPhpFile($viewFile, $params);
+			if($viewFile && !AppHelper::pathIsAbsolute($viewFile)) $viewFile = $this->basePath.'/views/' . $viewFile.'.php';
+		    if(!file_exists($viewFile)) throw new Exception("View file '$viewFile' does not exist", HTTP::HTTP_NOT_FOUND);
+			$content = $this->renderPhpFile($viewFile, $params??[]);
 			if($layout) {
-                $content = $this->render($layout, array_merge(['content'=>$content], $layoutParams ?? []), false);
+                $content = $this->render($layout, array_merge(['content'=>$content], $layoutParams??[]), false);
 			}
 		}
 		catch(Throwable $e) {
-			$content = "<div>Render error in view '$viewName': ".$e->getMessage().'</div>';
+			$content = "<div>Render error in view '$viewFile': ".$e->getMessage().'</div>';
 		}
         return $content;
     }
@@ -380,6 +461,7 @@ class App extends Component {
 	 *
 	 * @param string $viewName
 	 * @return string|null
+	 * @throws Exception -- if view path does not exist
 	 */
 	public function viewFile($viewName) {
 		$viewPath = $this->basePath.'/views';
