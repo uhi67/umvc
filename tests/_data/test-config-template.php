@@ -37,23 +37,6 @@ return [
             'user' => getenv('DB_USER') ?: "umvc-test",
             'password' => getenv('DB_PASSWORD') ?: "umvc-test",
         ],
-        //---- Authentication module
-//        'auth' => [
-//            \uhi67\umvc\SamlAuth::class,
-//            //---- SAML related configuration values
-//            // Must be set to a secure password
-//            'admin_password' => '...',
-//            // Must be set to a secure random string
-//            'secret_salt' => '...',
-//            // A specific IdP can be configured to login with. If not specified, the discovery service will be called.
-//            'idp' => null,
-//            // URL of the discovery service to be used. If not specified, the internal discovery service will be used with predefined IdPs.
-//            'disco' => null,
-//            // Refers to the proper SAML auth-source config element in the `config/saml/config/authsource.php` file
-//            'authSource' => 'umvc-test',
-//            'idAttribute' => 'eduPersonPrincipalName',
-//            'userModel' => \app\models\User::class, // Must be a Model implementing UserInterface
-//        ],
         // Define the cache used for accelerating database operations. May be omitted in development environment.
         'cache' => [
             // A component definition array must contain a classname and optional initialization values for public properties.

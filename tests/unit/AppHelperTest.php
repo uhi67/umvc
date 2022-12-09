@@ -22,6 +22,7 @@ class AppHelperTest extends \Codeception\Test\Unit
 
 	/**
 	 * @dataProvider provWaitFor
+	 * @group slow
 	 * @return void
 	 */
     public function testWaitFor($timeout, $interval, $length, $success, $attempts, $elapsed)

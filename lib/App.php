@@ -110,8 +110,10 @@ class App extends Component {
     private $_assets;
     /** @var Connection $_connection -- the default database connection */
     private $_connection;
+	/** @var bool|string -- Actually requested locale of current render for partial views */
+	private $userLocale = true;
 
-    /**
+	/**
      * Initializes the components defined in the config.
      *
      * 'components' as name=>config pairs define the common components for web API.
@@ -345,18 +347,21 @@ class App extends Component {
     }
 
 	/**
-	 *##  Returns rendered contents of the view
+	 * ## Returns rendered contents of the view
 	 *
-	 * **Definitions of localized views:**
+	 * ### Definitions of localized views:**
+	 *
 	 * - default view: the original view path without localization, e.g 'main/index'
 	 * - localized view: the view path with locale code, e.g. 'main/en/index' or 'main/en-GB/index' whichever fits better.
 	 * - locale can be an ISO 639-1 language code ('en') optionally extended with a ISO 3166-1-a2 region ('en-GB')
 	 *
-	 * **Rules for locale and language codes**
+	 * ### Rules for locale and language codes**
+	 *
 	 * - If current locale is 'en-GB', the path with 'en-GB' is preferred, otherwise 'en' is used. No other 'en-*' is used
 	 * - If current locale is 'en', the path with 'en' is used, no any 'en-*' is recognised.
 	 *
-	 * **Locale selection:**
+	 * ### Locale selection
+	 *
 	 * - true: use current locale if the localized view exists, otherwise use the default view
 	 * - false: do not use localized view, even if exists. If the unlocalized view does not exist, an exception occurs.
 	 * - explicit locale: use the specified locale, as defined at 'true' case.
@@ -369,19 +374,25 @@ class App extends Component {
 	 * @param array $layoutParams -- optional parameters for the layout view
 	 * @param string|bool|null $locale -- use localized layout selection (ISO 639-1 language / ISO 3166-1-a2 locale), see above
 	 *
-	 * @return null|string -- null if view file does not exist
+	 * @return null|string -- null if view file (or layout file if applied) does not exist
 	 * @throws Exception -- if view path does not exist
 	 */
 	public function render($viewName, $params=[], $layout=null, $layoutParams=[], $locale=true) {
 		if($locale === null || $locale===true) $locale = $this->locale;
 		if($locale) {
+			$this->userLocale = $locale;
 			// Priority order: 1. Localized view (with long or short locale) / 2. untranslated / 3. default-locale view (long/short)
 			$viewFile = $this->localizedViewFile($viewName, $locale);
-			if(!$viewFile) $viewFile = $this->viewFile($viewName);
-			if(!$viewFile) $viewFile = $this->localizedViewFile($viewName, App::$app->source_locale);
+			if(!$viewFile) {
+				$viewFile = $this->viewFile($viewName);
+			}
+			if(!$viewFile) {
+				$viewFile = $this->localizedViewFile($viewName, $this->source_locale);
+			}
 		} else {
 			$viewFile = $this->viewFile($viewName);
 		}
+		if(!$viewFile) return null;
 		return $this->renderFile($viewFile, $params, $layout, $layoutParams);
 	}
 
@@ -390,15 +401,15 @@ class App extends Component {
 	 * Returns null if none of them exists.
 	 *
 	 * @param string $viewName
-	 * @param string $locale
+	 * @param string|null $locale -- optional
 	 * @return string|null
 	 * @throws Exception -- if view path does not exist
 	 */
-	private function localizedViewFile($viewName, $locale) {
+	public function localizedViewFile($viewName, $locale) {
 		// 1. Look up view file using full locale
-		$lv = $this->localizedViewName($viewName, $locale);
+		$lv = $locale ? $this->localizedViewName($viewName, $locale) : $viewName;
 		$viewFile = $this->viewFile($lv);
-		if(!$viewFile) {
+		if(!$viewFile && $locale) {
 			// 2. Look up view file using short language code
 			$lv = $this->localizedViewName($viewName, substr($locale, 0, 2));
 			$viewFile = $this->viewFile($lv);
@@ -482,23 +493,25 @@ class App extends Component {
      * @throws Exception
      */
     public function renderPartial($viewName, $params=[]) {
-        return $this->render($viewName, $params, false);
+        $result = $this->render($viewName, $params, false, null, $this->userLocale);
+		if(ENV_DEV && $result===null) return "[ **Render error: view '$viewName' not found** ]";
+		return $result;
     }
 
 
     /**
      * Internal renderer with output buffering and variable scope isolation
      *
-     * @param $_file_
+     * @param string $_file_
      * @param array $_params_
      *
      * @return false|string
      */
     private function renderPhpFile($_file_, $_params_ = []) {
-        $level = ob_get_level();
+        $_level_ = ob_get_level();
         ob_start();
         ob_implicit_flush(false);
-        extract($_params_, EXTR_OVERWRITE);
+        extract($_params_, EXTR_SKIP);
         try {
             require $_file_;
             return ob_get_clean();
@@ -510,7 +523,7 @@ class App extends Component {
 			return ob_get_clean();
 		}
         finally {
-            while(ob_get_level() > $level) ob_end_clean();
+            while(ob_get_level() > $_level_) ob_end_clean();
         }
     }
 
