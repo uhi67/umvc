@@ -351,26 +351,28 @@ class App extends Component {
 	 *
 	 * ### Definitions of localized views:**
 	 *
-	 * - default view: the original view path without localization, e.g 'main/index'
+	 * - source locale: the locale used in the source code and the base language of the translations.
+	 * - default view: the original view path without localization, e.g 'main/index' written in the language and rules of the source locale
 	 * - localized view: the view path with locale code, e.g. 'main/en/index' or 'main/en-GB/index' whichever fits better.
+	 * - source-locale view: the default view or the localized view of the source-locale
 	 * - locale can be an ISO 639-1 language code ('en') optionally extended with a ISO 3166-1-a2 region ('en-GB')
 	 *
 	 * ### Rules for locale and language codes**
 	 *
 	 * - If current locale is 'en-GB', the path with 'en-GB' is preferred, otherwise 'en' is used. No other 'en-*' is used
-	 * - If current locale is 'en', the path with 'en' is used, no any 'en-*' is recognised.
+	 * - If current locale is 'en', the path with 'en' is used, no 'en-*' is recognized.
 	 *
 	 * ### Locale selection
 	 *
-	 * - true: use current locale if the localized view exists, otherwise use the default view
-	 * - false: do not use localized view, even if exists. If the unlocalized view does not exist, an exception occurs.
+	 * - true: use current locale if the localized view exists, otherwise use the default view or source-locale view.
+	 * - false: do not use localized view, even if exists. If the unlocalized (default) view does not exist, an exception occurs.
 	 * - explicit locale: use the specified locale, as defined at 'true' case.
 	 *
 	 * Note: returns an error message rendered as a string on internal rendering errors or Exception
 	 *
 	 * @param string $viewName -- basename of a php view-file in the `views` directory, without extension and without localization code
 	 * @param array $params -- parameters to assign to variables used in the view
-	 * @param string $layout -- the layout applied to this render after the view rendered. If false, no layout will be applied.
+	 * @param string $layout -- the layout applied to the result after the view rendered. If false, no layout will be applied.
 	 * @param array $layoutParams -- optional parameters for the layout view
 	 * @param string|bool|null $locale -- use localized layout selection (ISO 639-1 language / ISO 3166-1-a2 locale), see above
 	 *

@@ -477,8 +477,8 @@ class AppHelper {
 	/**
 	 * Returns true if path is absolute, false if not (relative).
 	 * Empty string considered as relative.
-	 * Can be user for file síystem and URL paths as well.
-	 * Both Windows and linux file system paths are detected.
+	 * Can be used for file system and URL paths as well.
+	 * Both Windows and Linux file system paths are detected.
 	 * The path itself is not validated, malformed paths can be either absolute or relative.
 	 * Note: Paths beginning with drive letter on Windows but not \\ still considered as absolute.
 	 *

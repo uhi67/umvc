@@ -38,7 +38,7 @@ class AppTest extends \Codeception\Test\Unit
 	public function provLocalizedViewFile()
 	{
 		return [
-			// $expected, $view, $params, $layout, $layoutParams, $locale
+			// $expected, $view, $locale
 			[null, 'invalid'],
 			['main/rendertest.php', 'main/rendertest'],
 		];
