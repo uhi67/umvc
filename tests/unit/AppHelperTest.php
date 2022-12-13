@@ -22,6 +22,7 @@ class AppHelperTest extends \Codeception\Test\Unit
 
 	/**
 	 * @dataProvider provWaitFor
+	 * @group slow
 	 * @return void
 	 */
     public function testWaitFor($timeout, $interval, $length, $success, $attempts, $elapsed)
@@ -46,6 +47,32 @@ class AppHelperTest extends \Codeception\Test\Unit
 			[3, 2, 4, false, 2, 3],
 			[3, 10, 4, false, 1, 3],
 			[0, 0, 4, false, 1, 1],
+		];
+	}
+
+	/**
+	 * @dataProvider provPathIsAbsolute
+	 * @return void
+	 */
+	public function testPathIsAbsolute($path, $expected) {
+		$this->assertEquals($expected, AppHelper::pathIsAbsolute($path));
+	}
+	public function provPathIsAbsolute() {
+		return [
+			['.', false],
+			['', false],
+			['../', false],
+			['./any', false],
+			['alma', false],
+			['/', true],
+			['/alma', true],
+			['\\alma', true],
+			['C:\\alma', true],
+			['eee:\\alma', true],
+			['_:\\alma', true],
+			['D:alma', true],
+			['http://alma', true],
+			['mailto:info@umvc.test', true],
 		];
 	}
 }

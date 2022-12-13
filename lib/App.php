@@ -110,8 +110,10 @@ class App extends Component {
     private $_assets;
     /** @var Connection $_connection -- the default database connection */
     private $_connection;
+	/** @var bool|string -- Actually requested locale of current render for partial views */
+	private $userLocale = true;
 
-    /**
+	/**
      * Initializes the components defined in the config.
      *
      * 'components' as name=>config pairs define the common components for web API.
@@ -344,31 +346,123 @@ class App extends Component {
         return $this->_connection;
     }
 
+	/**
+	 * ## Returns rendered contents of the view
+	 *
+	 * ### Definitions of localized views:**
+	 *
+	 * - source locale: the locale used in the source code and the base language of the translations.
+	 * - default view: the original view path without localization, e.g 'main/index' written in the language and rules of the source locale
+	 * - localized view: the view path with locale code, e.g. 'main/en/index' or 'main/en-GB/index' whichever fits better.
+	 * - source-locale view: the default view or the localized view of the source-locale
+	 * - locale can be an ISO 639-1 language code ('en') optionally extended with a ISO 3166-1-a2 region ('en-GB')
+	 *
+	 * ### Rules for locale and language codes**
+	 *
+	 * - If current locale is 'en-GB', the path with 'en-GB' is preferred, otherwise 'en' is used. No other 'en-*' is used
+	 * - If current locale is 'en', the path with 'en' is used, no 'en-*' is recognized.
+	 *
+	 * ### Locale selection
+	 *
+	 * - true: use current locale if the localized view exists, otherwise use the default view or source-locale view.
+	 * - false: do not use localized view, even if exists. If the unlocalized (default) view does not exist, an exception occurs.
+	 * - explicit locale: use the specified locale, as defined at 'true' case.
+	 *
+	 * Note: returns an error message rendered as a string on internal rendering errors or Exception
+	 *
+	 * @param string $viewName -- basename of a php view-file in the `views` directory, without extension and without localization code
+	 * @param array $params -- parameters to assign to variables used in the view
+	 * @param string $layout -- the layout applied to the result after the view rendered. If false, no layout will be applied.
+	 * @param array $layoutParams -- optional parameters for the layout view
+	 * @param string|bool|null $locale -- use localized layout selection (ISO 639-1 language / ISO 3166-1-a2 locale), see above
+	 *
+	 * @return null|string -- null if view file (or layout file if applied) does not exist
+	 * @throws Exception -- if view path does not exist
+	 */
+	public function render($viewName, $params=[], $layout=null, $layoutParams=[], $locale=true) {
+		if($locale === null || $locale===true) $locale = $this->locale;
+		if($locale) {
+			$this->userLocale = $locale;
+			// Priority order: 1. Localized view (with long or short locale) / 2. untranslated / 3. default-locale view (long/short)
+			$viewFile = $this->localizedViewFile($viewName, $locale);
+			if(!$viewFile) {
+				$viewFile = $this->viewFile($viewName);
+			}
+			if(!$viewFile) {
+				$viewFile = $this->localizedViewFile($viewName, $this->source_locale);
+			}
+		} else {
+			$viewFile = $this->viewFile($viewName);
+		}
+		if(!$viewFile) return null;
+		return $this->renderFile($viewFile, $params, $layout, $layoutParams);
+	}
+
+	/**
+	 * Returns best localized view filename using long or short locale. Checks if the view file exists.
+	 * Returns null if none of them exists.
+	 *
+	 * @param string $viewName
+	 * @param string|null $locale -- optional
+	 * @return string|null
+	 * @throws Exception -- if view path does not exist
+	 */
+	public function localizedViewFile($viewName, $locale) {
+		// 1. Look up view file using full locale
+		$lv = $locale ? $this->localizedViewName($viewName, $locale) : $viewName;
+		$viewFile = $this->viewFile($lv);
+		if(!$viewFile && $locale) {
+			// 2. Look up view file using short language code
+			$lv = $this->localizedViewName($viewName, substr($locale, 0, 2));
+			$viewFile = $this->viewFile($lv);
+		}
+		return $viewFile;
+	}
+
+	/**
+	 * Returns view name completed with location path.
+	 *
+	 * Examples:
+	 *
+	 * - 'view1', 'la' => 'la/view1'
+	 * - 'controller/action', 'la' => 'controller/la/action'
+	 *
+	 * The result of invalid $viewName or $locale is undefined!
+	 *
+	 * @param string $viewName
+	 * @param string $locale
+	 * @return string
+	 */
+	private function localizedViewName($viewName, $locale) {
+		$p = strrpos($viewName, '/');
+		if($p===false) $p = -1;
+		return substr($viewName,0, $p+1) . $locale . '/'.substr($viewName, $p+1);
+	}
     /**
-     * Returns rendered contents of the view
+     * Returns rendered contents of the view using a $viewFile
      *
      * If layout is null (or omitted), the default layout is applied.
      *
-     * @param string $viewName -- basename of a php view-file in the `views` directory, without extension
+     * @param string $viewFile -- a php view-file with absolute path or relative to the `views` directory
      * @param array $params -- parameters to assign to variables used in the view
      * @param string|bool $layout -- the layout applied to this render after the view rendered. If false, no layout will be applied.
      * @param array $layoutParams -- optional parameters for the layout view
      *
-     * @return false|string
-     * @throws Exception
+     * @return null|string
+     * @throws Exception -- if file does not exist
      */
-    public function render($viewName, $params=[], $layout=null, $layoutParams=[]) {
+    public function renderFile($viewFile, $params=[], $layout=null, $layoutParams=[]) {
 	    try {
 		    if($layout === null) $layout = $this->layout;
-		    $viewFile = $this->viewFile($viewName);
-			if(!$viewFile) throw new Exception("View file for view '$viewName' does not exist", HTTP::HTTP_NOT_FOUND);
-			$content = $this->renderPhpFile($viewFile, $params);
+			if($viewFile && !AppHelper::pathIsAbsolute($viewFile)) $viewFile = $this->basePath.'/views/' . $viewFile.'.php';
+		    if(!file_exists($viewFile)) throw new Exception("View file '$viewFile' does not exist", HTTP::HTTP_NOT_FOUND);
+			$content = $this->renderPhpFile($viewFile, $params??[]);
 			if($layout) {
-                $content = $this->render($layout, array_merge(['content'=>$content], $layoutParams ?? []), false);
+                $content = $this->render($layout, array_merge(['content'=>$content], $layoutParams??[]), false);
 			}
 		}
 		catch(Throwable $e) {
-			$content = "<div>Render error in view '$viewName': ".$e->getMessage().'</div>';
+			$content = "<div>Render error in view '$viewFile': ".$e->getMessage().'</div>';
 		}
         return $content;
     }
@@ -380,6 +474,7 @@ class App extends Component {
 	 *
 	 * @param string $viewName
 	 * @return string|null
+	 * @throws Exception -- if view path does not exist
 	 */
 	public function viewFile($viewName) {
 		$viewPath = $this->basePath.'/views';
@@ -400,23 +495,25 @@ class App extends Component {
      * @throws Exception
      */
     public function renderPartial($viewName, $params=[]) {
-        return $this->render($viewName, $params, false);
+        $result = $this->render($viewName, $params, false, null, $this->userLocale);
+		if(ENV_DEV && $result===null) return "[ **Render error: view '$viewName' not found** ]";
+		return $result;
     }
 
 
     /**
      * Internal renderer with output buffering and variable scope isolation
      *
-     * @param $_file_
+     * @param string $_file_
      * @param array $_params_
      *
      * @return false|string
      */
     private function renderPhpFile($_file_, $_params_ = []) {
-        $level = ob_get_level();
+        $_level_ = ob_get_level();
         ob_start();
         ob_implicit_flush(false);
-        extract($_params_, EXTR_OVERWRITE);
+        extract($_params_, EXTR_SKIP);
         try {
             require $_file_;
             return ob_get_clean();
@@ -428,7 +525,7 @@ class App extends Component {
 			return ob_get_clean();
 		}
         finally {
-            while(ob_get_level() > $level) ob_end_clean();
+            while(ob_get_level() > $_level_) ob_end_clean();
         }
     }
 

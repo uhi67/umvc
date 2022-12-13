@@ -242,6 +242,7 @@ class Controller extends Component
 	 * @param string $viewName
 	 * @param string $locale
 	 * @return string|null
+	 * @throws Exception
 	 */
 	private function localizedView($viewName, $locale) {
 		// Look up view file using full locale
