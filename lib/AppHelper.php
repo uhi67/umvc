@@ -114,7 +114,7 @@ class AppHelper {
         $responseStatus = $responseStatus ?: HTTP::HTTP_INTERNAL_SERVER_ERROR;
         $title = HTTP::$statusTexts[$responseStatus] ?? 'Internal application error';
 
-        if(php_sapi_name() == "cli") {
+        if(App::isCLI()) {
 
             $msg = "[$responseStatus] $title: ".$e->getMessage();
             $details = sprintf(" in file '%s' at line '%d'", $e->getFile(), $e->getLine());

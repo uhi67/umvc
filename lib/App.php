@@ -114,6 +114,14 @@ class App extends Component {
 	private $userLocale = true;
 
 	/**
+	 * We are being executed from the CLI
+	 * @return bool
+	 */
+	public static function isCLI() {
+		return php_sapi_name() == "cli";
+	}
+
+	/**
      * Initializes the components defined in the config.
      *
      * 'components' as name=>config pairs define the common components for web API.
