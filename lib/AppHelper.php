@@ -468,7 +468,7 @@ class AppHelper {
 		do {
 			$lastTry = time();
 			if($test()) return true;
-			sleep(min($timeoutPassed - time(), $lastTry+$interval - time()));
+			sleep(max(0, min($timeoutPassed - time(), $lastTry+$interval - time())));
 		}
 		while(time() < $timeoutPassed);
 		return false;
