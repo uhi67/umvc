@@ -140,7 +140,7 @@ class App extends Component {
         error_reporting(E_ALL);
 
         // Other configurable settings
-	    $conf = ['title', 'mainControllerClass', 'layout', 'basePath', 'runtimePath'];
+	    $conf = ['title', 'mainControllerClass', 'layout', 'basePath', 'runtimePath', 'baseUrl'];
         foreach($conf as $key) {
             if(array_key_exists($key, $this->config)) $this->$key = $this->config[$key];
         }

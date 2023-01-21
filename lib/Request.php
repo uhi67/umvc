@@ -27,7 +27,7 @@ class Request extends Component {
 		// Determines original baseurl (canonic)
 		if(!$this->baseUrl && $this->parent->baseUrl) $this->baseUrl = $this->parent->baseUrl;
 		if(!$this->baseUrl && isset($_SERVER['HTTP_HOST'])) {
-			$prot = isset($_SERVER['REQUEST_SCHEME']) ? $_SERVER['REQUEST_SCHEME'] : 'http';
+			$prot = $_SERVER['REQUEST_SCHEME'] ?? 'http';
 			$prot = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] ? "https" : $prot;
 			$this->baseUrl = $prot . "://" . $_SERVER['HTTP_HOST'] . ArrayHelper::getValue($_SERVER, 'SCRIPT_NAME', '');
 			if(substr($this->baseUrl,-10)=='/index.php') $this->baseUrl = substr($this->baseUrl, 0, -10);
