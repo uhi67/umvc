@@ -61,12 +61,14 @@ class App extends Component {
     /** @var string|Controller|null -- the default controller of the application */
     public $mainControllerClass = null;
 
+	/** @var string -- base URL of the application's landing page */
+	public $baseUrl;
     /** @var string -- base path of the application */
     public $basePath;
 	/** @var string -- path of the runtime directory, default is $basePath.'/runtime' */
 	public $runtimePath;
     /** @var string -- URL of the current page without query parameters */
-    public $baseUrl;
+    public $currentUrl;
     /** @var UserInterface|Model|null $user -- The logged-in user or null */
     public $user;
 
@@ -146,14 +148,14 @@ class App extends Component {
 		if(!$this->runtimePath) $this->runtimePath = $this->basePath.'/runtime';
 
 	    if($this->sapi != 'cli') {
-            $this->baseUrl = isset($_SERVER['REQUEST_URI']) ? parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) : null;
+            $this->currentUrl = isset($_SERVER['REQUEST_URI']) ? parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) : null;
 		    if(!is_dir($logDir = $this->runtimePath.'/logs')) {
 			    if(!@mkdir($logDir, 0774, true)) {
 				    throw new Exception("Failed to create dir `$logDir`");
 			    }
 		    }
-            if(!$this->request) $this->request = new Request();
-            if(!$this->session) $this->session = new Session();
+            if(!$this->request) $this->request = new Request(['parent'=>$this]);
+            if(!$this->session) $this->session = new Session(['parent'=>$this]);
         }
 
         $components = $this->config['components'] ?? [];
@@ -279,10 +281,17 @@ class App extends Component {
     public function run() {
         try {
             if(!$this->url) $this->url = ArrayHelper::getValue($_SERVER, 'REQUEST_URI');
-            if(!$this->baseUrl) $this->baseUrl = isset($_SERVER['REQUEST_URI']) ? parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) : null;
+            if(!$this->currentUrl) $this->currentUrl = isset($_SERVER['REQUEST_URI']) ? parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) : null;
             if(!$this->query) $this->query = $_GET;
-            if(!$this->path) $this->path = parse_url($this->url, PHP_URL_PATH);
+            if(!$this->path) {
+				$this->path = parse_url($this->url, PHP_URL_PATH);
+	            $basePath = $this->baseUrl ? explode('/', trim(parse_url($this->baseUrl, PHP_URL_PATH), '/')) : [];
+				echo json_encode($basePath);
+            }
             $this->path = $this->path ? explode('/', trim($this->path, '/')) : [];
+	        while($basePath && $basePath[0]==$this->path[0]) {
+		        array_shift($basePath); array_shift($this->path);
+	        }
 
             if(ENV_DEV) Debug::debug('[url] '.$this->url);
 

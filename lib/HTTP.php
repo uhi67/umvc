@@ -321,7 +321,7 @@ class HTTP {
 	 * @return string
 	 */
 	public static function getSelfURL() {
-		$baseurl = App::$app->baseUrl;
+		$baseurl = App::$app->currentUrl;
 		if (!empty($baseurl)) {
 			$protocol = parse_url($baseurl, PHP_URL_SCHEME);
 			$hostname = parse_url($baseurl, PHP_URL_HOST);
