@@ -286,7 +286,6 @@ class App extends Component {
             if(!$this->path) {
 				$this->path = parse_url($this->url, PHP_URL_PATH);
 	            $basePath = $this->baseUrl ? explode('/', trim(parse_url($this->baseUrl, PHP_URL_PATH), '/')) : [];
-				echo json_encode($basePath);
             }
             $this->path = $this->path ? explode('/', trim($this->path, '/')) : [];
 	        while($basePath && $basePath[0]==$this->path[0]) {
