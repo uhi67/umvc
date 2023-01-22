@@ -85,4 +85,17 @@ class AppTest extends \Codeception\Test\Unit
 		    ["<h2>Szia, haver!</h2>\r\n<p>Welcome.</p>", 'main/rendertest3', ['name'=>'haver'], false, null, 'hu'],
 	    ];
     }
+
+	/**
+	 * @dataProvider provCreateUrl
+	 * @return void
+	 */
+	public function testCreateUrl($expected, $def, $abs) {
+		$this->assertEquals($expected, $this->app->createUrl($def, $abs));
+	}
+	function provCreateUrl() {
+		return [
+			['http://umvc.test/', null, true],
+		];
+	}
 }
