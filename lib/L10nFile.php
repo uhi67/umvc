@@ -76,7 +76,10 @@ class L10nFile extends L10n {
 		if($lang===null) $lang = $this->lang;
 
 		$directory = $this->directory($category);
-		if(!is_dir($directory)) return $source.'***'; // The category does not exist
+		if(!is_dir($directory)) {
+            App::log('warning', "Translation category '$category' is missing in `$directory`");
+            return $source.'***';
+        }
 
 		$text = static::getTextFile($category, $directory, $source, $lang, $this->source);
 
