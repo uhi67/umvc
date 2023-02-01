@@ -235,8 +235,8 @@ class Controller extends Component
      * @param array $layoutParams -- optional parameters for the layout view
      * @param string|bool|null $locale -- use localized layout selection (ISO 639-1 language / ISO 3166-1-a2 locale), see above
      *
-     * @return false|string
-     * @throws Exception
+     * @return string -- output
+     * @throws Exception -- if view does not exist or other error occurs
      */
     public function render($viewName, $params=[], $layout=null, $layoutParams=[], $locale=null) {
 	    if($locale === null || $locale===true) $locale = $this->app->locale;

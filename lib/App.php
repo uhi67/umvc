@@ -412,7 +412,7 @@ class App extends Component {
 	 * @param array $layoutParams -- optional parameters for the layout view
 	 * @param string|bool|null $locale -- use localized layout selection (ISO 639-1 language / ISO 3166-1-a2 locale), see above
 	 *
-	 * @return null|string -- null if view file (or layout file if applied) does not exist
+	 * @return string -- output
 	 * @throws Exception -- if view path does not exist
 	 */
 	public function render($viewName, $params=[], $layout=null, $layoutParams=[], $locale=true) {
@@ -430,7 +430,7 @@ class App extends Component {
 		} else {
 			$viewFile = $this->viewFile($viewName);
 		}
-		if(!$viewFile) return null;
+		if(!$viewFile) throw new Exception("View file is not found for '$viewName", HTTP::HTTP_NOT_FOUND);
 		return $this->renderFile($viewFile, $params, $layout, $layoutParams);
 	}
 
@@ -484,7 +484,7 @@ class App extends Component {
      * @param string|bool $layout -- the layout applied to this render after the view rendered. If false, no layout will be applied.
      * @param array $layoutParams -- optional parameters for the layout view
      *
-     * @return null|string
+     * @return string
      * @throws Exception -- if file does not exist
      */
     public function renderFile($viewFile, $params=[], $layout=null, $layoutParams=[]) {
@@ -663,7 +663,7 @@ class App extends Component {
         if(is_array($url)) $url = $this->createUrl($url);
         $this->sendHeader('Location: '.$url);
         $this->responseStatus = 302;
-        return true;
+	    return App::EXIT_STATUS_OK;
     }
 
     /**
