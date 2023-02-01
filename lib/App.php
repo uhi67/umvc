@@ -5,6 +5,7 @@ namespace uhi67\umvc;
 use Codeception\Util\Debug;
 use ErrorException;
 use Exception;
+use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 
 /**
@@ -54,7 +55,11 @@ use Throwable;
  * @package UMVC Simple Application Framework
  */
 class App extends Component {
-    /** @var array $config -- configuration settings */
+	const
+		EXIT_STATUS_OK = 0,
+		EXIT_STATUS_ERROR = 1;          // General error
+
+	/** @var array $config -- configuration settings */
     public $config;
     /** @var string $title of the application (used in CLI echo) */
     public $title;
@@ -102,9 +107,10 @@ class App extends Component {
      * locale can be an ISO 639-1 language code ('en') optionally extended with a ISO 3166-1-a2 region ('en-GB')
      */
     public $source_locale = 'en-GB';
-    /** @var string $locale -- the current locale for localization, e.g. "hu-HU".*/
+    /** @var string $locale -- the current locale for localization, e.g. "hu-HU". */
     public $locale = 'en-GB';
-
+	/** @var string[] $classPath -- The path of the actually executed Controller includin controller name, see also {@see Controller::$classPath} */
+	public $classPath;
 
     /** @var Component[] $_components  -- the configured components */
     private $_components;
@@ -227,10 +233,12 @@ class App extends Component {
 
     /**
      * Create App from given config file and run.
+     * If an integer is returned from the controller, it used as exit status.  
+     * If a string or stringable returned, outputs to the standard output, and returns with OK.
      * Called from index.php
      *
      * @param $configFile
-     * @return int
+     * @return int -- exit status
      */
     public static function createRun($configFile) {
         try {
@@ -248,7 +256,7 @@ class App extends Component {
             set_error_handler(function($severity, $errstr, $errfile, $errline) {
                 $err = new ErrorException($errstr, 0, $severity, $errfile, $errline);
                 AppHelper::showException($err);
-                exit(500);
+                exit(self::EXIT_STATUS_ERROR);
             });
             register_shutdown_function(function() {
                 $error = error_get_last();
@@ -261,11 +269,15 @@ class App extends Component {
             // Default application class (uhi67\umvc\App) may be overriden in config
             $class = $config['class'] ?? ($config[0] ?? App::class);
             $app = App::create(['class'=>$class, 'config'=>$config]);
-            return $app->run();
+            $response = $app->run();
+			if(is_int($response)) return $response;
+			if(!is_string($response)) echo json_encode($response);
+			else echo $response;
+			return self::EXIT_STATUS_OK;
         }
         catch(Throwable $e) {
             AppHelper::showException($e);
-            return -1;
+	        return self::EXIT_STATUS_ERROR;
         }
     }
 
@@ -276,7 +288,7 @@ class App extends Component {
      * Path elements are mapped to FQ class-name + optional action-name.
      * Called from createRun and codeception connector
      *
-     * @return int -- HTTP status code
+     * @return string|int -- output or exit status code
      */
     public function run() {
         try {
@@ -296,14 +308,15 @@ class App extends Component {
 
             if($this->path==[''] && $this->mainControllerClass) {
                 // The default action of main page can be called in the short way
+	            $this->classPath = [$this->mainControllerClass::getClassPath()];
                 return $this->runController($this->mainControllerClass, [], $this->query);
             }
             else {
                 // Find the actual controller class for this path, and let it go
                 for ($i = 1; $i <= count($this->path); $i++) {
-                    $classPath = array_slice($this->path, 0, $i);
-                    $classPath[$i - 1] = AppHelper::camelize($classPath[$i - 1]);
-                    $controllerClass = 'app\controllers\\' . implode('\\', $classPath) . 'Controller';
+                    $this->classPath = array_slice($this->path, 0, $i);
+	                $camelizedClassPath = array_map(function($p) { return AppHelper::camelize($p); }, $this->classPath);
+                    $controllerClass = 'app\controllers\\' . implode('\\', $camelizedClassPath) . 'Controller';
                     if (class_exists($controllerClass)) {
                         return $this->runController($controllerClass, array_slice($this->path, $i), $this->query);
                     }
@@ -313,6 +326,7 @@ class App extends Component {
             // Last resort: main controller action, if exists
             $action = $this->path[0]??'default';
             if($this->mainControllerClass && is_callable([$this->mainControllerClass, 'action'.$action])) {
+				$this->classPath = [$this->mainControllerClass::getClassPath()];
                 return $this->runController($this->mainControllerClass, $this->path, $this->query);
             }
 
@@ -330,11 +344,17 @@ class App extends Component {
      * @param string $controllerClass -- ClassName ot the controller to be called
      * @param string[] $path -- the remainder of the request path after the controller name
      * @param array $query -- the actual GET query
-     * @return int -- HTTP response status
+     * @return string|int -- output or exit status
      * @throws Exception -- if invalid action was requested
      */
     public function runController($controllerClass, $path, $query) {
-        $this->controller = new $controllerClass(['app' => $this, 'path' => $path, 'query' => $query]);
+		if(!is_array($this->classPath)) throw new Exception('Invalid classPath: '.print_r($this->classPath, true));
+        $this->controller = new $controllerClass([
+			'app' => $this,
+	        'path' => $path,
+			'classPath' => implode('/', $this->classPath),
+	        'query' => $query
+        ]);
         return $this->controller->go();
     }
 
