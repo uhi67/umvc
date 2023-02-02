@@ -233,7 +233,7 @@ class App extends Component {
 
     /**
      * Create App from given config file and run.
-     * If an integer is returned from the controller, it used as exit status.  
+     * If an integer is returned from the controller, it used as exit status.
      * If a string or stringable returned, outputs to the standard output, and returns with OK.
      * Called from index.php
      *
@@ -838,6 +838,7 @@ class App extends Component {
     }
 
     public function hasComponent($name, $type=Component::class) {
+        if($this->_components===null) throw new Exception('Configuration error: components definition is missing');
         if(array_key_exists($name, $this->_components) && $this->_components[$name] instanceof $type) return $this->_components[$name];
         return null;
     }
