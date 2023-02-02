@@ -24,6 +24,8 @@ class Command extends Component
     public $query;
     /** @var string|null -- name of the currently executed action (without 'action' prefix) */
     public $action;
+	/** @var string $classPath -- the controller id path for controller Id property (Compatibility with Controller)*/
+	public $classPath = null;
 
     /**
      * Execute the request by this controller

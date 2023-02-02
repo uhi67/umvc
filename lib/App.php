@@ -109,7 +109,7 @@ class App extends Component {
     public $source_locale = 'en-GB';
     /** @var string $locale -- the current locale for localization, e.g. "hu-HU". */
     public $locale = 'en-GB';
-	/** @var string[] $classPath -- The path of the actually executed Controller includin controller name, see also {@see Controller::$classPath} */
+	/** @var string[] $classPath -- The path of the actually executed Controller including controller name, see also {@see Controller::$classPath} */
 	public $classPath;
 
     /** @var Component[] $_components  -- the configured components */
@@ -348,6 +348,7 @@ class App extends Component {
      * @throws Exception -- if invalid action was requested
      */
     public function runController($controllerClass, $path, $query) {
+		if(App::isCLI()) $this->classPath = [$controllerClass::shortName()];
 		if(!is_array($this->classPath)) throw new Exception('Invalid classPath: '.print_r($this->classPath, true));
         $this->controller = new $controllerClass([
 			'app' => $this,
@@ -768,14 +769,22 @@ class App extends Component {
             for ($i = 1; $i <= count($this->path); $i++) {
                 $classPath = array_slice($this->path, 0, $i);
                 $classPath[$i - 1] = AppHelper::camelize($classPath[$i - 1]);
+				// Case 1: Command class is in the current application
                 $controllerClass = 'app\commands\\' . ($pathinfo = implode('\\', $classPath)) . 'Controller';
                 if (class_exists($controllerClass)) {
                     return $this->runController($controllerClass, array_slice($this->path, $i), $this->query);
                 }
+	            // Case 2: Command class is in the framework
                 $controllerClass = 'uhi67\umvc\commands\\' . implode('\\', $classPath) . 'Controller';
                 if (class_exists($controllerClass)) {
                     return $this->runController($controllerClass, array_slice($this->path, $i), $this->query);
                 }
+	            // Case 3: Command class is in another component
+	            $controllerClass = implode('\\', $classPath) . 'Controller';
+	            if (class_exists($controllerClass)) {
+					$this->classPath = $classPath; $this->classPath[count($this->classPath)-1] .= 'Controller';
+		            return $this->runController($controllerClass, array_slice($this->path, $i), $this->query);
+	            }
             }
             throw new Exception("Command not found ($pathinfo, $controllerClass)", HTTP::HTTP_NOT_FOUND);
         }

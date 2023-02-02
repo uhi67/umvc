@@ -382,7 +382,7 @@ class Model extends BaseModel {
      *  - other expression formats
      * @param array $params the parameter values for $1 parameters or name=>value pairs for $name parameters
      * @param Connection|null $connection -- database connection. Default is from App.
-     * @param null $query -- (output only) return the query created. Affected rows are accessible as $query->affected
+     * @param Query|null $query -- (output only) return the query created. Affected rows are accessible as $query->affected
      * @return bool success
      * @throws Exception
      */
