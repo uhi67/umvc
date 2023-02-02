@@ -724,6 +724,7 @@ class BaseModel extends Component implements JsonSerializable
         return $recursive ? ArrayHelper::toArray($data) : $data;
     }
 
+	#[\ReturnTypeWillChange]
     /**
      * Serializes model data for json_encode
      *
