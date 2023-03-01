@@ -664,7 +664,7 @@ class App extends Component {
         if(is_array($url)) $url = $this->createUrl($url);
         $this->sendHeader('Location: '.$url);
         $this->responseStatus = 302;
-        return App::EXIT_STATUS_OK;
+        return App::EXIT_STATUS_ERROR;
     }
 
     /**
