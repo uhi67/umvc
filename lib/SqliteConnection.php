@@ -24,7 +24,9 @@ class SqliteConnection extends Connection {
         $this->reset();
     }
 
-    public function supportsOrderNullsLast() { return false; }
+    public function supportsOrderNullsLast() {
+        return false;
+    }
 
     /**
      * @throws Exception on failure
@@ -43,8 +45,8 @@ class SqliteConnection extends Connection {
      */
     public function quoteIdentifier($fieldName) {
         if(!$fieldName) throw new Exception('Empty field-name');
-        if($fieldName[0]=='"' && substr($fieldName, -1) == '"') $fieldName = substr($fieldName,1,-1);
-        return '"'.str_replace('"', '_', $fieldName).'"';
+        if($fieldName[0] == '"' && substr($fieldName, -1) == '"') $fieldName = substr($fieldName, 1, -1);
+        return '"' . str_replace('"', '_', $fieldName) . '"';
     }
 
     /**
@@ -56,15 +58,14 @@ class SqliteConnection extends Connection {
      * @param string $table
      * @return array|boolean -- returns false if table does not exist
      */
-    public function tableMetadata($table)
-    {
+    public function tableMetadata($table) {
         $table = $this->quoteIdentifier($table);
-        $stmt = $this->pdo->query('pragma table_info('.$table.')'); // Returns cid,name,type,notnull,dflt_value,pk
+        $stmt = $this->pdo->query('pragma table_info(' . $table . ')'); // Returns cid,name,type,notnull,dflt_value,pk
         if(!$stmt) return false;
         $rows = $stmt->fetchAll();
-        if($rows===false) return false;
+        if($rows === false) return false;
         $i = 1;
-        $result = array();
+        $result = [];
         foreach($rows as $row) {
             $type = $row['type'];
             $len = -1;
@@ -76,9 +77,9 @@ class SqliteConnection extends Connection {
                 'num' => $i++,
                 'type' => $type,
                 'len' => $len,
-                'not null' => $row['notnull']==0,
-                'has default' => $row['dflt_value']!==null,
-                'pk' => $row['pk']==1,
+                'not null' => $row['notnull'] == 0,
+                'has default' => $row['dflt_value'] !== null,
+                'pk' => $row['pk'] == 1,
             ];
         }
         return $result;

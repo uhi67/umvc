@@ -16,7 +16,7 @@ class UserException extends Exception {
      * @param int $status
      * @param Exception $previous
      */
-    public function __construct($message, $status, $previous=null) {
+    public function __construct($message, $status, $previous = null) {
         parent::__construct($message, $status, $previous);
     }
 }

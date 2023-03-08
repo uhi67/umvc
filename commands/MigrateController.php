@@ -54,8 +54,8 @@ class MigrateController extends Command {
 
     public function actionDefault() {
         if($this->verbose) {
-	        echo "The migrate command keeps database changes in sync with source code.", PHP_EOL;
-	        echo "Run `php app migrate help` for more details.", PHP_EOL, PHP_EOL;
+            echo "The migrate command keeps database changes in sync with source code.", PHP_EOL;
+            echo "Run `php app migrate help` for more details.", PHP_EOL, PHP_EOL;
         }
         return $this->actionUp();
     }
@@ -67,18 +67,18 @@ class MigrateController extends Command {
      * @throws Exception
      */
     public function actionUp() {
-        if (!$this->createMigrationTable()) exit(1);
-        if (!$this->createMigrationPath()) exit(2);
+        if(!$this->createMigrationTable()) exit(1);
+        if(!$this->createMigrationPath()) exit(2);
         // Collect new migration files
-	    if($this->verbose>2) echo "Migrating from path '$this->migrationPath'", PHP_EOL;
+        if($this->verbose > 2) echo "Migrating from path '$this->migrationPath'", PHP_EOL;
         $dh = opendir($this->migrationPath);
-        if(!$dh) throw new Exception("Invalid dir ".$this->migrationPath);
+        if(!$dh) throw new Exception("Invalid dir " . $this->migrationPath);
         $new = [];
-        while (($file = readdir($dh)) !== false) {
-            if(filetype($this->migrationPath.'/'.$file)=='file' && preg_match('/^m\d{6}_\d{6}_[\w_]+\.(php|sql)$/', $file)) {
+        while(($file = readdir($dh)) !== false) {
+            if(filetype($this->migrationPath . '/' . $file) == 'file' && preg_match('/^m\d{6}_\d{6}_[\w_]+\.(php|sql)$/', $file)) {
                 // Check in database
                 $name = pathinfo($file, PATHINFO_FILENAME);
-                $applied = \uhi67\umvc\models\Migration::getOne(['name'=>$name]);
+                $applied = \uhi67\umvc\models\Migration::getOne(['name' => $name]);
                 if(!$applied) $new[] = $file;
             }
         }
@@ -97,7 +97,7 @@ class MigrateController extends Command {
                 $filename = $this->migrationPath . '/' . $file;
                 echo "  - $filename", PHP_EOL;
             }
-            if($this->confirm!='yes' && !CliHelper::confirm('Apply all the new migrations?')) exit;
+            if($this->confirm != 'yes' && !CliHelper::confirm('Apply all the new migrations?')) exit;
         }
 
         // Execute new migrations
@@ -106,24 +106,23 @@ class MigrateController extends Command {
             $this->connection->pdo->beginTransaction();
             $name = pathinfo($file, PATHINFO_FILENAME);
             $ext = pathinfo($file, PATHINFO_EXTENSION);
-            $filename = $this->migrationPath.'/'.$file;
+            $filename = $this->migrationPath . '/' . $file;
             try {
-                if($this->verbose>1) echo "Applying $name from $filename", PHP_EOL;
-                if($ext=='php') {
+                if($this->verbose > 1) echo "Applying $name from $filename", PHP_EOL;
+                if($ext == 'php') {
                     $success = false;
 
                     // Run php file
                     try {
                         /** @var Migration $className */
-                        $className = '\app\migrations\\'.$name;
+                        $className = '\app\migrations\\' . $name;
                         require $filename;
                         /** @var Migration $migration */
-                        $migration = new $className(['app'=>$this->app, 'connection'=>$this->connection, 'verbose'=>$this->verbose]);
+                        $migration = new $className(['app' => $this->app, 'connection' => $this->connection, 'verbose' => $this->verbose]);
                         $success = $migration->up();
-                    }
-                    catch(Exception $e) {
+                    } catch(Exception $e) {
                         if($this->verbose) echo sprintf('%s in file %s at line %s', $e->getMessage(), $e->getFile(), $e->getLine()), PHP_EOL;
-                        if($this->verbose>1) debug_print_backtrace();
+                        if($this->verbose > 1) debug_print_backtrace();
                     }
                     if($success) {
                         // Insert into database
@@ -139,10 +138,9 @@ class MigrateController extends Command {
                         if($this->connection->pdo->inTransaction()) $this->connection->pdo->rollBack();
                         break;
                     }
-                }
-                else {
+                } else {
                     // SQL-type migration
-                    $migration = new SqlMigration(['connection'=>$this->connection, 'filename'=>$filename, 'verbose'=>$this->verbose]);
+                    $migration = new SqlMigration(['connection' => $this->connection, 'filename' => $filename, 'verbose' => $this->verbose]);
                     $success = $migration->up();
 
                     if($success) {
@@ -158,8 +156,7 @@ class MigrateController extends Command {
                         if(!$migrationDone->save()) {
                             echo "Registering migration " . $n . " failed.", PHP_EOL;
                             throw new Exception("Registering migration " . $n . " failed.");
-                        }
-                        else $n++;
+                        } else $n++;
                     } else {
                         echo "Applying migration '" . $name . "' failed", PHP_EOL;
                         echo $this->connection->lastError;
@@ -167,25 +164,24 @@ class MigrateController extends Command {
                         break;
                     }
                 }
-				// Note: MySQL auto-commits transactions on DDL statements. Therefore we may find our transaction already gone
-	            if($this->connection->pdo->inTransaction()) {
-					$this->connection->pdo->commit();
-	            }
-            }
-            catch(Throwable $e) {
+                // Note: MySQL auto-commits transactions on DDL statements. Therefore we may find our transaction already gone
+                if($this->connection->pdo->inTransaction()) {
+                    $this->connection->pdo->commit();
+                }
+            } catch(Throwable $e) {
                 if($this->connection->pdo->inTransaction()) $this->connection->pdo->rollBack();
-				if(ENV_DEV) Debug::debug(sprintf("Exception in migration: '%s' in file '%s' at line '%d'", $e->getMessage(), $e->getFile(), $e->getLine()));
+                if(ENV_DEV) Debug::debug(sprintf("Exception in migration: '%s' in file '%s' at line '%d'", $e->getMessage(), $e->getFile(), $e->getLine()));
                 printf("Exception: %s in file %s at line %d\n", $e->getMessage(), $e->getFile(), $e->getLine());
-                throw new Exception("Applying migration '". $name."' caused an exception", 500, $e);
+                throw new Exception("Applying migration '" . $name . "' caused an exception", 500, $e);
             }
         }
-        if($n==0 && $this->verbose) echo "No migrations applied", PHP_EOL;
+        if($n == 0 && $this->verbose) echo "No migrations applied", PHP_EOL;
         else {
             // If migrations were applied, the model table metadata cache must be cleared
             if($this->app->hasComponent('cache')) $this->app->cache->clear();
 
             // Summary
-            if($this->verbose) echo PHP_EOL, $n, $n>1 ? " migrations were" : " migration was", " applied.", PHP_EOL;
+            if($this->verbose) echo PHP_EOL, $n, $n > 1 ? " migrations were" : " migration was", " applied.", PHP_EOL;
         }
         return 0;
     }
@@ -197,10 +193,10 @@ class MigrateController extends Command {
         echo "   `php app migrate` -- migrate up. Interactive confirmations will be asked for.", PHP_EOL;
         echo "   `php app migrate/up verbose=2` -- migrate up with detailed output; `verbose=0` for silent operation.", PHP_EOL;
         echo "   `php app migrate/create <name>` -- create new php migration in the migration directory", PHP_EOL;
-	    echo "   `php app migrate/reset` -- delete database and migrate up from the beginning", PHP_EOL, PHP_EOL;
-		echo "Options:", PHP_EOL, PHP_EOL;
-	    echo "   - `confirm=yes` to avoid interactive confirmations", PHP_EOL;
-	    echo "   - `verbose=0` for silent operation, 1 for normal, 2 for detailed output", PHP_EOL;
+        echo "   `php app migrate/reset` -- delete database and migrate up from the beginning", PHP_EOL, PHP_EOL;
+        echo "Options:", PHP_EOL, PHP_EOL;
+        echo "   - `confirm=yes` to avoid interactive confirmations", PHP_EOL;
+        echo "   - `verbose=0` for silent operation, 1 for normal, 2 for detailed output", PHP_EOL;
     }
 
     /**
@@ -208,8 +204,8 @@ class MigrateController extends Command {
      */
     public function actionCreate() {
         if(!$this->connection) throw new Exception('No database connection defined');
-        if (!$this->createMigrationTable()) exit(1);
-        if (!$this->createMigrationPath()) exit(2);
+        if(!$this->createMigrationTable()) exit(1);
+        if(!$this->createMigrationPath()) exit(2);
         $name = array_shift($this->query);
         return $this->createMigration($name);
     }
@@ -222,9 +218,9 @@ class MigrateController extends Command {
      */
     public function createMigrationTable() {
         if(!$this->connection->tableExists($this->migrationTable)) {
-            if($this->confirm!='yes' && !CliHelper::confirm('The `migration` table does not exist. Create?')) exit;
+            if($this->confirm != 'yes' && !CliHelper::confirm('The `migration` table does not exist. Create?')) exit;
             echo "Creating `migration` table...", PHP_EOL;
-            $this->connection->pdo->query('CREATE TABLE '.$this->migrationTable.' (name varchar(100) unique primary key, applied int)');
+            $this->connection->pdo->query('CREATE TABLE ' . $this->migrationTable . ' (name varchar(100) unique primary key, applied int)');
             if(!$this->connection->tableExists($this->migrationTable)) {
                 echo "Creating `migration` table failed", PHP_EOL;
                 return false;
@@ -240,7 +236,7 @@ class MigrateController extends Command {
      */
     public function createMigrationPath() {
         if(!is_dir($this->migrationPath)) {
-            if($this->confirm!='yes' && !CliHelper::confirm('The `/migrations` directory does not exist. Create?')) exit;
+            if($this->confirm != 'yes' && !CliHelper::confirm('The `/migrations` directory does not exist. Create?')) exit;
             echo "Creating `migrations` directory...", PHP_EOL;
             if(!mkdir($this->migrationPath, true)) {
                 echo "Creating `migrations` directory failed", PHP_EOL;
@@ -262,7 +258,7 @@ class MigrateController extends Command {
             echo 'The migration name must be specified.', PHP_EOL;
             return 3;
         }
-        if (!preg_match('/^[\w\\\\]+$/', $name)) {
+        if(!preg_match('/^[\w\\\\]+$/', $name)) {
             echo 'The migration name should contain letters, digits, underscore and/or backslash characters only.', PHP_EOL;
             return 4;
         }
@@ -273,10 +269,10 @@ class MigrateController extends Command {
         }
         $file = $this->migrationPath . DIRECTORY_SEPARATOR . $shortClassName . '.php';
         if(file_exists($file)) {
-            echo 'A migration file with name '.$name.' already exists.', PHP_EOL;
+            echo 'A migration file with name ' . $name . ' already exists.', PHP_EOL;
             return 5;
         }
-        if($this->confirm!='yes' && !CliHelper::confirm("Create new migration '$file'?")) exit(-1);
+        if($this->confirm != 'yes' && !CliHelper::confirm("Create new migration '$file'?")) exit(-1);
         $content = <<<EOT
 <?php
 namespace app\migrations;
@@ -291,7 +287,7 @@ class %className% extends Migration {
 }
 EOT;
         $content = str_replace('%className%', $shortClassName, $content);
-        if (file_put_contents($file, $content, LOCK_EX) === false) {
+        if(file_put_contents($file, $content, LOCK_EX) === false) {
             echo "Failed to create new migration.", PHP_EOL;
             return 6;
         }
@@ -299,124 +295,121 @@ EOT;
         return 0;
     }
 
-	/**
-	 * Delete the database and migrate up from the beginning
-	 *
-	 * @return int -- error status
-	 * @throws Exception
-	 */
-	public function actionReset() {
-		if($this->confirm!='yes' && !CliHelper::confirm('Are you sure to delete the whole database?')) return 1;
-		$name = $this->connection->schemaName;
-		if($this->verbose) echo "Deleting database '$name'...\n";
-		if(!$this->truncateDatabase()) {
-			echo "Error truncating database", PHP_EOL;
-			return 2;
-		}
-		if(!$this->createMigrationTable()) return 3;
-		return $this->actionUp();
-	}
+    /**
+     * Delete the database and migrate up from the beginning
+     *
+     * @return int -- error status
+     * @throws Exception
+     */
+    public function actionReset() {
+        if($this->confirm != 'yes' && !CliHelper::confirm('Are you sure to delete the whole database?')) return 1;
+        $name = $this->connection->schemaName;
+        if($this->verbose) echo "Deleting database '$name'...\n";
+        if(!$this->truncateDatabase()) {
+            echo "Error truncating database", PHP_EOL;
+            return 2;
+        }
+        if(!$this->createMigrationTable()) return 3;
+        return $this->actionUp();
+    }
 
-	/**
-	 * Drop all object from the database
-	 *
-	 * @param int $verbose
-	 * @return bool -- success
-	 * @throws Exception
-	 */
-	public function truncateDatabase($verbose=0) {
-		$metadata = $this->connection->schemaMetadata;
-		$success = true;
+    /**
+     * Drop all object from the database
+     *
+     * @param int $verbose
+     * @return bool -- success
+     * @throws Exception
+     */
+    public function truncateDatabase($verbose = 0) {
+        $metadata = $this->connection->schemaMetadata;
+        $success = true;
 
-		// First drop all foreign keys,
-		if($verbose>1) echo "Dropping foreign keys...\n";
-		foreach ($metadata as $tableName=>$tableData) {
-			$foreignKeys = $this->connection->getForeignKeys($tableName);
-			if($foreignKeys) {
-				foreach ($foreignKeys as $name => $foreignKey) {
-					if($verbose>2) echo "Dropping foreign key '$name'\n";
-					$constraint_name = $foreignKey['CONSTRAINT_NAME']??$foreignKey['constraint_name'];
-					$table_name = $foreignKey['TABLE_NAME']??$foreignKey['table_name'];
-					if(!$this->connection->dropForeignKey($constraint_name, $table_name)) $success=false;
-					elseif($verbose>1) echo "Foreign key $name dropped.\n";
-				}
-			}
-		}
+        // First drop all foreign keys,
+        if($verbose > 1) echo "Dropping foreign keys...\n";
+        foreach($metadata as $tableName => $tableData) {
+            $foreignKeys = $this->connection->getForeignKeys($tableName);
+            if($foreignKeys) {
+                foreach($foreignKeys as $name => $foreignKey) {
+                    if($verbose > 2) echo "Dropping foreign key '$name'\n";
+                    $constraint_name = $foreignKey['CONSTRAINT_NAME'] ?? $foreignKey['constraint_name'];
+                    $table_name = $foreignKey['TABLE_NAME'] ?? $foreignKey['table_name'];
+                    if(!$this->connection->dropForeignKey($constraint_name, $table_name)) $success = false;
+                    elseif($verbose > 1) echo "Foreign key $name dropped.\n";
+                }
+            }
+        }
 
-		// drop the tables:
-		if($verbose>1) echo "Dropping tables and views...\n";
-		foreach ($metadata as $tableName => $schema) {
-			if($verbose>2) echo "Dropping table/view '$tableName'\n";
-			try {
-				$this->connection->dropTable($tableName);
-				if($verbose>1) echo "Table $tableName dropped.\n";
-			} catch (Exception $e) {
-				if ($this->connection->isViewRelated($message = $e->getMessage())) {
-					if(!$this->connection->dropView($tableName)) $success=false;
-					elseif($verbose>1) echo "View $tableName dropped.\n";
-				} else {
-					echo "Cannot drop table '$tableName': $message .\n";
-					$success = false;
-				}
-			}
-		}
+        // drop the tables:
+        if($verbose > 1) echo "Dropping tables and views...\n";
+        foreach($metadata as $tableName => $schema) {
+            if($verbose > 2) echo "Dropping table/view '$tableName'\n";
+            try {
+                $this->connection->dropTable($tableName);
+                if($verbose > 1) echo "Table $tableName dropped.\n";
+            } catch(Exception $e) {
+                if($this->connection->isViewRelated($message = $e->getMessage())) {
+                    if(!$this->connection->dropView($tableName)) $success = false;
+                    elseif($verbose > 1) echo "View $tableName dropped.\n";
+                } else {
+                    echo "Cannot drop table '$tableName': $message .\n";
+                    $success = false;
+                }
+            }
+        }
 
-		// Drop functions from public schema (exclude pg_catalog)
-		$functions = $this->connection->getRoutines();
-		if($verbose>1 && $functions) echo "Dropping functions and routines\n";
-		foreach($functions as $functionName) {
-			if($verbose>2) echo "Dropping $functionName\n";
-			if($this->connection->dropRoutine($functionName)) {
-				if($verbose>1) echo "$functionName dropped.\n";
-			}
-			else {
-				echo "Cannot drop '$functionName'.\n";
-				$success = false;
-			}
-		}
+        // Drop functions from public schema (exclude pg_catalog)
+        $functions = $this->connection->getRoutines();
+        if($verbose > 1 && $functions) echo "Dropping functions and routines\n";
+        foreach($functions as $functionName) {
+            if($verbose > 2) echo "Dropping $functionName\n";
+            if($this->connection->dropRoutine($functionName)) {
+                if($verbose > 1) echo "$functionName dropped.\n";
+            } else {
+                echo "Cannot drop '$functionName'.\n";
+                $success = false;
+            }
+        }
 
-		// TODO: drop triggers
-		// $triggers = $this->connection->getTriggers();
+        // TODO: drop triggers
+        // $triggers = $this->connection->getTriggers();
 
-		// Drop sequences // Note: MySQL does not use explicit sequences, this is for future compatibility (e.g. PostgreSQL)
-		$sequences = $this->connection->getSequences();
-		if($verbose>1 && $sequences) echo "Dropping sequences...\n";
-		foreach($sequences as $sequenceName) {
-			if($verbose>2) echo "Dropping sequence $sequenceName\n";
-			if(!$this->connection->dropSequence($sequenceName)) $success=false;
-			elseif($verbose>1) echo "Sequence $sequenceName dropped.\n";
-		}
+        // Drop sequences // Note: MySQL does not use explicit sequences, this is for future compatibility (e.g. PostgreSQL)
+        $sequences = $this->connection->getSequences();
+        if($verbose > 1 && $sequences) echo "Dropping sequences...\n";
+        foreach($sequences as $sequenceName) {
+            if($verbose > 2) echo "Dropping sequence $sequenceName\n";
+            if(!$this->connection->dropSequence($sequenceName)) $success = false;
+            elseif($verbose > 1) echo "Sequence $sequenceName dropped.\n";
+        }
 
-		return $success;
-	}
+        return $success;
+    }
 
-	/**
-	 * Waits for database (container) to be ready for connection
-	 *
-	 * See also: tests/docker/readme.md
-	 *
-	 * @param int $timeout -- seconds to giving up
-	 * @param int $interval -- seconds between connection attempts
-	 * @return int -- 0 on success, 1 otherwise
-	 */
-	public function actionWait($timeout=60, $interval=5) {
-		$result = AppHelper::waitFor(function() use ($interval) {
-			try {
-				echo "Trying to connect...\n";
-				if(!$this->app->db->pdo) return false;
-				echo "Connected\n";
-				return true;
-			}
-			catch(Throwable $e) {
-				echo $e->getMessage()."\n";
-				return false;
-			}
-				/** @noinspection PhpWrongCatchClausesOrderInspection */
-			catch(Exception $e) {
-				echo $e->getMessage()."\n";
-				return false;
-			}
-		}, $timeout, $interval);
-		return $result ? 0 : 1;
-	}
+    /**
+     * Waits for database (container) to be ready for connection
+     *
+     * See also: tests/docker/readme.md
+     *
+     * @param int $timeout -- seconds to giving up
+     * @param int $interval -- seconds between connection attempts
+     * @return int -- 0 on success, 1 otherwise
+     */
+    public function actionWait($timeout = 60, $interval = 5) {
+        $result = AppHelper::waitFor(function() use ($interval) {
+            try {
+                echo "Trying to connect...\n";
+                if(!$this->app->db->pdo) return false;
+                echo "Connected\n";
+                return true;
+            } catch(Throwable $e) {
+                echo $e->getMessage() . "\n";
+                return false;
+            } /** @noinspection PhpWrongCatchClausesOrderInspection */
+            catch(Exception $e) {
+                echo $e->getMessage() . "\n";
+                return false;
+            }
+        }, $timeout, $interval);
+        return $result ? 0 : 1;
+    }
 }

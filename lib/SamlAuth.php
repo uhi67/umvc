@@ -25,15 +25,15 @@ class SamlAuth extends AuthManager {
     public $disco;
     // Refers to the proper SAML auth-source config element in the `config/saml/config/authsource.php` file
     public $authSource;
-	/** @var string $idAttribute -- attribute name used to identify the user */
+    /** @var string $idAttribute -- attribute name used to identify the user */
     public $idAttribute = 'eduPersonPrincipalName';
 
     /** @var Simple -- the SAML auth source */
     public $auth;
 
-	/** @var array|null $attr -- The cached attributes of the logged-in user or null */
+    /** @var array|null $attr -- The cached attributes of the logged-in user or null */
     private $_attributes = null;
-	private static $_template;
+    private static $_template;
 
     /**
      * Magic method for retrieving SAML attribute values
@@ -43,11 +43,11 @@ class SamlAuth extends AuthManager {
      *
      * @return string|array|null -- null: attribute is not found
      */
-    public function get($attributeName, $index=null) {
-		if(!$this->isAuthenticated()) return null;
+    public function get($attributeName, $index = null) {
+        if(!$this->isAuthenticated()) return null;
         if(array_key_exists($attributeName, $attributes = $this->auth->getAttributes())) {
             $value = $attributes[$attributeName];
-            return ($index!==null) ? $value[$index] : $value;
+            return ($index !== null) ? $value[$index] : $value;
         }
         return null;
     }
@@ -65,14 +65,14 @@ class SamlAuth extends AuthManager {
         if(!class_exists('\SimpleSAML\Auth\Simple')) {
             /** @noinspection PhpUndefinedClassInspection */
             $this->auth = new SimpleSAML_Auth_Simple($this->authSource);
-        }
-        else {
+        } else {
             $this->auth = new Simple($this->authSource);
         }
     }
 
     /**
      * Returns value of configured id attribute of the user
+     *
      * @return string
      * @throws Exception
      */
@@ -93,7 +93,7 @@ class SamlAuth extends AuthManager {
      * @return bool
      */
     public function isAuthenticated() {
-        if ($this->auth != null) {
+        if($this->auth != null) {
             return $this->auth->isAuthenticated();
         }
         return false;
@@ -109,8 +109,8 @@ class SamlAuth extends AuthManager {
      * @param array $params
      * @return bool
      */
-    public function requireAuth($params=[]) {
-        if ($this->auth != null) {
+    public function requireAuth($params = []) {
+        if($this->auth != null) {
             $this->auth->requireAuth($params);
             return true;
         }
@@ -125,7 +125,7 @@ class SamlAuth extends AuthManager {
      */
     public function logout() {
         parent::logout();
-        if ($this->auth != null && $this->auth->isAuthenticated()) {
+        if($this->auth != null && $this->auth->isAuthenticated()) {
             $this->auth->logout();
         }
         return false;
@@ -140,14 +140,13 @@ class SamlAuth extends AuthManager {
         $idp = null;
         if(method_exists($this->auth, 'getAuthData')) {
             $idp = $this->auth->getAuthData('saml:sp:IdP');
-        }
-        else if(method_exists('SimpleSAML_Session', 'getInstance')) {
+        } elseif(method_exists('SimpleSAML_Session', 'getInstance')) {
             // SimpleSamlPhp Older than 1.9 version
             /** @var Session $session */
-	        /** @noinspection PhpUndefinedMethodInspection */
-	        $session = Session::getInstance();
-	        /** @noinspection PhpUndefinedMethodInspection */
-	        $idp = $session->getIdP();
+            /** @noinspection PhpUndefinedMethodInspection */
+            $session = Session::getInstance();
+            /** @noinspection PhpUndefinedMethodInspection */
+            $idp = $session->getIdP();
         }
         return $idp;
     }
@@ -162,12 +161,11 @@ class SamlAuth extends AuthManager {
      * @return UserInterface|null
      * @throws Exception
      */
-    public function requireLogin($returnTo=null) {
+    public function requireLogin($returnTo = null) {
         $params = [];
         if($returnTo) {
             $params['ReturnTo'] = $returnTo;
-        }
-        elseif($returnTo===null) {
+        } elseif($returnTo === null) {
             $request = $_GET;
             unset($request['login']);
             $returnTo = App::$app->createUrl($request);
@@ -179,21 +177,19 @@ class SamlAuth extends AuthManager {
         if($this->auth->isAuthenticated()) {
             if(!isset($this->attributes[$this->idAttribute])) {
                 $_SESSION['uid'] = $this->uid = static::INVALID_USER;
-	            throw new Exception(App::l('umvc', 'Required attribute {$attribute} is missing', ['attribute'=>$this->idAttribute]));
-            }
-            else {
+                throw new Exception(App::l('umvc', 'Required attribute {$attribute} is missing', ['attribute' => $this->idAttribute]));
+            } else {
                 $uid = $this->attributes[$this->idAttribute][0];
                 // Prevent the user save error to cause an endless loop of errors
-                if(isset($_SESSION['uid']) && $_SESSION['uid']==static::INVALID_USER) return null;
+                if(isset($_SESSION['uid']) && $_SESSION['uid'] == static::INVALID_USER) return null;
                 $user = $this->userModel::findUser($uid);
                 if($user) {
-	                if(!isset($_SESSION['uid']) || $_SESSION['uid'] != $user->getUserId()) {
-		                if(!$user->updateUser($this->attributes)) throw new Exception("User record cannot be saved ($uid)");
-	                }
+                    if(!isset($_SESSION['uid']) || $_SESSION['uid'] != $user->getUserId()) {
+                        if(!$user->updateUser($this->attributes)) throw new Exception("User record cannot be saved ($uid)");
+                    }
                     $this->login($user);
                     return $user;
-                }
-                else {
+                } else {
                     try {
                         $user = $this->userModel::createUser($uid, $this->attributes);
                         if(!$user) {
@@ -201,8 +197,7 @@ class SamlAuth extends AuthManager {
                         }
                         $_SESSION['uid'] = $this->uid = $user->getUserId();
                         return $user;
-                    }
-                    catch(Throwable $e) {
+                    } catch(Throwable $e) {
                         // -1 indicates that SAML login is successful, but the application login failed. Prevents endless loop.
                         $_SESSION['uid'] = $this->uid = static::INVALID_USER;
                         throw new Exception("User record cannot be created ($uid)", HTTP::HTTP_INTERNAL_SERVER_ERROR, $e);
@@ -214,87 +209,85 @@ class SamlAuth extends AuthManager {
         return null;
     }
 
-	/**
-	 * Translates a SAML attribute name
-	 *
-	 * @param string $attributeName
-	 * @param string $la -- ISO 639-1 language or ISO 3166-1 locale
-	 *
-	 * @return string -- translated name or original if translation is not found
-	 * @throws Exception
-	 */
-	public static function translateAttributeName($attributeName, $la) {
-		if(
-			(!class_exists('\SimpleSAML\Configuration') && !class_exists('\SimpleSAML_Configuration')) ||
-			(!class_exists('\SimpleSAML\XHTML\Template') && !class_exists('\SimpleSAML_XHTML_Template'))
-		) return $attributeName;
-		if(static::$_template) $t = static::$_template;
-		else {
-			$globalConfig = Configuration::getInstance();
-			$t = (static::$_template = new Template($globalConfig, 'status.php', 'attributes'));
+    /**
+     * Translates a SAML attribute name
+     *
+     * @param string $attributeName
+     * @param string $la -- ISO 639-1 language or ISO 3166-1 locale
+     *
+     * @return string -- translated name or original if translation is not found
+     * @throws Exception
+     */
+    public static function translateAttributeName($attributeName, $la) {
+        if(
+            (!class_exists('\SimpleSAML\Configuration') && !class_exists('\SimpleSAML_Configuration')) ||
+            (!class_exists('\SimpleSAML\XHTML\Template') && !class_exists('\SimpleSAML_XHTML_Template'))
+        ) return $attributeName;
+        if(static::$_template) $t = static::$_template;
+        else {
+            $globalConfig = Configuration::getInstance();
+            $t = (static::$_template = new Template($globalConfig, 'status.php', 'attributes'));
 
-			if(method_exists('\SimpleSAML\Locale\Language', 'setLanguage')) {
-				$t->getTranslator()->getLanguage()->setLanguage(substr($la, 0, 2), false);
-			}
-			else {
-				/** @noinspection PhpDeprecationInspection */
-				$t->setLanguage(substr($la, 0, 2), false);
-			}
-		}
-		if(method_exists('\SimpleSAML\Locale\Translate', 'getAttributeTranslation')) {
-			$translated = $t->getTranslator()->getAttributeTranslation($attributeName);
-		}
-		else {
-			/** @noinspection PhpDeprecationInspection */
-			$translated = $t->getAttributeTranslation($attributeName);
-		}
-		return $translated;
-	}
+            if(method_exists('\SimpleSAML\Locale\Language', 'setLanguage')) {
+                $t->getTranslator()->getLanguage()->setLanguage(substr($la, 0, 2), false);
+            } else {
+                /** @noinspection PhpDeprecationInspection */
+                $t->setLanguage(substr($la, 0, 2), false);
+            }
+        }
+        if(method_exists('\SimpleSAML\Locale\Translate', 'getAttributeTranslation')) {
+            $translated = $t->getTranslator()->getAttributeTranslation($attributeName);
+        } else {
+            /** @noinspection PhpDeprecationInspection */
+            $translated = $t->getAttributeTranslation($attributeName);
+        }
+        return $translated;
+    }
 
-	/**
-	 * Html-formats values of attribute, depending on attribute name
-	 *
-	 * @param string $attributeName
-	 * @param string|array $values -- multiple values can be passed in array
-	 *
-	 * @return string
-	 * @noinspection PhpDocMissingThrowsInspection
-	 */
-	public static function formatAttribute($attributeName, $values) {
-		if (!is_array($values)) $values = [$values];
-		if (count($values) == 0) return '';
-		if (count($values) == 1) return static::formatValue($attributeName, $values[0]);
-		/** @noinspection PhpUnhandledExceptionInspection */
-		return Html::tag('ul', implode('', array_map(function ($v) use($attributeName) {
-			/** @noinspection PhpUnhandledExceptionInspection */
-			return Html::tag('li', static::formatValue($attributeName, $v));
-		}, $values)));
-	}
+    /**
+     * Html-formats values of attribute, depending on attribute name
+     *
+     * @param string $attributeName
+     * @param string|array $values -- multiple values can be passed in array
+     *
+     * @return string
+     * @noinspection PhpDocMissingThrowsInspection
+     */
+    public static function formatAttribute($attributeName, $values) {
+        if(!is_array($values)) $values = [$values];
+        if(count($values) == 0) return '';
+        if(count($values) == 1) return static::formatValue($attributeName, $values[0]);
+        /** @noinspection PhpUnhandledExceptionInspection */
+        return Html::tag('ul', implode('', array_map(function($v) use ($attributeName) {
+            /** @noinspection PhpUnhandledExceptionInspection */
+            return Html::tag('li', static::formatValue($attributeName, $v));
+        }, $values)));
+    }
 
-	/**
-	 * Html-formats a single value of attribute, depending on attribute name
-	 *
-	 * @param string $attributeName
-	 * @param string $value
-	 *
-	 * @return string
-	 * @noinspection PhpDocMissingThrowsInspection
-	 */
-	public static function formatValue($attributeName, $value) {
-		if($attributeName == 'jpegPhoto') {
-			/** @noinspection PhpUnhandledExceptionInspection */
-			return Html::tag('img', '', ['src' => 'data:image/jpeg;base64,' . $value]);
-		}
-		if(is_array($value)) return '['. implode(', ', array_map(function($k,$v) use($attributeName) {
-				return (is_integer($k) ? '' : $k . ': ') . self::formatValue($attributeName.'.'.$k, $v);
-			}, array_keys($value), array_values($value))). ']';
-		return $value;
-	}
+    /**
+     * Html-formats a single value of attribute, depending on attribute name
+     *
+     * @param string $attributeName
+     * @param string $value
+     *
+     * @return string
+     * @noinspection PhpDocMissingThrowsInspection
+     */
+    public static function formatValue($attributeName, $value) {
+        if($attributeName == 'jpegPhoto') {
+            /** @noinspection PhpUnhandledExceptionInspection */
+            return Html::tag('img', '', ['src' => 'data:image/jpeg;base64,' . $value]);
+        }
+        if(is_array($value)) return '[' . implode(', ', array_map(function($k, $v) use ($attributeName) {
+                return (is_integer($k) ? '' : $k . ': ') . self::formatValue($attributeName . '.' . $k, $v);
+            }, array_keys($value), array_values($value))) . ']';
+        return $value;
+    }
 
-	public function getAttributes() {
-		if(!$this->_attributes && $this->auth && $this->auth->isAuthenticated()) {
-			$this->_attributes = $this->auth->getAttributes();
-		}
-		return $this->_attributes;
-	}
+    public function getAttributes() {
+        if(!$this->_attributes && $this->auth && $this->auth->isAuthenticated()) {
+            $this->_attributes = $this->auth->getAttributes();
+        }
+        return $this->_attributes;
+    }
 }

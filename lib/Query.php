@@ -43,8 +43,7 @@ use Throwable;
  *
  * @package UMVC Simple Application Framework
  */
-class Query extends Component
-{
+class Query extends Component {
     const ORDER_ASC = 0;
     const ORDER_DESC = 1;
     const NULLS_FIRST = 0;
@@ -61,43 +60,43 @@ class Query extends Component
      *  - 7: separate builder (might be vendor-specific)
      */
     protected static $_operators = [
-        'null'	=>	0,
-        'true'	=>	0,
-        'false'	=>	0,
-        '~'		=>	1,	// bitwise not
-        '^'		=>	2,
-        '*'		=>	4,
-        '/'		=>	2,
-        '%'		=>	2,
-        '+'		=>	4,
-        '-'		=>	2,
-        '<<'	=>	2,
-        '>>'	=>	2,
-        '&'		=>	4,
-        '|'		=>	4,
-        '='		=>	2,
-        '!='	=>	2,
-        '<'		=>	2,
-        '>'		=>	2,
-        '>='	=>	2,
-        '<='	=>	2,
-        'is null'=>	5,
-        'is not null'=>5,
-        'is true'=>	5,
-        'like'	=>	2,
-        'ilike'	=>	2,
-        'rlike'	=>	2, // ~* in pg
-        'regex'	=>	2, // ~ in pg
-        'not rlike'	=>	2, // !~* in pg
-        'not regex'	=>	2, // !~ in pg
-        'in'	=>	6,
-        'not in'=>	6,
-        'exists'=>  1,
-        'between'=>	3,
-        'not'	=>	1,
-        'and'	=>	4,
-        'or'	=>	4,
-        '||'	=>	4,  // for string concatenation use concat()
+        'null' => 0,
+        'true' => 0,
+        'false' => 0,
+        '~' => 1,    // bitwise not
+        '^' => 2,
+        '*' => 4,
+        '/' => 2,
+        '%' => 2,
+        '+' => 4,
+        '-' => 2,
+        '<<' => 2,
+        '>>' => 2,
+        '&' => 4,
+        '|' => 4,
+        '=' => 2,
+        '!=' => 2,
+        '<' => 2,
+        '>' => 2,
+        '>=' => 2,
+        '<=' => 2,
+        'is null' => 5,
+        'is not null' => 5,
+        'is true' => 5,
+        'like' => 2,
+        'ilike' => 2,
+        'rlike' => 2, // ~* in pg
+        'regex' => 2, // ~ in pg
+        'not rlike' => 2, // !~* in pg
+        'not regex' => 2, // !~ in pg
+        'in' => 6,
+        'not in' => 6,
+        'exists' => 1,
+        'between' => 3,
+        'not' => 1,
+        'and' => 4,
+        'or' => 4,
+        '||' => 4,  // for string concatenation use concat()
         'interval' => 1,
         'current_timestamp' => 0,
         'case' => 7,
@@ -115,7 +114,7 @@ class Query extends Component
     private $stmt;
     /** @var array $_fields - select part of SELECT, or field list of INSERT, if not given, * or indices of values are used. Ignored on UPDATE or DELETE. Array of literal field-names or other expressions */
     private $_fields;
-    /** @var string|array|null|Model $_from  - model list (optionally indexed with aliases) of FROM part of SELECT or UPDATE or a single model name */
+    /** @var string|array|null|Model $_from - model list (optionally indexed with aliases) of FROM part of SELECT or UPDATE or a single model name */
     private $_from;
     /** @var array $_joins -- -- list of JOINS as [alias=>[model, join-type, conditions], ...] condition is a `mainField=>foreignField` associative pair, or any numeric-indexed other expression */
     private $_joins;
@@ -165,11 +164,11 @@ class Query extends Component
      */
     private function allModelFields(array $models) {
         $forceAlias = count($models) > 1;
-        $fields = array();
-        foreach($models as $key=>$modelName) {
+        $fields = [];
+        foreach($models as $key => $modelName) {
             if($modelName instanceof Query) {
                 // all fields from sub-query
-                $fields = array_merge($fields, array($key.'.*'));
+                $fields = array_merge($fields, [$key . '.*']);
             } else {
                 if(is_integer($key) && $forceAlias) $a1 = $modelName::tableName();
                 else {
@@ -193,9 +192,11 @@ class Query extends Component
      * @throws Exception -- if the name contains the delimiter
      */
     public function quoteFieldName($fieldName) {
-        if(strpos($fieldName, '.')!==false) {
+        if(strpos($fieldName, '.') !== false) {
             $db = $this;
-            return implode('.', array_map(function($n) use($db) {return $db->quoteSingleName($n);}, explode('.', $fieldName)));
+            return implode('.', array_map(function($n) use ($db) {
+                return $db->quoteSingleName($n);
+            }, explode('.', $fieldName)));
         }
         return $this->quoteSingleName($fieldName);
     }
@@ -233,7 +234,7 @@ class Query extends Component
      * @param array|null $expressionList -- Array of literal field-names or other expressions
      * @return $this
      */
-    public function select($expressionList=null) {
+    public function select($expressionList = null) {
         $this->_fields = $expressionList;
         $this->type = 'SELECT';
         $this->_sql = null;
@@ -241,16 +242,16 @@ class Query extends Component
         return $this;
     }
 
-	/**
-	 * Adds fields to the SELECT part of the query.
-	 *
-	 * (If no fields were defined earlier, all fields of all current models are used)
-	 *
-	 * @param array|null $expressionList -- Array of literal field-names or other expressions. Single field-name is allowed, but single expression must be wrapped in an array.
-	 * @return $this
-	 * @throws Exception
-	 */
-    public function addSelect($expressionList=null) {
+    /**
+     * Adds fields to the SELECT part of the query.
+     *
+     * (If no fields were defined earlier, all fields of all current models are used)
+     *
+     * @param array|null $expressionList -- Array of literal field-names or other expressions. Single field-name is allowed, but single expression must be wrapped in an array.
+     * @return $this
+     * @throws Exception
+     */
+    public function addSelect($expressionList = null) {
         if($expressionList) {
             if(!$this->_fields) $this->_fields = $this->allModelFields($this->_from);
             $this->_fields = $this->_fields ? array_merge($this->_fields, (array)$expressionList) : (array)$expressionList;
@@ -306,7 +307,7 @@ class Query extends Component
      * @param mixed $expression
      * @return Query
      */
-    public function where($expression, $params=[]) {
+    public function where($expression, $params = []) {
         $this->where = $expression;
         if(!empty($params)) $this->bind($params);
         $this->_sql = null;
@@ -324,10 +325,10 @@ class Query extends Component
      * @param mixed $expression
      * @return Query
      */
-    public function andWhere($expression, $params=[]) {
+    public function andWhere($expression, $params = []) {
         if(empty($this->where)) {
             $this->_where = ['AND', $expression];
-        } elseif(is_array($this->where) && isset($this->where[0]) && $this->where[0]=='AND') {
+        } elseif(is_array($this->where) && isset($this->where[0]) && $this->where[0] == 'AND') {
             $this->_where[] = $expression;
         } else {
             $this->_where = ['AND', $this->where, $expression];
@@ -450,9 +451,14 @@ class Query extends Component
         $this->_sql = null;
         return $this;
     }
-    public function getModelClass() { return $this->_modelClass; }
 
-    public function getIndexField() { return $this->_indexField; }
+    public function getModelClass() {
+        return $this->_modelClass;
+    }
+
+    public function getIndexField() {
+        return $this->_indexField;
+    }
 
     public function setType($type) {
         $this->_type = $type;
@@ -460,7 +466,10 @@ class Query extends Component
         $this->_sql = null;
         return $this;
     }
-    public function getType() { return $this->_type ?: 'SELECT'; }
+
+    public function getType() {
+        return $this->_type ?: 'SELECT';
+    }
 
     public function setFields($value) {
         $this->_fields = $value;
@@ -567,19 +576,19 @@ class Query extends Component
      * @param array $values
      * @return static
      */
-    public function setParams($values=[]) {
-        if($values===null) $values = [];
+    public function setParams($values = []) {
+        if($values === null) $values = [];
         $this->invalidateResults();
         // Normalize indices: Numeric-indexed user parameters must be 0-based
         $keys = array_keys($values);
-        $i=0;
+        $i = 0;
         foreach($keys as &$index) {
             if(is_int($index)) $index = $i++;
         }
         $values = array_combine($keys, array_values($values));
 
         $this->_params = $values;
-        foreach($this->_params as $name=>$value) {
+        foreach($this->_params as $name => $value) {
             $this->_innerParams[$name] = $values;
         }
         return $this;
@@ -635,22 +644,21 @@ class Query extends Component
      */
     public function getAll() {
         try {
-            if($this->sql && $this->_all!==null) return $this->_all;
+            if($this->sql && $this->_all !== null) return $this->_all;
             $start = microtime(true);
             $this->stmt = $this->prepareStatement();
             $this->stmt->execute();
             $result = $this->stmt->fetchAll(PDO::FETCH_ASSOC);
             if(ENV_DEV) App::log(LogLevel::DEBUG, sprintf('Elapsed=%.3f SQL = %s', microtime(true) - $start, $this->sql));
-        }
-        catch(Exception $e) {
-            App::log(LogLevel::ERROR, $e->getMessage(). ' while executing SQL: '.$this->sql);
-            if(ENV_DEV) throw new Exception($e->getMessage(). ' while executing SQL: '.$this->sql, 500, $e);
+        } catch(Exception $e) {
+            App::log(LogLevel::ERROR, $e->getMessage() . ' while executing SQL: ' . $this->sql);
+            if(ENV_DEV) throw new Exception($e->getMessage() . ' while executing SQL: ' . $this->sql, 500, $e);
             else throw $e;
         }
 
         // Populate model
         if($this->modelClass) {
-            foreach ($result as &$value) {
+            foreach($result as &$value) {
                 $value = new $this->modelClass($oldValues = $value);
                 /** @var Model $value */
                 $value->setOldAttributes($oldValues);
@@ -676,21 +684,20 @@ class Query extends Component
      * @throws Exception -- when `prepare`, `bind`, `execute` or `fetch` failed
      */
     public function getOne() {
-        if($this->sql && $this->_one!==null) return $this->_one;
+        if($this->sql && $this->_one !== null) return $this->_one;
         $start = microtime(true);
         try {
-            if (!($this->stmt = $this->prepareStatement([PDO::ATTR_CURSOR => PDO::CURSOR_SCROLL]))) {
+            if(!($this->stmt = $this->prepareStatement([PDO::ATTR_CURSOR => PDO::CURSOR_SCROLL]))) {
                 throw new Exception($this->lastError(true) . ', SQL=' . $this->sql);
             }
-        }
-        catch(Throwable $e) {
+        } catch(Throwable $e) {
             AppHelper::showException($e);
             throw new Exception($this->lastError(true) . ', SQL=' . $this->sql);
         }
         if(!$this->stmt->execute()) throw new Exception($this->lastError(true));
         $result = $this->stmt->fetch(PDO::FETCH_ASSOC);
         $error = $this->lastError(true);
-        if($result === false && substr($error,0,5) != '00000') throw new Exception($error);
+        if($result === false && substr($error, 0, 5) != '00000') throw new Exception($error);
         if(!$result) return $this->_one = null; // Note: Null value is not stored effectively...
         if(ENV_DEV) App::log(LogLevel::DEBUG, sprintf('Elapsed=%.3f SQL = %s', microtime(true) - $start, $this->sql));
 
@@ -721,7 +728,7 @@ class Query extends Component
 
         // Populate model
         if($this->modelClass) {
-            if ($result === null) $model = null;
+            if($result === null) $model = null;
             else {
                 $model = new $this->modelClass($result);
                 $model->setOldAttributes($result);
@@ -739,20 +746,23 @@ class Query extends Component
      * @param int|string $column -- column may be indexed by both integers and column names
      * @return array
      */
-    public function getColumn($column=0) {
-        if($column===0 && $this->sql && $this->_column!==null) return $this->_column;
+    public function getColumn($column = 0) {
+        if($column === 0 && $this->sql && $this->_column !== null) return $this->_column;
         $this->stmt = $this->prepareStatement([PDO::ATTR_CURSOR => PDO::CURSOR_SCROLL]);
         $this->stmt->execute();
         $result = [];
         $index = $this->_indexField ?: false;
-        while ($row = $this->stmt->fetch()) {
+        while($row = $this->stmt->fetch()) {
             if($index && !isset($row[$index])) throw new Exception("Invalid index column $index");
-            if(!$row[$index]) { var_dump("Empty index: ", $row); exit; }
+            if(!$row[$index]) {
+                var_dump("Empty index: ", $row);
+                exit;
+            }
             if($index) $result[$row[$index]] = $row[$column];
             else $result[] = $row[$column];
         }
 
-        if($column===0) $this->_column = $result;
+        if($column === 0) $this->_column = $result;
         return $result;
     }
 
@@ -763,8 +773,8 @@ class Query extends Component
      * @return mixed
      * @throws Exception
      */
-    public function getScalar($column=0) {
-        if($column===0 && $this->sql && $this->_scalar!==null) return $this->_scalar;
+    public function getScalar($column = 0) {
+        if($column === 0 && $this->sql && $this->_scalar !== null) return $this->_scalar;
         $this->stmt = null;
         try {
             $this->stmt = $this->prepareStatement();
@@ -774,18 +784,17 @@ class Query extends Component
             // Empty result is not error
             if(($row = $this->stmt->fetch()) === false) {
                 $errorInfo = $this->stmt->errorInfo();
-                if($errorInfo[0]!='00000')
+                if($errorInfo[0] != '00000')
                     throw new Exception('Error fetching SQL: ' . implode('; ', $errorInfo));
                 $row = null;
             }
-        }
-        catch(Throwable $e) {
+        } catch(Throwable $e) {
             $phase = $this->stmt ? 'executing' : 'preparing';
-            $details = ENV_DEV ? '; ' . $phase.' "'.$this->sql.'" with parameters ['.implode(',', array_keys($this->params)).']' : '';
-            throw new Exception('PDO Error '.$e->getMessage().$details);
+            $details = ENV_DEV ? '; ' . $phase . ' "' . $this->sql . '" with parameters [' . implode(',', array_keys($this->params)) . ']' : '';
+            throw new Exception('PDO Error ' . $e->getMessage() . $details);
         }
-        $result = $row===null ? null : $row[$column];
-        if($column===0) $this->_scalar = $result;
+        $result = $row === null ? null : $row[$column];
+        if($column === 0) $this->_scalar = $result;
         return $result;
     }
 
@@ -795,7 +804,7 @@ class Query extends Component
      * @return int
      */
     public function getCount() {
-        if($this->sql && $this->_count!==null) return $this->_count;
+        if($this->sql && $this->_count !== null) return $this->_count;
         $query = clone $this;
         $query->select('(count(*))')->orderBy(null);
         return $this->_count = $query->scalar;
@@ -803,6 +812,7 @@ class Query extends Component
 
     /**
      * Converts the Query to an option array (for cloning purposes)
+     *
      * @return array
      */
     public function toArray() {
@@ -832,13 +842,12 @@ class Query extends Component
      * @throws Exception
      */
     public function execute() {
-        if($this->type=='SELECT') throw new Exception('Use get*() methods for SELECT queries');
+        if($this->type == 'SELECT') throw new Exception('Use get*() methods for SELECT queries');
         $this->stmt = $this->prepareStatement();
         try {
             return $this->stmt->execute();
-        }
-        catch(Exception $e) {
-            throw new Exception('Error executing '.$this->sql. ' with params ('.implode(', ', $this->params). ')', 0, $e);
+        } catch(Exception $e) {
+            throw new Exception('Error executing ' . $this->sql . ' with params (' . implode(', ', $this->params) . ')', 0, $e);
         }
     }
 
@@ -898,16 +907,15 @@ class Query extends Component
      * @return $this
      * @throws Exception -- if modelClass is not valid
      */
-    public function into($modelClass, $fieldList=null) {
+    public function into($modelClass, $fieldList = null) {
         $this->type = 'INSERT';
-        if($this->modelClass && is_array($modelClass) && $fieldList===null) {
+        if($this->modelClass && is_array($modelClass) && $fieldList === null) {
             $this->_fields = $modelClass;
-        }
-        else {
+        } else {
             if(is_array($modelClass)) throw new Exception('fieldList can be specified alone only if modelClass is already stored');
             if(!is_a($modelClass, Model::class, true)) throw new Exception('Invalid modelClass');
             $this->modelClass = $modelClass;
-            if ($fieldList) $this->_fields = $fieldList;
+            if($fieldList) $this->_fields = $fieldList;
         }
         $this->_sql = null;
         return $this;
@@ -927,16 +935,15 @@ class Query extends Component
      * @return Query -- the query object
      * @throws Exception
      */
-    public static function createSelect($modelClass=null, $fields=null, $condition=null, $params=null, $connection=null) {
-        if(is_array($modelClass) &&  func_num_args()==1) {
+    public static function createSelect($modelClass = null, $fields = null, $condition = null, $params = null, $connection = null) {
+        if(is_array($modelClass) && func_num_args() == 1) {
             $options = $modelClass;
             $query = new Query($options);
             $query->type = 'SELECT';
-        }
-        else {
-            if($connection && ! $connection instanceof Connection) throw new Exception('Invalid connection parameter');
+        } else {
+            if($connection && !$connection instanceof Connection) throw new Exception('Invalid connection parameter');
             $query = new Query([
-                'type'=>'SELECT',
+                'type' => 'SELECT',
                 'modelClass' => $modelClass,
                 'fields' => $fields,
                 'where' => $condition,
@@ -970,19 +977,18 @@ class Query extends Component
      * @return Query -- the query object
      * @throws Exception
      */
-    public static function createInsert($modelName, $fields=null, $values=null, $connection=null) {
-        if(is_array($modelName) &&  func_num_args()==1) {
+    public static function createInsert($modelName, $fields = null, $values = null, $connection = null) {
+        if(is_array($modelName) && func_num_args() == 1) {
             $options = $modelName;
-            $query = new Query(array_merge(array('type'=>'insert'), $options));
-        }
-        else {
-            if($connection && ! $connection instanceof Connection) throw new Exception('Invalid connection parameter');
-            $query = new Query(array('type'=>'insert',
+            $query = new Query(array_merge(['type' => 'insert'], $options));
+        } else {
+            if($connection && !$connection instanceof Connection) throw new Exception('Invalid connection parameter');
+            $query = new Query(['type' => 'insert',
                 'modelClass' => $modelName,
                 'fields' => $fields,
                 'values' => $values,
                 'connection' => $connection,
-            ));
+            ]);
         }
         return $query;
     }
@@ -1002,16 +1008,15 @@ class Query extends Component
      * @return Query -- the query object
      * @throws Exception
      */
-    public static function createUpdate($modelClass, $values=null, $condition=null, $params=null, $connection=null) {
-        if(is_array($modelClass) &&  func_num_args()==1) {
+    public static function createUpdate($modelClass, $values = null, $condition = null, $params = null, $connection = null) {
+        if(is_array($modelClass) && func_num_args() == 1) {
             $options = $modelClass;
             $query = new Query($options);
             $query->type = 'UPDATE';
-        }
-        else {
-            if($connection && ! $connection instanceof Connection) throw new Exception('Invalid connection parameter');
+        } else {
+            if($connection && !$connection instanceof Connection) throw new Exception('Invalid connection parameter');
             $query = new Query([
-                'type'=>'UPDATE',
+                'type' => 'UPDATE',
                 'modelClass' => $modelClass,
                 'values' => $values,
                 'where' => $condition,
@@ -1035,20 +1040,19 @@ class Query extends Component
      * @return Query -- the query object
      * @throws Exception
      */
-    public static function createDelete($modelClass, $condition=null, $params=null, $connection=null) {
-        if(is_array($modelClass) &&  func_num_args()==1) {
+    public static function createDelete($modelClass, $condition = null, $params = null, $connection = null) {
+        if(is_array($modelClass) && func_num_args() == 1) {
             $options = $modelClass;
-        }
-        else {
-            $options = array(
+        } else {
+            $options = [
                 'modelClass' => $modelClass,
                 'where' => $condition,
                 'params' => $params,
                 'connection' => $connection,
-            );
+            ];
         }
-        if(isset($options['connection']) && ! $options['connection'] instanceof Connection) throw new Exception('Invalid connection parameter');
-        return new Query(array_merge(['type'=>'DELETE'], $options));
+        if(isset($options['connection']) && !$options['connection'] instanceof Connection) throw new Exception('Invalid connection parameter');
+        return new Query(array_merge(['type' => 'DELETE'], $options));
     }
 
     /**
@@ -1057,11 +1061,11 @@ class Query extends Component
      * @param array $options -- PDO prepare options
      * @return PDOStatement|false -- false if bind or prepare failed
      */
-    public function prepareStatement($options=[]) {
+    public function prepareStatement($options = []) {
         $stmt = $this->connection->prepareStatement($this->sql, $options); // this actually builds up the SQL statement and computes the inner parameters
-        if($stmt===false) return false;
-        if($this->_innerParams) foreach($this->_innerParams as $name=>&$value) {
-            if(!$stmt->bindParam(is_int($name) ? $name+1 : $name, $value)) return false;
+        if($stmt === false) return false;
+        if($this->_innerParams) foreach($this->_innerParams as $name => &$value) {
+            if(!$stmt->bindParam(is_int($name) ? $name + 1 : $name, $value)) return false;
         }
         return $stmt;
     }
@@ -1073,7 +1077,7 @@ class Query extends Component
      */
     public function build() {
         $this->resetParams();
-        if (!is_callable($builder = [$this, 'build' . ucfirst(strtolower($this->type))])) {
+        if(!is_callable($builder = [$this, 'build' . ucfirst(strtolower($this->type))])) {
             throw new Exception('Invalid query type `' . $this->type . '`');
         }
         return $this->_sql = $builder();
@@ -1114,7 +1118,7 @@ class Query extends Component
      */
     public function modelTableName($modelName) {
         if(class_exists($modelName) && is_a($modelName, Model::class, true)) {
-            if (!is_callable($callable = array($modelName, 'tableName'))) {
+            if(!is_callable($callable = [$modelName, 'tableName'])) {
                 throw new Exception("Invalid model class: $modelName");
             }
             return call_user_func($callable);
@@ -1131,8 +1135,8 @@ class Query extends Component
      * @throws Exception
      */
     public function modelFields($modelName) {
-        if(!is_callable(array($modelName, 'databaseAttributes'))) throw new Exception("Invalid model classname '$modelName'");
-        return call_user_func(array($modelName, 'databaseAttributes'), $this);
+        if(!is_callable([$modelName, 'databaseAttributes'])) throw new Exception("Invalid model classname '$modelName'");
+        return call_user_func([$modelName, 'databaseAttributes'], $this);
     }
 
     /**
@@ -1145,24 +1149,23 @@ class Query extends Component
      * @return string -- alias name of main model table or null
      * @throws Exception
      */
-    public function normalizeAlias(&$aliases=null) {
+    public function normalizeAlias(&$aliases = null) {
         // Collect existing aliases
         $aliases = [];
-        if(is_array($this->_from)) foreach($this->_from as $i=>$model) if(!is_int($i)) $aliases[] = $i;
-        if(is_array($this->_joins)) foreach($this->_joins as $i=>$def) if(!is_int($i)) $aliases[] = $i;
+        if(is_array($this->_from)) foreach($this->_from as $i => $model) if(!is_int($i)) $aliases[] = $i;
+        if(is_array($this->_joins)) foreach($this->_joins as $i => $def) if(!is_int($i)) $aliases[] = $i;
 
         // Generate aliases for FROM tables
-        if(!empty($this->joins) || is_array($this->_from) && count($this->_from)>1) {
+        if(!empty($this->joins) || is_array($this->_from) && count($this->_from) > 1) {
             if(is_string($this->_from)) {
                 $aliases[] = $alias = lcfirst(($this->_from)::shortName());
-                $this->_from = array($alias => $this->_from);
-            }
-            else if(is_array($this->_from)) {
+                $this->_from = [$alias => $this->_from];
+            } elseif(is_array($this->_from)) {
                 /**
                  * @var int $i
                  * @var string|Model $model
                  */
-                foreach($this->_from as $i=>$model) {
+                foreach($this->_from as $i => $model) {
                     if(is_int($i)) {
                         $aliases[] = $alias = $this->findUniqueAlias(lcfirst($model::shortName()), $aliases);
                         $this->_from[$alias] = $model;
@@ -1174,7 +1177,7 @@ class Query extends Component
 
         // Generate aliases for JOIN tables
         if(is_array($this->_joins)) {
-            foreach ($this->_joins as $i => $joinDef) {
+            foreach($this->_joins as $i => $joinDef) {
                 if(is_int($i)) {
                     $aliases[] = $alias = $this->findUniqueAlias(lcfirst(Model::shortName($joinDef[0])), $aliases);
                     $this->_joins[$alias] = $joinDef;
@@ -1185,15 +1188,15 @@ class Query extends Component
 
         // Return the alias of the main model
         $alias = is_array($this->from) ? array_search($this->modelClass, $this->from) : null;
-        if($alias===false || is_int($alias)) $alias = null;
+        if($alias === false || is_int($alias)) $alias = null;
         return $alias;
     }
 
     public function findUniqueAlias($baseName, $aliases) {
         $alias = $baseName;
-        $i=1;
+        $i = 1;
         while(in_array($alias, $aliases)) {
-            $alias = $baseName.($i++);
+            $alias = $baseName . ($i++);
         }
         return $alias;
     }
@@ -1208,7 +1211,7 @@ class Query extends Component
         $from = $this->from;
         if(!$from && $this->modelClass) $from = $this->modelClass;
         if(!$from && $this->_where) throw new Exception('FROM or modelClass is mandatory when WHERE part is present');
-        return 'SELECT '.
+        return 'SELECT ' .
             trim($this->buildFieldNames($from, $this->fields, $number)) .
             $this->buildFrom($from) .
             $this->buildJoins($this->modelClass, $alias, $this->joins) .
@@ -1217,8 +1220,8 @@ class Query extends Component
             // TODO: implement HAVING -- later
             // TODO: implement UNION, INTERSECT, EXCEPT -- later
             $this->buildOrders($this->orders, $alias) . // Auto alias not applied in order to use alias fields.
-            ($this->limit ? ' LIMIT '.(int)$this->limit : '') .
-            ($this->offset ? ' OFFSET '.(int)$this->offset : '');
+            ($this->limit ? ' LIMIT ' . (int)$this->limit : '') .
+            ($this->offset ? ' OFFSET ' . (int)$this->offset : '');
     }
 
     /**
@@ -1229,7 +1232,7 @@ class Query extends Component
      * @throws Exception
      */
     public function buildFrom($from) {
-        return $from ? (' FROM '. $this->buildTableNames($from)) : '';
+        return $from ? (' FROM ' . $this->buildTableNames($from)) : '';
     }
 
     /**
@@ -1244,7 +1247,7 @@ class Query extends Component
     public function buildTableNames($models) {
         if(!is_array($models)) return $this->buildTableName($models);
         return implode(', ', array_map(function($model, $alias) {
-            if(is_integer($alias)) $alias='';
+            if(is_integer($alias)) $alias = '';
             return $this->buildTableName($model, $alias);
         }, $models, array_keys($models)));
     }
@@ -1260,16 +1263,16 @@ class Query extends Component
      * @return string
      * @throws Exception -- if the name contains the delimiter or the $model classname is not a valid Model
      */
-    public function buildTableName($model, $alias='') {
+    public function buildTableName($model, $alias = '') {
         if($model instanceof Query) {
             $model->connection = $this->connection;
-            return '(' . $model->sql . ')'. ($alias ? (' '.static::quoteFieldName($alias)) : '');
+            return '(' . $model->sql . ')' . ($alias ? (' ' . static::quoteFieldName($alias)) : '');
         }
         /** @var string $model */
         Assertions::assertString($model);
 
         $name = $this->modelTableName($model);
-        return static::quoteFieldName($name). (($alias && ($alias!=$name)) ? (' '.static::quoteFieldName($alias)) : '');
+        return static::quoteFieldName($name) . (($alias && ($alias != $name)) ? (' ' . static::quoteFieldName($alias)) : '');
     }
 
     /**
@@ -1287,18 +1290,18 @@ class Query extends Component
      * @throws Exception
      * @see Query::buildExpression
      */
-    public function buildWhere($alias=null) {
+    public function buildWhere($alias = null) {
         $condition = $this->_where;
-        if(is_null($condition) || is_array($condition) && count($condition)==0) return '';
-        if($condition===true) return '';
-        if($condition===false) return ' WHERE false';
+        if(is_null($condition) || is_array($condition) && count($condition) == 0) return '';
+        if($condition === true) return '';
+        if($condition === false) return ' WHERE false';
         if(!is_array($condition)) {
-            $pk = call_user_func(array($this->modelClass, 'primaryKey')); // returns array of field names
-            if(count($pk)>1) throw new Exception('Scalar condition can be used only for single primary key');
+            $pk = call_user_func([$this->modelClass, 'primaryKey']); // returns array of field names
+            if(count($pk) > 1) throw new Exception('Scalar condition can be used only for single primary key');
             if(is_array($pk)) $pk = $pk[0];
-            $condition = array($pk => $this->literal($condition));
+            $condition = [$pk => $this->literal($condition)];
         }
-        return ' WHERE '.$this->buildExpression($condition, $alias);
+        return ' WHERE ' . $this->buildExpression($condition, $alias);
     }
 
     /**
@@ -1308,12 +1311,12 @@ class Query extends Component
      * @return string
      * @throws Exception -- if the expression in the definition is invalid
      */
-    public function buildGroupBy($groupBy, $alias=null) {
-        if(is_null($groupBy) || $groupBy==='' || $groupBy===array()) return '';
-        if(is_string($groupBy)) $groupBy = array($groupBy);
+    public function buildGroupBy($groupBy, $alias = null) {
+        if(is_null($groupBy) || $groupBy === '' || $groupBy === []) return '';
+        if(is_string($groupBy)) $groupBy = [$groupBy];
         if(!is_array($groupBy)) throw new Exception('GROUP BY mut be an array');
         $db = $this;
-        return ' GROUP BY ' . implode(', ', array_map(function($f) use($alias, $db) {
+        return ' GROUP BY ' . implode(', ', array_map(function($f) use ($alias, $db) {
                 return $db->buildExpression($f, $alias);
             }, $groupBy));
     }
@@ -1328,10 +1331,10 @@ class Query extends Component
      * @return array
      */
     public function preprocessAssociative($list) {
-        foreach($list as $index=>$value) {
+        foreach($list as $index => $value) {
             if(!is_integer($index)) {
                 unset($list[$index]);
-                $list[] = array('=', $index, $value);
+                $list[] = ['=', $index, $value];
             }
         }
         return $list;
@@ -1363,9 +1366,9 @@ class Query extends Component
      * @throws Exception
      * @throws Exception on invalid expression, unknown operator, invalid number of operands, extra whitespaces in field names
      */
-    public function buildExpression($expression, $alias=null, $precedence=null) {
+    public function buildExpression($expression, $alias = null, $precedence = null) {
         if(is_null($expression)) return 'NULL';
-        if(is_null($precedence)) $precedence=999;
+        if(is_null($precedence)) $precedence = 999;
         if(is_bool($expression)) {
             return $expression ? 'TRUE' : 'FALSE';
         }
@@ -1374,20 +1377,20 @@ class Query extends Component
         }
         if(is_string($expression)) {
             if(is_numeric($expression)) return "'$expression'";
-            if($expression=='') return "''";
+            if($expression == '') return "''";
             $expression = trim($expression);
-            $c = substr($expression,0,1);
-            if($c=='(') {
-                if(substr($expression,-1)==')') return $expression;
+            $c = substr($expression, 0, 1);
+            if($c == '(') {
+                if(substr($expression, -1) == ')') return $expression;
                 throw new Exception('Invalid expression: missing `)`');
             }
-            if($c=="'" || $c=="E" && substr($expression,1,1)=="'") {
-                if(substr($expression,-1)=="'") return $expression;
+            if($c == "'" || $c == "E" && substr($expression, 1, 1) == "'") {
+                if(substr($expression, -1) == "'") return $expression;
                 throw new Exception('Invalid expression: missing `\'`');
             }
 
             // Parameter placeholders
-            if($expression=='?') return $expression;
+            if($expression == '?') return $expression;
             if(preg_match('~^:[\w]+$~', $expression)) return $expression;
 
             $output = null;
@@ -1395,9 +1398,13 @@ class Query extends Component
             // Field names: (field, field alias, "field", table.field, "table"."field", "table"."field" "alias")
             if(strpos($expression, ' ')) {
                 $ee = preg_split('/\s+/', $expression);
-                if(strtoupper($ee[1])=='AS' && count($ee)==3)  { $output = $ee[2]; $expression=$ee[0]; }
-                else if(count($ee)==2)  { $output = $ee[1]; $expression=$ee[0]; }
-                else throw new Exception(sprintf('Invalid expression: too many whitespaces in field name `%s` ', $expression));
+                if(strtoupper($ee[1]) == 'AS' && count($ee) == 3) {
+                    $output = $ee[2];
+                    $expression = $ee[0];
+                } elseif(count($ee) == 2) {
+                    $output = $ee[1];
+                    $expression = $ee[0];
+                } else throw new Exception(sprintf('Invalid expression: too many whitespaces in field name `%s` ', $expression));
             }
             return $this->buildFieldName($expression, $alias, $output);
         }
@@ -1405,61 +1412,64 @@ class Query extends Component
             if(isset($expression[0])) {
                 if(is_array($expression[0])) $op = 'AND';
                 else $op = array_shift($expression);
-                if(substr($op,0,1)=='[' || substr($op,0,1)=='\'') throw new Exception('Invalid operator: '.$op);
-                if(substr($op,0,1)=='(') {
-                    if(substr($op,-1)==')') return $op;
+                if(substr($op, 0, 1) == '[' || substr($op, 0, 1) == '\'') throw new Exception('Invalid operator: ' . $op);
+                if(substr($op, 0, 1) == '(') {
+                    if(substr($op, -1) == ')') return $op;
                     throw new Exception('Invalid expression: missing `)`');
                 }
                 $expression = $this->preprocessAssociative($expression);
-                if(($ops = static::isOperator($op))!==false) {
+                if(($ops = static::isOperator($op)) !== false) {
                     $pr = static::operatorPrecedence($op);
                     $opr = $this->connection->operatorName(strtoupper($op));
                     if(!$opr) throw new Exception("Operator `$op` is not supported");
 
-                    if($ops<4 && count($expression)!=$ops) throw new Exception("Operator `$opr` requires $ops operand");
+                    if($ops < 4 && count($expression) != $ops) throw new Exception("Operator `$opr` requires $ops operand");
                     switch($ops) {
                         case 0:
                             return $opr;
                         case 1:
-                            return $opr . ' '. $this->buildExpression($expression[0], $alias, $pr);
+                            return $opr . ' ' . $this->buildExpression($expression[0], $alias, $pr);
                         case 2:
                         case 4:
                             // now $expression is an operand list.
-                            if($opr=='||' && empty($expression)) return "''";
-                            if($opr=='*' && empty($expression)) return 1;
-                            if($opr=='+' && empty($expression)) return 0;
-                            if($opr=='&' && empty($expression)) return -1;
-                            if($opr=='|' && empty($expression)) return 0;
+                            if($opr == '||' && empty($expression)) return "''";
+                            if($opr == '*' && empty($expression)) return 1;
+                            if($opr == '+' && empty($expression)) return 0;
+                            if($opr == '&' && empty($expression)) return -1;
+                            if($opr == '|' && empty($expression)) return 0;
                             try {
                                 $db = $this;
-                                $subExpressions = @array_map(function($x) use($alias, $pr, $db) {
+                                $subExpressions = @array_map(function($x) use ($alias, $pr, $db) {
                                     return $db->buildExpression($x, $alias, $pr);
                                 }, $expression);
-                                if($opr=='AND') $subExpressions = array_filter($subExpressions, function($se) { return $se != 'TRUE'; });
-                                if($opr=='AND' && empty($subExpressions)) return 'TRUE';
-                                if($opr=='AND' && in_array('FALSE', $subExpressions)) return 'FALSE';
-                                if($opr=='OR') $subExpressions = array_filter($subExpressions, function($se) { return $se != 'FALSE'; });
-                                if($opr=='OR' && empty($subExpressions)) return 'FALSE';
-                                if($opr=='OR' && in_array('TRUE', $subExpressions)) return 'TRUE';
-                                $r = implode(' '.$opr.' ', $subExpressions);
+                                if($opr == 'AND') $subExpressions = array_filter($subExpressions, function($se) {
+                                    return $se != 'TRUE';
+                                });
+                                if($opr == 'AND' && empty($subExpressions)) return 'TRUE';
+                                if($opr == 'AND' && in_array('FALSE', $subExpressions)) return 'FALSE';
+                                if($opr == 'OR') $subExpressions = array_filter($subExpressions, function($se) {
+                                    return $se != 'FALSE';
+                                });
+                                if($opr == 'OR' && empty($subExpressions)) return 'FALSE';
+                                if($opr == 'OR' && in_array('TRUE', $subExpressions)) return 'TRUE';
+                                $r = implode(' ' . $opr . ' ', $subExpressions);
                                 break;
-                            }
-                            catch(Exception $e) {
-                                throw new Exception("Invalid internal expression at operator `$opr`: ".json_encode($expression), 0, $e);
+                            } catch(Exception $e) {
+                                throw new Exception("Invalid internal expression at operator `$opr`: " . json_encode($expression), 0, $e);
                             }
                         case 3:
                             $r = $this->buildExpression($expression[0], $alias, $pr) .
-                                ' '. $opr . ' '. $this->buildExpression($expression[1], $alias, $pr) .
+                                ' ' . $opr . ' ' . $this->buildExpression($expression[1], $alias, $pr) .
                                 ' AND ' . $this->buildExpression($expression[2], $alias, $pr);
                             break;
                         case 5:
-                            if(count($expression)!=1) throw new Exception("Operator `$opr` requires exactly one operand");
-                            return $this->buildExpression($expression[0], $alias, $pr).' '.$opr;
+                            if(count($expression) != 1) throw new Exception("Operator `$opr` requires exactly one operand");
+                            return $this->buildExpression($expression[0], $alias, $pr) . ' ' . $opr;
                         case 6:
-                            if(count($expression)!=2) throw new Exception("Operator `$opr` requires exactly two operands.");
-                            if($opr=='IN' && empty($expression[1])) return 'FALSE';
+                            if(count($expression) != 2) throw new Exception("Operator `$opr` requires exactly two operands.");
+                            if($opr == 'IN' && empty($expression[1])) return 'FALSE';
                             $r = $this->buildExpression($expression[0], $alias, $pr) .
-                                ' '. $opr . ' ('. $this->buildExpressionList($expression[1], $alias) .
+                                ' ' . $opr . ' (' . $this->buildExpressionList($expression[1], $alias) .
                                 ')';
                             break;
                         case 7:
@@ -1469,31 +1479,30 @@ class Query extends Component
                     }
 
                     // Determine () on precedence order
-                    if(count($expression)>1 && $pr>$precedence) $r='('.$r.')';
+                    if(count($expression) > 1 && $pr > $precedence) $r = '(' . $r . ')';
                     return $r;
                 }
                 // Function call
-                if(substr($op, -2)=='()') {
+                if(substr($op, -2) == '()') {
                     $db = $this;
-                    return substr($op,0,-1).implode(', ', array_map(function($x) use($alias, $db) {
+                    return substr($op, 0, -1) . implode(', ', array_map(function($x) use ($alias, $db) {
                             return $db->buildExpression($x, $alias);
-                        }, $expression)).')';
-                }
-                else {
-                    throw new Exception("Unknown operator `$op`: ".json_encode($expression), 0);
+                        }, $expression)) . ')';
+                } else {
+                    throw new Exception("Unknown operator `$op`: " . json_encode($expression), 0);
                 }
             }
             if(empty($expression)) return 'TRUE';
             // fieldName=>expression condition list (always literal values, no subexpressions)
             if(ArrayHelper::isAssociative($expression)) {
                 $op = 'AND';
-                $ex = array_merge([$op], array_map(function($value, $index){
-                    if($value===null || $value===[]) return ['is null', $index];
+                $ex = array_merge([$op], array_map(function($value, $index) {
+                    if($value === null || $value === []) return ['is null', $index];
                     if(is_array($value)) {
                         $value = array_map(function($item) {
                             $paramName = ArrayHelper::genUniqueIndex($this->_innerParams, '_p');
                             $this->_innerParams[$paramName] = static::literal($item);
-                            return ':'.$paramName;
+                            return ':' . $paramName;
                         }, $value);
                         return ['in', $index, $value];
                     }
@@ -1502,7 +1511,7 @@ class Query extends Component
                     }
                     $paramName = ArrayHelper::genUniqueIndex($this->_innerParams, '_p');
                     $this->_innerParams[$paramName] = static::literal($value);
-                    return ['=', $index, ':'.$paramName];
+                    return ['=', $index, ':' . $paramName];
                 }, array_values($expression), array_keys($expression)));
                 return $this->buildExpression($ex, $alias, $precedence);
             }
@@ -1510,12 +1519,12 @@ class Query extends Component
         if($expression instanceof Query) {
             $expression->connection = $this->connection;
             $expression->params = $this->_innerParams;
-            $result = '('.$expression->sql.')';
+            $result = '(' . $expression->sql . ')';
             $this->_innerParams = $expression->params;
             return $result;
         }
         if(is_object($expression)) return $this->connection->quoteValue($this->literal($expression));
-        throw new Exception('Invalid expression '.json_encode($expression));
+        throw new Exception('Invalid expression ' . json_encode($expression));
     }
 
     /**
@@ -1554,10 +1563,10 @@ class Query extends Component
      * @return string -- the expression built
      * @throws Exception
      */
-    public function buildOperator($op, $expression, $alias=null) {
-        $functionName = strtolower($op).'Build';
-        if(!is_callable(array($this, $functionName))) throw new Exception("Expression build function `$functionName` is missing");
-        return call_user_func(array($this, $functionName), $expression, $alias);
+    public function buildOperator($op, $expression, $alias = null) {
+        $functionName = strtolower($op) . 'Build';
+        if(!is_callable([$this, $functionName])) throw new Exception("Expression build function `$functionName` is missing");
+        return call_user_func([$this, $functionName], $expression, $alias);
     }
 
     /**
@@ -1580,7 +1589,7 @@ class Query extends Component
         if(is_string($joins)) return $joins;
         $result = '';
 
-        foreach($joins as $key=>$join) {
+        foreach($joins as $key => $join) {
             if(is_array($join)) {
                 /** @var string|Model $foreignModel */
                 $foreignModel = array_shift($join);
@@ -1589,7 +1598,7 @@ class Query extends Component
                 $type = '';
                 if(isset($join[0]) && is_string($join[0]) && in_array(
                         $joinType = strtoupper($join[0]),
-                        array('LEFT', 'RIGHT', 'INNER', 'LEFT OUTER', 'RIGHT OUTER', 'FULL', 'FULL OUTER'))
+                        ['LEFT', 'RIGHT', 'INNER', 'LEFT OUTER', 'RIGHT OUTER', 'FULL', 'FULL OUTER'])
                 ) {
                     $type = $joinType;
                     array_shift($join);
@@ -1623,7 +1632,7 @@ class Query extends Component
         // type: CROSS | [NATURAL] { [INNER] | { LEFT | RIGHT | FULL } [OUTER] }
         $type = strtoupper(trim($type));
         $types = explode(' ', $type);
-        $hasOn = count($types)==0 || ($types[0]!='CROSS' && $types[0]!='NATURAL');
+        $hasOn = count($types) == 0 || ($types[0] != 'CROSS' && $types[0] != 'NATURAL');
         $valid = preg_match('/^(CROSS|((NATURAL)?\s?(INNER|((LEFT|RIGHT|FULL)( OUTER)?))?))$/', $type);
         if(!$valid) throw new Exception("Invalid join type $type");
 
@@ -1633,29 +1642,27 @@ class Query extends Component
             // Processing conditions: array('creator'=>'id'), --> array('AND', 'creator'=>'alias.id')  --> 'model.creator = alias.id'
 
             if(ArrayHelper::isAssociative($conditions)) {
-                $expression = array('AND');
-                foreach($conditions as $mainField=>$foreignField) {
+                $expression = ['AND'];
+                foreach($conditions as $mainField => $foreignField) {
                     Assertions::assertString($foreignField);
-                    $field = strpos($foreignField, '.')===false ? $foreignAlias.'.'.$foreignField : $foreignField;
-                    $expression[] = array('=', $mainField, $field);
+                    $field = strpos($foreignField, '.') === false ? $foreignAlias . '.' . $foreignField : $foreignField;
+                    $expression[] = ['=', $mainField, $field];
                 }
-            }
-            else {
+            } else {
                 $expression = $conditions;
             }
 
             if(!$mainAlias) $mainAlias = $model::tableName();
             return sprintf('%s JOIN %s ON %s',
                 $type,
-                $this->quoteSingleName($foreignTableName) . ($alias && $alias != $foreignTableName ? ' '.$this->quoteSingleName($alias) : ''),
+                $this->quoteSingleName($foreignTableName) . ($alias && $alias != $foreignTableName ? ' ' . $this->quoteSingleName($alias) : ''),
                 $this->buildExpression($expression, $mainAlias)
             );
-        }
-        else {
+        } else {
             if(!empty($conditions)) throw new Exception("Needless condition for $type JOIN");
             return sprintf('%s JOIN %s',
                 $type,
-                $this->quoteSingleName($foreignTableName) . ($alias ? ' '.$this->quoteSingleName($alias) : '')
+                $this->quoteSingleName($foreignTableName) . ($alias ? ' ' . $this->quoteSingleName($alias) : '')
             );
         }
     }
@@ -1670,7 +1677,7 @@ class Query extends Component
      * @return string
      * @throws Exception
      */
-    public function buildExpressionList($list, $alias=null) {
+    public function buildExpressionList($list, $alias = null) {
         if($list instanceof Query) {
             $list->connection = $this->connection;
             $list->params = $this->_innerParams;
@@ -1682,7 +1689,7 @@ class Query extends Component
             throw new Exception('Invalid expression list', $list);
         }
         $db = $this;
-        return implode(', ', array_map(function($expression) use($alias, $db) {
+        return implode(', ', array_map(function($expression) use ($alias, $db) {
             return $db->buildExpression($expression, $alias);
         }, $list));
     }
@@ -1701,18 +1708,18 @@ class Query extends Component
      * Builds an SQL fragment used as ORDER BY part
      * Returns empty string on empty orders.
      *
-     * @param array $orders  -- array of order definitions as in {@see buildOrderList()}
+     * @param array $orders -- array of order definitions as in {@see buildOrderList()}
      * @param string $alias -- optional alias for model, used for field names in {@see buildFieldNameValue()}
      *
      * @return string -- an 'ORDER BY ...' clause or empty string
      * @throws Exception  -- if $orders parameter or any of the orders is invalid
      */
-    public function buildOrders($orders, $alias=null) {
+    public function buildOrders($orders, $alias = null) {
         if(is_null($orders)) return '';
-        if(is_string($orders)) $orders = array($orders);
+        if(is_string($orders)) $orders = [$orders];
         if(!is_array($orders)) throw new Exception('Orders mut be an array');
         if(!count($orders)) return '';
-        return ' ORDER BY '.$this->buildOrderList($orders, $alias);
+        return ' ORDER BY ' . $this->buildOrderList($orders, $alias);
     }
 
     /**
@@ -1729,9 +1736,9 @@ class Query extends Component
      * @return string -- the SQL fragment to be placed after the 'ORDER BY' or empty if no elements in orders.
      * @throws Exception -- if $orders parameter or any of the orders is invalid
      */
-    public function buildOrderList($orders, $alias=null) {
+    public function buildOrderList($orders, $alias = null) {
         if(is_null($orders)) return '';
-        if(is_string($orders)) $orders = array($orders);
+        if(is_string($orders)) $orders = [$orders];
         if(!is_array($orders)) throw new Exception('Orders mut be an array');
         if(!count($orders)) return '';
         // NULLs works directly on postgresql only, mysql must generate slave item ISNULL() if LAST is requested
@@ -1740,8 +1747,7 @@ class Query extends Component
             return implode(', ', array_map(function($o) use ($alias, $db) {
                 return $db->buildOrder($o, $alias);
             }, $orders));
-        }
-        catch(Exception $e) {
+        } catch(Exception $e) {
             throw new Exception('Invalid order list', $e->getCode(), $e);
         }
     }
@@ -1759,14 +1765,14 @@ class Query extends Component
      * @return string -- an item for ORDER BY, without separator comma
      * @throws Exception -- if order is empty, a closing parenthesis is missing, or failed to build (invalid)
      */
-    public function buildOrder($o, $alias=null) {
+    public function buildOrder($o, $alias = null) {
         if(empty($o)) throw new Exception('Empty order item.');
         if(is_string($o)) {
-            if(substr($o, 0, 1)=='(') {
-                if(substr($o, -1)!=')') throw new Exception("Missing closing parenthesis in order item '$o'");
-                return substr($o,1,-1);
+            if(substr($o, 0, 1) == '(') {
+                if(substr($o, -1) != ')') throw new Exception("Missing closing parenthesis in order item '$o'");
+                return substr($o, 1, -1);
             }
-            if(strpos($o, ' ')!==false) {
+            if(strpos($o, ' ') !== false) {
                 $words = explode(' ', trim($o));
                 $words[0] = $this->buildFieldName($words[0], $alias);
                 return implode(' ', $words);
@@ -1778,15 +1784,14 @@ class Query extends Component
             $fieldName = $o[0];
             $order = ArrayHelper::getValue($o, 1, self::ORDER_ASC);
             $nulls = ArrayHelper::getValue($o, 2, self::NULLS_FIRST);
-            $preorder = $nulls==self::NULLS_LAST && !$this->connection->supportsOrderNullsLast() ?
-                ('ISNULL('.$this->buildFieldName($fieldName, $alias).'), ') :
+            $preorder = $nulls == self::NULLS_LAST && !$this->connection->supportsOrderNullsLast() ?
+                ('ISNULL(' . $this->buildFieldName($fieldName, $alias) . '), ') :
                 '';
             try {
                 return $preorder . $this->buildFieldName($fieldName, $alias) .
                     ($order == self::ORDER_DESC || strtoupper($order) == 'DESC' ? ' DESC' : '') .
                     (($this->connection->supportsOrderNullsLast() && ($nulls == self::NULLS_LAST || strtoupper($order) == 'NULLS LAST')) ? ' NULLS LAST' : '');
-            }
-            catch(Exception $e) {
+            } catch(Exception $e) {
                 throw new Exception('Invalid order expression', $fieldName, $e);
             }
         }
@@ -1821,7 +1826,7 @@ class Query extends Component
      */
     public function buildUpdateSet($values) {
         $db = $this;
-        return implode(', ', array_map(function($fieldName, $exp) use($db) {
+        return implode(', ', array_map(function($fieldName, $exp) use ($db) {
             return
                 $db->buildFieldName($fieldName) .
                 ' = ' .
@@ -1838,7 +1843,7 @@ class Query extends Component
      * @throws Exception
      */
     public function buildDelete() {
-        return /** @lang */'DELETE FROM ' .
+        return /** @lang */ 'DELETE FROM ' .
             $this->buildTableName($this->modelClass) .
             $this->buildWhere();
     }
@@ -1867,9 +1872,8 @@ class Query extends Component
         if(!$fields && is_array($values) && ArrayHelper::isAssociative($values)) {
             // Single row INSERT using expressions
             $fieldsPart = $this->buildFieldNames($this->modelClass, array_keys($values), $number);
-            $valuesPart = 'VALUES ('.$this->buildExpressionList(array_values($values)).')';
-        }
-        elseif(!$values) {
+            $valuesPart = 'VALUES (' . $this->buildExpressionList(array_values($values)) . ')';
+        } elseif(!$values) {
             // Single row INSERT using literal values -- generates an explicit parametrized query
             if(!$fields) throw new Exception('Must specify either `fields` or `values` for INSERT');
             if(!is_array($fields) || !ArrayHelper::isAssociative($fields)) throw new Exception('`values` must contain the values or `fields` must be an associative array');
@@ -1877,11 +1881,10 @@ class Query extends Component
             $values = array_map(function($value) {
                 $paramName = ArrayHelper::genUniqueIndex($this->_innerParams, '_p');
                 $this->_innerParams[$paramName] = $value;
-                return ':'.$paramName;
+                return ':' . $paramName;
             }, array_values($fields));
-            $valuesPart = 'VALUES ('.implode(', ', $values).')';
-        }
-        else {
+            $valuesPart = 'VALUES (' . implode(', ', $values) . ')';
+        } else {
             // Multi-row INSERT using literal values or sub-Query. Not a parametrized query.
             if(!($values instanceof Query) && ArrayHelper::isAssociative($values)) throw new Exception('`values` must be a 2-dim numeric-indexed array of literal values of rows or a sub-Query');
             $fieldsPart = $this->buildFieldNames($this->modelClass, $fields, $number);
@@ -1890,7 +1893,7 @@ class Query extends Component
 
         $tablePart = $this->buildTableName($this->modelClass);
 
-        return 'INSERT INTO ' . $tablePart . ' (' . $fieldsPart. ') '. $valuesPart;
+        return 'INSERT INTO ' . $tablePart . ' (' . $fieldsPart . ') ' . $valuesPart;
     }
 
     /**
@@ -1910,23 +1913,23 @@ class Query extends Component
      * @return string -- the values part (including VALUES keyword if necessary)
      * @throws Exception -- if a row is not an array, has too many values, or $values is an invalid type.
      */
-    public function buildValues($values, $number=null) {
+    public function buildValues($values, $number = null) {
         if(is_string($values)) return $values;
         if(is_array($values)) {
             $result = 'VALUES ';
-            foreach($values as $index=>$valueList) {
+            foreach($values as $index => $valueList) {
                 $result .= '(';
-                if($valueList===null) throw new Exception("#$index: Null values row.");
+                if($valueList === null) throw new Exception("#$index: Null values row.");
                 if(!is_array($valueList)) throw new Exception("#$index: Invalid values row. Values must contain arrays.", $valueList);
                 $n0 = count($valueList);
                 $n = $number ?: $n0; // The actual number of values to be inserted
-                if($n0 > $n) throw new Exception("Too many values in the list #$index. $n0>$n", array($number, $valueList));
-                for($i=0;$i<$n;$i++) {
-                    $result .= ($i>=$n0) ? 'NULL' : $this->connection->quoteValue($valueList[$i]);
-                    if($i<$n-1) $result .= ', ';
+                if($n0 > $n) throw new Exception("Too many values in the list #$index. $n0>$n", [$number, $valueList]);
+                for($i = 0; $i < $n; $i++) {
+                    $result .= ($i >= $n0) ? 'NULL' : $this->connection->quoteValue($valueList[$i]);
+                    if($i < $n - 1) $result .= ', ';
                 }
                 $result .= ')';
-                if($index<count($values)-1) $result .= ",\n";
+                if($index < count($values) - 1) $result .= ",\n";
             }
             return $result;
         }
@@ -1955,10 +1958,10 @@ class Query extends Component
      */
     public function buildFieldNames($models, $fields, &$number) {
         $forceAlias = false;
-        if($models===null) $models=[]; // throw new Exception('No model or table name given for select');
-        if(!is_array($models)) $models = array($models);
+        if($models === null) $models = []; // throw new Exception('No model or table name given for select');
+        if(!is_array($models)) $models = [$models];
         //if(count($models)<1) throw new Exception('Must specify at least one model');
-        if(count($models)>1) $forceAlias = true;
+        if(count($models) > 1) $forceAlias = true;
         if(ArrayHelper::isAssociative($models, false)) $forceAlias = true;
 
         $mk = array_keys($models);
@@ -1972,39 +1975,38 @@ class Query extends Component
         if(is_null($fields)) {
             $fields = $this->allModelFields($models);
         } else {
-            if(!is_array($fields)) $fields = array($fields);
+            if(!is_array($fields)) $fields = [$fields];
             if($forceAlias) {
-                $fields = array_map(function($f) use($alias) {
+                $fields = array_map(function($f) use ($alias) {
                     if(!is_string($f)) return $f;
-                    if(substr($f,0,1)=="'") return $f;
-                    if(substr($f,0,1)=='(') return $f;
+                    if(substr($f, 0, 1) == "'") return $f;
+                    if(substr($f, 0, 1) == '(') return $f;
                     if(strpos($f, '.')) return $f;
-                    return $alias.'.'.$f;
+                    return $alias . '.' . $f;
                 }, $fields);
             }
         }
 
-        if(!is_array($fields)) $fields = array($fields);
+        if(!is_array($fields)) $fields = [$fields];
         $number = count($fields);
         $prefix = $forceAlias ? $alias : null;
         $db = $this;
         $aliases = array_keys($fields);
-        return implode(', ', array_map(function($f, $a, $i) use($prefix, $fields, $aliases, $db) {
+        return implode(', ', array_map(function($f, $a, $i) use ($prefix, $fields, $aliases, $db) {
             $output = is_integer($a) ? '' : $a;
             // Auto output alias-prefixed field-name if similar field-name exist before it's index
             if(!$output && is_scalar($f) && strpos($f, '.')) {
                 $field_name = AppHelper::substring_after($f, '.', true);
                 // Search for the position of the occurrence of the field_name, where no alias present
-                $pos = ArrayHelper::array_find_key($fields, function($item, $alias) use($f, $field_name) {
+                $pos = ArrayHelper::array_find_key($fields, function($item, $alias) use ($f, $field_name) {
                     if(!is_numeric($alias)) return false;
-                    return $item!==$f && $field_name == AppHelper::substring_after($item, '.', true);
+                    return $item !== $f && $field_name == AppHelper::substring_after($item, '.', true);
                 });
-                if(is_numeric($pos) && $pos < $i) $output =  str_replace('.', '_', $f);
+                if(is_numeric($pos) && $pos < $i) $output = str_replace('.', '_', $f);
             }
             try {
                 return $db->buildFieldName($f, $prefix, $output);
-            }
-            catch(Exception $e) {
+            } catch(Exception $e) {
                 throw new Exception("Invalid field name definition '$f'", 0, $e);
             }
         }, $fields, $aliases, array_keys($aliases)));
@@ -2024,8 +2026,8 @@ class Query extends Component
      * @return string
      * @throws Exception
      */
-    public function buildFieldName($name, $prefix=null, $output=null) {
-        return $this->buildFieldNameValue($name, $prefix) . ($output ? ' AS '.$this->quoteSingleName($output) : '');
+    public function buildFieldName($name, $prefix = null, $output = null) {
+        return $this->buildFieldNameValue($name, $prefix) . ($output ? ' AS ' . $this->quoteSingleName($output) : '');
     }
 
     /**
@@ -2037,21 +2039,21 @@ class Query extends Component
      * @return string
      * @throws Exception
      */
-    public function buildFieldNameValue($name, $prefix=null) {
+    public function buildFieldNameValue($name, $prefix = null) {
         if(is_array($name)) {
             return $this->buildExpression($name, $prefix);
         }
         if($name instanceof Query) {
-            $field = '('.$name->buildSelect().')';
+            $field = '(' . $name->buildSelect() . ')';
             $this->_params = array_merge($this->_params, $name->params);
             return $field;
         }
         if(is_object($name)) throw new Exception('invalid field definition');
         if(is_int($name)) return $name;
-        if($name=='?' || preg_match('/^:\w+$/', $name)) return $name;
-        if(substr($name,0,1)=="'" || substr($name,-1)=="'") return $name;
-        if(substr($name,0,1)=='(' || substr($name,-1)==')') return $name;
-        if(strpos($name, '.')===false && $prefix) $name = $prefix.'.'.$name;
+        if($name == '?' || preg_match('/^:\w+$/', $name)) return $name;
+        if(substr($name, 0, 1) == "'" || substr($name, -1) == "'") return $name;
+        if(substr($name, 0, 1) == '(' || substr($name, -1) == ')') return $name;
+        if(strpos($name, '.') === false && $prefix) $name = $prefix . '.' . $name;
         return $this->quoteFieldName($name);
     }
 
@@ -2066,9 +2068,9 @@ class Query extends Component
      */
     public function quoteSingleName($name) {
         $name = trim($name);
-        if($name=='*') return $name;
+        if($name == '*') return $name;
         $delimiter = $this->connection->quoteIdentifier('_'); // delimiter[0] and delimiter[2] is used.
-        $delimited = strlen($name)>2 && substr($name, 0, 1)==$delimiter[0] && substr($name, -1)==$delimiter[2];
+        $delimited = strlen($name) > 2 && substr($name, 0, 1) == $delimiter[0] && substr($name, -1) == $delimiter[2];
         $bareName = $delimited ? substr($name, 1, -1) : $name;
         if(strpos($bareName, $delimiter[0]) !== false || strpos($bareName, $delimiter[2]) !== false) {
             throw new Exception("Invalid field name ($name)");
@@ -2085,7 +2087,7 @@ class Query extends Component
      * @param bool $pdo -- read error from connected PDO, ignore last stmt
      * @return string|null -- "ANSI-code; driver-code; driver-message" or null if no statement available.
      */
-    public function lastError($pdo=false) {
+    public function lastError($pdo = false) {
         if($pdo) return implode('; ', $this->connection->pdo->errorInfo());
         return $this->stmt ? implode('; ', $this->stmt->errorInfo()) : null;
     }
@@ -2098,7 +2100,7 @@ class Query extends Component
      * @return static
      */
     public function filterLike($value, string $field) {
-        if($value!='') {
+        if($value != '') {
             $patternName = AppHelper::toNameID($field, '_', '');
             $patternExpression = ['concat()', "'%'", ['lower()', ':' . $patternName], "'%'"];
             $this->andWhere(['LIKE', ['lower()', $field], $patternExpression], [$patternName => $value]);
@@ -2114,7 +2116,7 @@ class Query extends Component
      * @return Query
      */
     public function filterIs($value, string $field) {
-        if($value!=='' && $value!==null) {
+        if($value !== '' && $value !== null) {
             $this->andWhere([$field => $value]);
         }
         return $this;
@@ -2131,8 +2133,8 @@ class Query extends Component
      * @return Query
      * @throws Exception
      */
-    public function filterInReferred($value, string $field, $foreignClass, $foreignValueField, $foreignIdField=null) {
-        if($value!='') {
+    public function filterInReferred($value, string $field, $foreignClass, $foreignValueField, $foreignIdField = null) {
+        if($value != '') {
             if(!$foreignIdField) $foreignIdField = $foreignClass::primaryKey();
             $patternName = AppHelper::toNameID($field, '_', '');
             $patternExpression = ['concat()', "'%'", ['lower()', ':' . $patternName], "'%'"];

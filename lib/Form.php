@@ -1,4 +1,5 @@
 <?php
+
 namespace uhi67\umvc;
 
 use Exception;
@@ -45,10 +46,10 @@ class Form extends Component {
      * @throws Exception
      */
     public function init() {
-        if($this->layout) $this->template = '_form/_field_'.$this->layout;
-        $viewFile = App::$app->basePath.'/views/'.$this->template.'.php';
+        if($this->layout) $this->template = '_form/_field_' . $this->layout;
+        $viewFile = App::$app->basePath . '/views/' . $this->template . '.php';
         if(!file_exists($viewFile)) {
-            $viewFile = dirname(__DIR__).'/views/'.$this->template.'.php';
+            $viewFile = dirname(__DIR__) . '/views/' . $this->template . '.php';
         }
         if(!file_exists($viewFile)) throw new Exception("Form: template view file `$viewFile` for `$this->layout` does not exist.");
     }
@@ -81,8 +82,8 @@ class Form extends Component {
      *
      * @throws Exception
      */
-    public function field($fieldName, array $options = [], $model=null) {
-        if($model===null) $model = $this->model;
+    public function field($fieldName, array $options = [], $model = null) {
+        if($model === null) $model = $this->model;
         $field = new Field(array_merge([
             'model' => $model,
             'fieldName' => $fieldName,

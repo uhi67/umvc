@@ -8,12 +8,12 @@
 
 return [
     // Class name must be the uhi67\umvc\App class or a descendant
-	\uhi67\umvc\App::class,
+    \uhi67\umvc\App::class,
 
     // Must be set to "production" on production site, can be set to "development" or "local" on development sites
     'application_env' => 'production',
-	'mainControllerClass' => '\app\controllers\MainController', // A user class derived from \uhi67\umvc\Controller
-	'layout'=>'layouts/main',
+    'mainControllerClass' => '\app\controllers\MainController', // A user class derived from \uhi67\umvc\Controller
+    'layout'=>'layouts/main',
 
     // Must be set to 'on' if site is behind a reverse proxy terminating the HTTPS connection and forwarding HTTP.
     'https' => 'off',
@@ -23,7 +23,7 @@ return [
         'db' => [
             \uhi67\umvc\MysqlConnection::class,
             'dsn' => "mysql:host=localhost;dbname=",
-	        'name' => "",
+            'name' => "",
             'user' => "",
             'password' => "",
         ],
@@ -42,7 +42,7 @@ return [
             'disco' => null,
             // Refers to the proper SAML auth-source config element in the `config/saml/config/authsource.php` file
             'authSource' => '',
-	        'userModel' => '', // Must be set to your `\uhi67\umvc\Model` class of users, implementing `\uhi67\umvc\UserInterface`
+            'userModel' => '', // Must be set to your `\uhi67\umvc\Model` class of users, implementing `\uhi67\umvc\UserInterface`
         ],
 
         // The cache used (for accelerating database operations). May be omitted in development environment.

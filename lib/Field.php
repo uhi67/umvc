@@ -13,8 +13,7 @@ use Exception;
  * @property-read string $requiredMark -- The * HTML-chunk with Required title if the field is required
  * @package UMVC Simple Application Framework
  */
-class Field extends Component
-{
+class Field extends Component {
     /** @var Model $model -- The model of the field or null if standalone field is to be created */
     public $model;
     /** @var string $fieldName -- the name of the property of the Model (database field) */
@@ -77,8 +76,8 @@ class Field extends Component
                 }
             }
         }
-        if(!$this->name) $this->name = $this->model ? $this->modelName.'['.$this->fieldName.']' : $this->fieldName;
-        if($this->icon) $this->label = $this->icon().' '.$this->label;
+        if(!$this->name) $this->name = $this->model ? $this->modelName . '[' . $this->fieldName . ']' : $this->fieldName;
+        if($this->icon) $this->label = $this->icon() . ' ' . $this->label;
         if(!$this->template) $this->template = '_form/_field';
 
         // Add validation rules to perform client-side validation (later...)
@@ -87,7 +86,7 @@ class Field extends Component
             // Applicable client-side validations (not implemented yet)
             $clientRules = ['mandatory', 'length', 'email', 'url', 'int', 'date', 'pattern'];
             if(isset($rules[$this->fieldName])) {
-                $fieldRules = array_filter($rules[$this->fieldName], function($v) use($clientRules) {
+                $fieldRules = array_filter($rules[$this->fieldName], function($v) use ($clientRules) {
                     return in_array($v, $clientRules) || is_array($v) && in_array($v[0], $clientRules);
                 });
                 if(in_array('mandatory', $fieldRules) && !isset($options['required'])) {
@@ -100,8 +99,8 @@ class Field extends Component
 
     public function icon() {
         if(!$this->icon) return '';
-        if(substr($this->icon,0,2)=='fa') return '<i class="'.$this->icon.'"></i>';
-        return '<span class="'.$this->icon.'"></span>';
+        if(substr($this->icon, 0, 2) == 'fa') return '<i class="' . $this->icon . '"></i>';
+        return '<span class="' . $this->icon . '"></span>';
     }
 
     /**
@@ -111,13 +110,13 @@ class Field extends Component
      *
      * @return string
      */
-    public function renderOptions($options=null) {
+    public function renderOptions($options = null) {
         if(!$options) $options = $this->options;
         $result = '';
-        foreach($options as $name=>$value) {
-            if($value===true) $value = null;
-            if($value===false) continue;
-            $result .= ' '.htmlspecialchars($name).'="'.htmlspecialchars($value).'"';
+        foreach($options as $name => $value) {
+            if($value === true) $value = null;
+            if($value === false) continue;
+            $result .= ' ' . htmlspecialchars($name) . '="' . htmlspecialchars($value) . '"';
         }
         return $result;
     }
@@ -127,13 +126,13 @@ class Field extends Component
      */
     public function labelClass() {
         $class = [];
-        if($this->form->layout=='horizontal') $class[] = 'control-label';
+        if($this->form->layout == 'horizontal') $class[] = 'control-label';
         if(is_array($this->form->labelClass)) $class = array_merge($class, $this->form->labelClass);
         elseif($this->form->labelClass) $class[] = $this->form->labelClass;
 
         if(is_array($this->labelClass)) $class = array_merge($class, $this->labelClass);
         elseif($this->labelClass) $class[] = $this->labelClass;
-        return $class ? ' class="'.implode(' ', $class).'"' : '';
+        return $class ? ' class="' . implode(' ', $class) . '"' : '';
     }
 
     /**
@@ -147,7 +146,7 @@ class Field extends Component
         if(is_array($this->noticeClass)) $class = array_merge($class, $this->noticeClass);
         elseif($this->noticeClass) $class[] = $this->noticeClass;
 
-        return $class ? ' class="'.implode(' ', $class).'"' : '';
+        return $class ? ' class="' . implode(' ', $class) . '"' : '';
     }
 
     /**
@@ -161,14 +160,14 @@ class Field extends Component
         if(is_array($this->wrapperClass)) $class = array_merge($class, $this->wrapperClass);
         elseif($this->wrapperClass) $class[] = $this->wrapperClass;
 
-        return $class ? ' class="'.implode(' ', $class).'"' : '';
+        return $class ? ' class="' . implode(' ', $class) . '"' : '';
     }
 
     /**
      * @throws Exception
      */
     public function render() {
-        return App::$app->renderPartial($this->template, ['field'=>$this]);
+        return App::$app->renderPartial($this->template, ['field' => $this]);
     }
 
     /**
@@ -177,7 +176,7 @@ class Field extends Component
      * @throws Exception
      */
     public function renderInput() {
-        $functionname = 'renderInput'. AppHelper::camelize($this->type);
+        $functionname = 'renderInput' . AppHelper::camelize($this->type);
         if(!is_callable([$this, $functionname])) throw new Exception("Undefined input type `$this->type`.");
         return call_user_func([$this, $functionname]);
     }
@@ -204,7 +203,7 @@ class Field extends Component
             $emptyText = $required ? $placeHolder : '';
             $result .= "<option value=''>$emptyText</option>";
         }
-        foreach($this->items as $v=>$l) {
+        foreach($this->items as $v => $l) {
             $selected = in_array($v, (array)$this->value) ? 'selected' : '';
             $result .= "<option value='$v' $selected>$l</option>";
         }
@@ -232,9 +231,9 @@ class Field extends Component
                     $emptyText
                 </label>\n";
         }
-        foreach($this->items as $value=>$label) {
+        foreach($this->items as $value => $label) {
             $index = is_integer($value) ? $value : crc32($value);
-            $checked = ($this->value===$value || ($this->value!==null && $value!==null && $this->value == $value)) ? 'checked' : '';
+            $checked = ($this->value === $value || ($this->value !== null && $value !== null && $this->value == $value)) ? 'checked' : '';
             $result .= "
                 <label for='$this->id-$index'>
                     <input type='radio' id='$this->id-$index' name='$this->name' class='$this->class' value='$value' $checked $options aria-invalid='false' />
@@ -252,7 +251,7 @@ class Field extends Component
     public function renderInputCheckboxlist() {
         $options = $this->renderOptions();
         $result = "<input type='hidden' id='$this->id-default' name='$this->name' value='' />";
-        foreach($this->items as $value=>$label) {
+        foreach($this->items as $value => $label) {
             $index = is_integer($value) ? $value : crc32($value);
             $checked = in_array($value, $this->value) ? ' checked' : '';
             $result .= "
@@ -282,7 +281,7 @@ class Field extends Component
             $emptyText = $required ? $placeHolder : '';
             $result .= "<option value=''>$emptyText</option>";
         }
-        foreach($this->items as $v=>$l) {
+        foreach($this->items as $v => $l) {
             $selected = in_array($v, (array)$this->value) ? 'selected' : '';
             $result .= "<option value='$v' $selected>$l</option>";
         }
@@ -293,22 +292,24 @@ class Field extends Component
     /**
      * Returns the value of the field converted to text to display in an input
      * Getter for {@see $textValue} property
+     *
      * @throws Exception
      */
     public function getTextValue() {
-        if($this->value===true) return 'TRUE';
-        if($this->value===false) return 'FALSE';
-        if($this->value===null) return '';
+        if($this->value === true) return 'TRUE';
+        if($this->value === false) return 'FALSE';
+        if($this->value === null) return '';
         if(is_scalar($this->value)) return $this->value;
         if($this->value instanceof DateTime) {
-            $format = $this->value->format('H:i:s')=='0:00:00' ? 'Y-m-d' : 'Y-m-d H:i:s';
+            $format = $this->value->format('H:i:s') == '0:00:00' ? 'Y-m-d' : 'Y-m-d H:i:s';
             return $this->value->format($format);
         }
-        throw new Exception('Text value of ' . (is_object($this->value) ? get_class($this->value): gettype($this->value)) . ' is not defined');
+        throw new Exception('Text value of ' . (is_object($this->value) ? get_class($this->value) : gettype($this->value)) . ' is not defined');
     }
 
     /**
      * Getter for {@see $requiredMark} property
+     *
      * @return string
      */
     public function getRequiredMark() {

@@ -18,13 +18,14 @@ use Exception;
  */
 class SqlMigration extends Migration {
     public $filename;
-	/**
-	 * This method must do the migration up job in the migration class.
+
+    /**
+     * This method must do the migration up job in the migration class.
      *
-	 * @return bool -- must return true on success, false on failure
+     * @return bool -- must return true on success, false on failure
      * @throws Exception -- may throw an Exception on failure
-	 */
-	public function up() {
+     */
+    public function up() {
         return $this->executeSqlFile($this->filename);
     }
 }

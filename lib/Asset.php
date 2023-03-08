@@ -35,7 +35,8 @@ class Asset extends Component {
 
     /**
      * Package files are copied into the cache
-     * @throws Exception -- if nor path nor package name is specified 
+     *
+     * @throws Exception -- if nor path nor package name is specified
      */
     public function init() {
         if(!$this->name && !$this->path) throw new Exception('Package name or path must be specified');
@@ -44,14 +45,14 @@ class Asset extends Component {
         // TODO check uníque name
 
         if(!$this->dir) {
-            if($this->path=='') $this->dir = App::$app->basePath.'/www';
-            elseif($this->path[0]=='/') $this->dir = App::$app->basePath.$this->path;
-            else $this->dir = App::$app->basePath.'/vendor/'.$this->path;
+            if($this->path == '') $this->dir = App::$app->basePath . '/www';
+            elseif($this->path[0] == '/') $this->dir = App::$app->basePath . $this->path;
+            else $this->dir = App::$app->basePath . '/vendor/' . $this->path;
         }
 
-        if(!$this->id) $this->id = substr(md5($this->dir),0,16);
-        if(!$this->cacheDir) $this->cacheDir = App::$app->basePath.'/www/assets/cache/'.$this->id;
-        if(!$this->cacheUrl) $this->cacheUrl = '/assets/cache/'.$this->id;
+        if(!$this->id) $this->id = substr(md5($this->dir), 0, 16);
+        if(!$this->cacheDir) $this->cacheDir = App::$app->basePath . '/www/assets/cache/' . $this->id;
+        if(!$this->cacheUrl) $this->cacheUrl = '/assets/cache/' . $this->id;
 
         if(!is_dir($this->cacheDir)) mkdir($this->cacheDir, 0774, true);
         if(!$this->patterns) $this->patterns = ['*'];
@@ -73,10 +74,10 @@ class Asset extends Component {
      *
      * Special pattern matches:
      *
-     * 		~pattern~ -- denotes a single level RegEx pattern (always begins with ~)
-     *		dirPattern/subPattern -- matches directories first, then recurses subpattern
-     * 		*,?		  -- single level directory or file pattern may contain legacy metacharacters
-     * 		...		  -- multiple level directory pattern: matches any levels and names of subdirectories
+     *        ~pattern~ -- denotes a single level RegEx pattern (always begins with ~)
+     *        dirPattern/subPattern -- matches directories first, then recurses subpattern
+     *        *,?          -- single level directory or file pattern may contain legacy metacharacters
+     *        ...          -- multiple level directory pattern: matches any levels and names of subdirectories
      *
      * @param string $baseDir -- absolute package root (search and return filenames in relation to this; no trailing '/')
      * @param string $dir -- iterated subdirectory, empty or 'dir/' (must have trailing / if non-empty)
@@ -86,79 +87,73 @@ class Asset extends Component {
      *
      * @throws Exception
      */
-    public static function matchPattern($baseDir, $dir, $pattern, $callback, $missing=null) {
+    public static function matchPattern($baseDir, $dir, $pattern, $callback, $missing = null) {
         $d = $baseDir . '/' . $dir;
 
         // RegEx pattern (surrounded by ~)
-        if(substr($pattern,0,1)=='~' && substr($pattern,-1)=='~') {
+        if(substr($pattern, 0, 1) == '~' && substr($pattern, -1) == '~') {
             // Single level RegEx pattern
             $dh = dir($d);
-            while(($file = $dh->read($dh))!==false) {
-                if($file=='.'||$file=='..') continue;
-                if(filetype($d.$file)!='dir') continue;
+            while(($file = $dh->read($dh)) !== false) {
+                if($file == '.' || $file == '..') continue;
+                if(filetype($d . $file) != 'dir') continue;
                 if(preg_match($pattern, $file)) {
-                    $callback($dir.$file);
+                    $callback($dir . $file);
                 }
             }
             $dh->close();
         }
-
         // Directory pattern (contains /)
-        else if(($p = strpos($pattern, '/'))!==false) {
+        elseif(($p = strpos($pattern, '/')) !== false) {
             // Match $dir and $subpattern
             $dirPattern = substr($pattern, 0, $p);
-            $subpattern = substr($pattern, $p+1);
-            if($dirPattern=='...') {
+            $subpattern = substr($pattern, $p + 1);
+            if($dirPattern == '...') {
                 // any-depth directory pattern (may contain more directory patterns, heavy recursion follows)
                 $dh = dir($d);
-                while(($file = $dh->read())!==false) {
-                    if($file=='.'||$file=='..') continue;
-                    if(filetype($d.$file)!='dir') continue;
-                    static::matchPattern($baseDir, $dir.$file.'/', $subpattern, $callback);
-                    static::matchPattern($baseDir, $dir.$file.'/', $pattern, $callback); // restart ... matching!
+                while(($file = $dh->read()) !== false) {
+                    if($file == '.' || $file == '..') continue;
+                    if(filetype($d . $file) != 'dir') continue;
+                    static::matchPattern($baseDir, $dir . $file . '/', $subpattern, $callback);
+                    static::matchPattern($baseDir, $dir . $file . '/', $pattern, $callback); // restart ... matching!
                 }
                 $dh->close();
-            }
-            elseif(preg_match('~[*?]~', $dirPattern)) {
+            } elseif(preg_match('~[*?]~', $dirPattern)) {
                 // Single level subdirectory pattern
                 $dh = dir($d);
-                while(($file = $dh->read())!==false) {
-                    if($file=='.'||$file=='..') continue;
-                    if(filetype($d.$file)!='dir') continue;
+                while(($file = $dh->read()) !== false) {
+                    if($file == '.' || $file == '..') continue;
+                    if(filetype($d . $file) != 'dir') continue;
                     if(!fnmatch($dirPattern, $file)) continue;
-                    static::matchPattern($baseDir, $dir.$file.'/', $subpattern, $callback);
+                    static::matchPattern($baseDir, $dir . $file . '/', $subpattern, $callback);
                 }
                 $dh->close();
-            }
-            else {
+            } else {
                 // literal subdirectory
-                if(is_dir($d.$dirPattern)) {
-                    static::matchPattern($baseDir, $dir.$dirPattern.'/', $subpattern, $callback, $missing);
-                }
-                else {
-                    if($missing) $missing($d.$dirPattern);
+                if(is_dir($d . $dirPattern)) {
+                    static::matchPattern($baseDir, $dir . $dirPattern . '/', $subpattern, $callback, $missing);
+                } else {
+                    if($missing) $missing($d . $dirPattern);
                 }
             }
         }
-
         // legacy wildcards pattern (contains * or ?)
-        else if(preg_match('~[*?]~', $pattern)) {
+        elseif(preg_match('~[*?]~', $pattern)) {
             // match directory pattern in the current directory (use fnmatch)
-	        if(!is_dir($d)) throw new Exception("Directory '$d' not found"); // note: opendir error is not catchable
+            if(!is_dir($d)) throw new Exception("Directory '$d' not found"); // note: opendir error is not catchable
             if($dh = opendir($d)) {
-                while (($file = readdir($dh)) !== false) {
-                    if(filetype($d . $file)!= 'file') continue;
+                while(($file = readdir($dh)) !== false) {
+                    if(filetype($d . $file) != 'file') continue;
                     if(fnmatch($pattern, $file)) {
-                        $callback($dir.$file);
+                        $callback($dir . $file);
                     }
                 }
                 closedir($dh);
             }
         }
-
         // Single literal filename
         else {
-            $fileName = $dir.$pattern;
+            $fileName = $dir . $pattern;
             // Use a single file (fileName includes path relative to asset root)
             if($missing && !file_exists($baseDir . '/' . $fileName)) $missing($fileName);
             else $callback($fileName);
@@ -177,7 +172,7 @@ class Asset extends Component {
      * @return string -- cache path (relative to cacheDir)
      */
     private function copyFile($fileName) {
-        $filePath = $this->dir.'/'.$fileName;   // Absolute path of original file to copy
+        $filePath = $this->dir . '/' . $fileName;   // Absolute path of original file to copy
         $cacheFileName = $this->cacheDir . '/' . $fileName; // Absolute path of cache file to copy into
 
         if(!file_exists($cacheFileName) || (filemtime($cacheFileName) < filemtime($filePath))) {
@@ -206,7 +201,7 @@ class Asset extends Component {
      * @return string
      */
     public static function ext($fileName) {
-        if($p=strpos($fileName, '?')) $fileName = substr($fileName,0,$p);
+        if($p = strpos($fileName, '?')) $fileName = substr($fileName, 0, $p);
         return strtolower(substr(strrchr($fileName, "."), 1));
     }
 
@@ -220,7 +215,7 @@ class Asset extends Component {
     public function url($fileName) {
         $url = '/assets/' . $this->path;
         if(!$fileName) return $url;
-        if(!file_exists($this->dir.'/'.$fileName)) return false;
+        if(!file_exists($this->dir . '/' . $fileName)) return false;
         return $this->cacheUrl . '/' . $this->copyFile($fileName);
     }
 }

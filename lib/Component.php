@@ -52,7 +52,7 @@ abstract class Component {
      * @throws Exception -- when the config is not an array (or null)
      */
     public function __construct($config = []) {
-        if (!empty($config)) {
+        if(!empty($config)) {
             static::configure($this, $config);
         }
         $this->init();
@@ -62,6 +62,7 @@ abstract class Component {
      * Initializes the object.
      * This method is invoked at the end of the constructor after the object is initialized with the
      * given configuration. The default implementation does nothing, override it if you want to use.
+     *
      * @return void
      */
     public function init() {
@@ -72,10 +73,10 @@ abstract class Component {
      * Prepares the object.
      * This method is invoked during App creation after all components are initialized.
      * Default implementation does nothing, override it if you want to use.
+     *
      * @return void
      */
-    public function prepare()
-    {
+    public function prepare() {
         // This function is intentionally empty. Descendants need not call it.
     }
 
@@ -89,14 +90,14 @@ abstract class Component {
      * @see __set()
      */
     public function __get($name) {
-        if(strpos($name, '-')!==false) $name = AppHelper::camelize($name);
+        if(strpos($name, '-') !== false) $name = AppHelper::camelize($name);
 
         $getter = 'get' . $name;
-        if (method_exists($this, $getter)) {
+        if(method_exists($this, $getter)) {
             return $this->$getter();
         }
 
-        if (method_exists($this, 'set' . $name)) {
+        if(method_exists($this, 'set' . $name)) {
             throw new Exception('Getting write-only property: ' . get_class($this) . '::' . $name);
         }
 
@@ -114,11 +115,11 @@ abstract class Component {
      */
     public function __set($name, $value) {
         $setter = 'set' . $name;
-        if (method_exists($this, $setter)) {
+        if(method_exists($this, $setter)) {
             $this->$setter($value);
             return;
         }
-        if (method_exists($this, 'get' . $name)) {
+        if(method_exists($this, 'get' . $name)) {
             throw new Exception('Setting read-only property: ' . get_class($this) . '::' . $name);
         }
         throw new Exception('Setting unknown property: ' . get_class($this) . '::' . $name);
@@ -126,13 +127,14 @@ abstract class Component {
 
     /**
      * Checks if a property is set: defined and not null.
+     *
      * @param string $name the property name
      * @return bool whether the named property is set
      * @see http://php.net/manual/en/function.isset.php
      */
     public function __isset($name) {
         $getter = 'get' . $name;
-        if (method_exists($this, $getter)) {
+        if(method_exists($this, $getter)) {
             return $this->$getter() !== null;
         }
         return false;
@@ -148,7 +150,7 @@ abstract class Component {
      */
     public function __unset($name) {
         $setter = 'set' . $name;
-        if (method_exists($this, $setter)) {
+        if(method_exists($this, $setter)) {
             $this->$setter(null);
             return;
         }
@@ -157,6 +159,7 @@ abstract class Component {
 
     /**
      * Returns a value indicating whether a property is defined for this component.
+     *
      * @param string $name the property name
      * @param bool $checkVars whether to treat member variables as properties
      * @return bool whether the property is defined
@@ -169,13 +172,14 @@ abstract class Component {
 
     /**
      * Returns a value indicating whether a property can be read.
+     *
      * @param string $name the property name
      * @param bool $checkVars whether to treat member variables as properties
      * @return bool whether the property can be read
      * @see canSetProperty()
      */
     public function canGetProperty($name, $checkVars = true) {
-        if (method_exists($this, 'get' . $name) || $checkVars && property_exists($this, $name)) {
+        if(method_exists($this, 'get' . $name) || $checkVars && property_exists($this, $name)) {
             return true;
         }
         return false;
@@ -183,13 +187,14 @@ abstract class Component {
 
     /**
      * Returns a value indicating whether a property can be set.
+     *
      * @param string $name the property name
      * @param bool $checkVars whether to treat member variables as properties
      * @return bool whether the property can be written
      * @see canGetProperty()
      */
     public function canSetProperty($name, $checkVars = true) {
-        if (method_exists($this, 'set' . $name) || $checkVars && property_exists($this, $name)) {
+        if(method_exists($this, 'set' . $name) || $checkVars && property_exists($this, $name)) {
             return true;
         }
         return false;
@@ -204,10 +209,10 @@ abstract class Component {
      * @return object the object itself
      * @throws Exception -- when the $config is not an array or null
      */
-    public static function configure($object, $config=null) {
-        if($config===null) return $object;
+    public static function configure($object, $config = null) {
+        if($config === null) return $object;
         Assertions::assertArray($config);
-        foreach ($config as $name => $value) {
+        foreach($config as $name => $value) {
             #echo get_class($object)."::$name: ".session_status(). " <br/>";
             if($name == 'class' && !$object->hasProperty('class')) continue;
             /** @noinspection PhpVariableVariableInspection */
@@ -255,23 +260,23 @@ abstract class Component {
      * @throws Exception if the configuration is invalid.
      * @throws ReflectionException
      */
-    public static function create($type, array $params = array()) {
-        if (is_string($type)) {
+    public static function create($type, array $params = []) {
+        if(is_string($type)) {
             return static::createClass($type, $params);
-        } elseif (is_array($type) && isset($type['class'])) {
+        } elseif(is_array($type) && isset($type['class'])) {
             $class = $type['class'];
             unset($type['class']);
             return static::createClass($class, $type);
-        } elseif (is_array($type) && isset($type[0])) {
+        } elseif(is_array($type) && isset($type[0])) {
             $class = $type[0];
             unset($type[0]);
             return static::createClass($class, $type);
-        } elseif (is_array($type) && is_a(get_called_class(), Component::class, true) && get_called_class() !== Component::class) {
+        } elseif(is_array($type) && is_a(get_called_class(), Component::class, true) && get_called_class() !== Component::class) {
             $class = get_called_class();
             return static::createClass($class, $type);
-        } elseif (is_callable($type, true)) {
+        } elseif(is_callable($type, true)) {
             return call_user_func_array($type, $params);
-        } elseif (is_array($type)) {
+        } elseif(is_array($type)) {
             throw new Exception('Object configuration must be an array containing a "class" element, or call from a derived Component class.');
         }
         throw new Exception('Unsupported configuration type: ' . gettype($type));
@@ -286,7 +291,7 @@ abstract class Component {
      */
     private static function createClass($class, $config) {
         $reflection = new ReflectionClass($class);
-        return $reflection->newInstanceArgs(array($config));
+        return $reflection->newInstanceArgs([$config]);
     }
 
     public function getNode() {
@@ -309,9 +314,9 @@ abstract class Component {
      * @param array $data -- name->value pairs to set
      * @param array|null $fields -- if given, a list of properties to set (filter/map: [field, field=>mapped, ...])
      */
-    public function populate($data, $fields=null) {
+    public function populate($data, $fields = null) {
         if($fields) {
-            foreach($fields as $field=>$remote) {
+            foreach($fields as $field => $remote) {
                 if(is_numeric($field)) $field = $remote;
                 if($this->canSetProperty($field)) $this->$field = ArrayHelper::getValue($data, $remote);
             }
@@ -330,14 +335,14 @@ abstract class Component {
      *
      * @return string
      */
-    public static function shortName($class=null) {
+    public static function shortName($class = null) {
         if(!$class) $class = get_called_class();
         if(is_object($class)) {
             $reflect = new ReflectionClass($class);
             return $reflect->getShortName();
         }
         $p = strrpos($class, '\\');
-        if($p===false) return $class;
-        return substr($class, $p+1);
+        if($p === false) return $class;
+        return substr($class, $p + 1);
     }
 }

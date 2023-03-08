@@ -29,12 +29,12 @@ class Model extends BaseModel {
     public $lastQuery;
 
     /** @var array $attribute values indexed by attribute names */
-    protected $_attributes = array();
+    protected $_attributes = [];
 
     /** @var array $_metadata -- Cached metadata of tables indexed by tableName */
     private static $_metadata = [];
 
-    /** @var Connection $_connection -- The explicit set database connection. If not set, App:::$app->connection is used  */
+    /** @var Connection $_connection -- The explicit set database connection. If not set, App:::$app->connection is used */
     private $_connection;
 
     /**
@@ -75,7 +75,7 @@ class Model extends BaseModel {
      */
     public static function autoIncrement() {
         $pk = static::primaryKey();
-        if(count($pk)>1) return [];
+        if(count($pk) > 1) return [];
         return array_slice($pk, 0, 1);
     }
 
@@ -103,12 +103,12 @@ class Model extends BaseModel {
      */
     public static function databaseAttributes() {
         $tableName = static::tableName();
-        if ($tableName == 'model') throw new Exception('Use derived models instead of Model', $tableName);
+        if($tableName == 'model') throw new Exception('Use derived models instead of Model', $tableName);
 
         $metadata = static::tableMetaData();
-        if (!$metadata) throw new Exception("Metadata of table $tableName not found");
+        if(!$metadata) throw new Exception("Metadata of table $tableName not found");
 
-        $fields = array_filter(array_keys($metadata), function ($name) {
+        $fields = array_filter(array_keys($metadata), function($name) {
             return substr($name, 0, 1) != '_';
         });
         sort($fields);
@@ -137,13 +137,13 @@ class Model extends BaseModel {
      * @return array|null if not found
      * @throws Exception
      */
-    public static function tableMetaData($connection=null) {
+    public static function tableMetaData($connection = null) {
         if(!$connection) $connection = App::$app->getConnection(true);
         $tableName = static::tableName();
         $metadata = ArrayHelper::getValue(self::$_metadata, $tableName);
 
         if(!$metadata) {
-            $metadata = App::$app->cached('_model_metadata_' . static::shortName(), function () use ($tableName, $connection) {
+            $metadata = App::$app->cached('_model_metadata_' . static::shortName(), function() use ($tableName, $connection) {
                 return $connection->tableMetadata($tableName);
             }, 3600);
             self::$_metadata[$tableName] = $metadata;
@@ -161,10 +161,10 @@ class Model extends BaseModel {
      *
      * @param array|null $condition -- returns null if record with condition not found
      * @return static
-     * @see Query::buildExpression()
      * @throws Exception -- when the PDO operation failed
+     * @see Query::buildExpression()
      */
-    public static function getOne($condition=null, $connection=null) {
+    public static function getOne($condition = null, $connection = null) {
         if(!$connection) $connection = App::$app->getConnection(true);
         // Note: FROM is implicit from called class
         return static::createQuery()->connect($connection)->where($condition)->limit(1)->one;
@@ -179,14 +179,15 @@ class Model extends BaseModel {
      * @return array|null -- array of Model instances or null on failure (not indexed by primary key)
      * @throws Exception|ReflectionException
      */
-    public static function getAll($condition=null, $orders=null, $connection=null) {
+    public static function getAll($condition = null, $orders = null, $connection = null) {
         if(!$connection) $connection = App::$app->getConnection(true);
         // Note: FROM is implicit from called class
-        return static::createQuery(['orders'=>$orders])->connect($connection)->where($condition)->getAll();
+        return static::createQuery(['orders' => $orders])->connect($connection)->where($condition)->getAll();
     }
 
     /**
      * Returns a value indicating whether the current record is new.
+     *
      * @return bool whether the record is new and should be inserted when calling save().
      */
     public function getIsNew() {
@@ -195,6 +196,7 @@ class Model extends BaseModel {
 
     /**
      * Sets the value indicating whether the record is new.
+     *
      * @param bool $value whether the record is new and should be inserted when calling save().
      * @see getIsNew()
      */
@@ -231,7 +233,7 @@ class Model extends BaseModel {
         // If $attributes is null, exclude autoincrement field(s) containing null values
         if(is_null($attributes)) {
             foreach($aa as $ai) {
-                if(array_key_exists($ai, $values) && $values[$ai]===null) {
+                if(array_key_exists($ai, $values) && $values[$ai] === null) {
                     unset($values[$ai]);
                 }
             }
@@ -240,15 +242,18 @@ class Model extends BaseModel {
         $query = null;
         try {
             // We use the `fields` property of the Query, because have literal values in the $values array.
-            $query = new Query(['type'=>'INSERT', 'modelClass'=>get_called_class(), 'fields'=>$values, 'connection'=>$this->connection]);
+            $query = new Query(['type' => 'INSERT', 'modelClass' => get_called_class(), 'fields' => $values, 'connection' => $this->connection]);
             $this->lastQuery = $query;
             $success = $query->execute();
             if(!$success) return false;
-        }
-        catch(Exception $e) {
-            try { $sql = $query ? $query->sql : ''; } catch(Throwable $e) { $sql='Error at building SQL: '.$e->getMessage(); }
+        } catch(Exception $e) {
+            try {
+                $sql = $query ? $query->sql : '';
+            } catch(Throwable $e) {
+                $sql = 'Error at building SQL: ' . $e->getMessage();
+            }
             $error = $query ? $query->connection->lastError : $e->getMessage();
-            throw new Exception('Insert failed: '.$e->getMessage(). ' Database error: '. $error .'. Query was: '.$sql, 0, $e);
+            throw new Exception('Insert failed: ' . $e->getMessage() . ' Database error: ' . $error . '. Query was: ' . $sql, 0, $e);
         }
 
         // Populate autoincrement fields
@@ -297,16 +302,16 @@ class Model extends BaseModel {
      * @throws ReflectionException
      */
     public function update($attributeNames = null) {
-        if($attributeNames===array()) return 0;
+        if($attributeNames === []) return 0;
 
         $values = $this->getDirtyAttributes($attributeNames);
-        if($values===array()) return 0;
+        if($values === []) return 0;
         $condition = $this->getOldPrimaryKey(true);
-		if(!$condition) throw new Exception("No primary key: ", json_encode($this->attributes));
+        if(!$condition) throw new Exception("No primary key: ", json_encode($this->attributes));
         $success = static::updateAll($values, $condition, $this->connection, $this->lastQuery);
 
         if($success) {
-            foreach ($values as $name => $value) {
+            foreach($values as $name => $value) {
                 $this->_oldAttributes[$name] = $value;
             }
         }
@@ -326,15 +331,15 @@ class Model extends BaseModel {
      * @return bool -- success
      * @throws Exception
      */
-    public static function updateAll($values, $condition, $connection=null, &$query=null) {
+    public static function updateAll($values, $condition, $connection = null, &$query = null) {
         if(!$connection) $connection = App::$app->getConnection(true);
 
         // Convert `fieldName=>value` pairs to parametrized `fieldName=>':param'` expressions
         $params = [];
-        $values = array_map(function($value) use(&$params) {
+        $values = array_map(function($value) use (&$params) {
             $paramName = ArrayHelper::genUniqueIndex($params, '_m');
             $params[$paramName] = $value;
-            return ':'.$paramName;
+            return ':' . $paramName;
         }, $values);
 
         $query = Query::createUpdate(get_called_class(), $values, $condition, $params, $connection);
@@ -386,7 +391,7 @@ class Model extends BaseModel {
      * @return bool success
      * @throws Exception
      */
-    public static function deleteAll($condition = null, $params = array(), $connection=null, &$query=null) {
+    public static function deleteAll($condition = null, $params = [], $connection = null, &$query = null) {
         if(!$connection) $connection = App::$app->getConnection(true);
         $query = Query::createDelete(get_called_class(), $condition, $params, $connection);
         if(!$query->execute()) return false;
@@ -416,10 +421,10 @@ class Model extends BaseModel {
      * @throws ReflectionException
      */
     public function save($attributeNames = null) {
-        if ($this->isNew) {
+        if($this->isNew) {
             return $this->insert($attributeNames);
         } else {
-            return $this->update($attributeNames)!== false; // see documentation of Model::update();
+            return $this->update($attributeNames) !== false; // see documentation of Model::update();
         }
     }
 
@@ -438,14 +443,14 @@ class Model extends BaseModel {
      */
     public function getOldPrimaryKey($asArray = false) {
         $keys = $this->primaryKey();
-        if (empty($keys)) {
+        if(empty($keys)) {
             return $asArray ? [] : null;
         }
-        if (!$asArray && count($keys) === 1) {
+        if(!$asArray && count($keys) === 1) {
             return $this->_oldAttributes[$keys[0]] ?? null;
         } else {
-            $values = array();
-            foreach ($keys as $name) {
+            $values = [];
+            foreach($keys as $name) {
                 $values[$name] = $this->_oldAttributes[$name] ?? null;
             }
             return $values;
@@ -463,29 +468,28 @@ class Model extends BaseModel {
      * @param string[]|null $names the names of the attributes whose values may be returned, null = all
      *
      * @return array the changed name-value pairs
-
      * @throws Exception
      */
     public function getDirtyAttributes($names = null) {
         $databaseAttributes = static::databaseAttributes();
         Assertions::assertArray($databaseAttributes);
-        if ($names === null) {
+        if($names === null) {
             $names = $databaseAttributes;
         } else {
             Assertions::assertArray($names);
             $names = array_intersect($names, $databaseAttributes);
         }
         $names = array_flip($names);
-        $attributes = array();
-        if ($this->_oldAttributes === null) {
-            foreach ($this->_attributes as $name => $value) {
-                if (isset($names[$name])) {
+        $attributes = [];
+        if($this->_oldAttributes === null) {
+            foreach($this->_attributes as $name => $value) {
+                if(isset($names[$name])) {
                     $attributes[$name] = static::databaseValue($value);
                 }
             }
         } else {
-            foreach ($this->_attributes as $name => $value) {
-                if (isset($names[$name]) && (!array_key_exists($name, $this->_oldAttributes) || $value !== $this->_oldAttributes[$name])) {
+            foreach($this->_attributes as $name => $value) {
+                if(isset($names[$name]) && (!array_key_exists($name, $this->_oldAttributes) || $value !== $this->_oldAttributes[$name])) {
                     $attributes[$name] = static::databaseValue($value);
                 }
             }
@@ -496,6 +500,7 @@ class Model extends BaseModel {
     /**
      * Sets the old attribute values.
      * All existing old attribute values will be discarded.
+     *
      * @param array|null $values old attribute values to be set.
      * If set to `null` this record is considered to be new.
      */
@@ -529,15 +534,14 @@ class Model extends BaseModel {
      * @param string $name the attribute name
      * @param mixed $value the old attribute value.
      *
-
      * @throws Exception if the named attribute does not exist.
      * @see hasAttribute()
      */
     public function setOldAttribute($name, $value) {
-        if (isset($this->_oldAttributes[$name]) || $this->hasAttribute($name)) {
+        if(isset($this->_oldAttributes[$name]) || $this->hasAttribute($name)) {
             $this->_oldAttributes[$name] = $value;
         } else {
-            throw new Exception('Model `'.$this->shortName.'` does not have attribute named "' . $name . '".');
+            throw new Exception('Model `' . $this->shortName . '` does not have attribute named "' . $name . '".');
         }
     }
 
@@ -551,23 +555,21 @@ class Model extends BaseModel {
      * @param string $name the property name
      *
      * @return mixed the property value
-
      * @throws Exception if the property is not defined
      * @throws ReflectionException
      */
     public function __get($name) {
         // Retrieved attribute
-        if (isset($this->_attributes[$name]) || array_key_exists($name, $this->_attributes)) {
+        if(isset($this->_attributes[$name]) || array_key_exists($name, $this->_attributes)) {
             return $this->_attributes[$name];
         }
 
         // Existing but not loaded attribute
-        if ($this->hasAttribute($name)) {
+        if($this->hasAttribute($name)) {
             $getter = 'get' . $name; // function names are case-insensitive in PHP!
-            if (method_exists($this, $getter)) {
+            if(method_exists($this, $getter)) {
                 return $this->$getter();
-            }
-            else return null;
+            } else return null;
         }
 
         // Reference composition (e.g. 'ref1.name')
@@ -588,7 +590,7 @@ class Model extends BaseModel {
      * @throws Exception
      */
     public function __set($name, $value) {
-        if (static::hasAttribute($name)) {
+        if(static::hasAttribute($name)) {
             $this->_attributes[$name] = $value;
         } else {
             parent::__set($name, $value);
@@ -609,15 +611,15 @@ class Model extends BaseModel {
     public function validateUnique($fieldName) {
         $value = $this->$fieldName;
         if(is_null($value)) return true;
-        $e = static::getOne([$fieldName=>$value]);
+        $e = static::getOne([$fieldName => $value]);
         if(!$this->isNew) {
             // If already saved, itself must be ignored
-            if (!$e) return true;
+            if(!$e) return true;
             $pk = $this->getOldPrimaryKey(true);
-            foreach ($pk as $k => $v) if ($e->$k == $v) return true;
+            foreach($pk as $k => $v) if($e->$k == $v) return true;
         }
         if($e) {
-            $this->addError($fieldName, App::l('umvc','must be unique'));
+            $this->addError($fieldName, App::l('umvc', 'must be unique'));
             return false;
         }
         return true;
@@ -636,11 +638,11 @@ class Model extends BaseModel {
     public function validateReferences($fieldName, $referencedModel) {
         /** @noinspection PhpVariableVariableInspection */
         $value = $this->$fieldName;
-        if($value===null) return true;
+        if($value === null) return true;
         if(!is_a($referencedModel, Model::class, true)) throw new Exception('Parameter 2 must be a className of a Model');
 
         $exist = $referencedModel::getOne($value);
-        if(!$exist) return $this->addError($fieldName, App::l('umvc','refers to a non-existing record'));
+        if(!$exist) return $this->addError($fieldName, App::l('umvc', 'refers to a non-existing record'));
         return true;
     }
 
@@ -659,22 +661,29 @@ class Model extends BaseModel {
      * @return array -- [[fieldName, order-direction, nulls], ...] -- value prepared for {@see Query::orderBy()}
      * @throws Exception -- if $customOrders is given but not valid
      */
-    public static function orderDef($orders, $orderDefinitions=null) {
-        if($orderDefinitions===null) $orderDefinitions = array_keys(Model::rules());
+    public static function orderDef($orders, $orderDefinitions = null) {
+        if($orderDefinitions === null) $orderDefinitions = array_keys(Model::rules());
 
-        foreach($orderDefinitions as $key=> $value) { if(is_int($key)) { $orderDefinitions[$value] = $value; unset($orderDefinitions[$key]); }}
+        foreach($orderDefinitions as $key => $value) {
+            if(is_int($key)) {
+                $orderDefinitions[$value] = $value;
+                unset($orderDefinitions[$key]);
+            }
+        }
 
         $orderBy = [];
         // Sortable array with items [field, direction (int), priority]
-        $tempOrders = array_filter(array_map(function($o, $fieldName) use($orderDefinitions) {
+        $tempOrders = array_filter(array_map(function($o, $fieldName) use ($orderDefinitions) {
             if(!($p = strpos($o, ';'))) return null;
-            $priority = (int)substr($o,$p+1);
-            $direction = strtoupper(substr($o,0,$p));
-            $dirValue = array_search($direction, [Query::ORDER_ASC=>'ASC', Query::ORDER_DESC=>'DESC']);
-            if($dirValue===false) return null; // A sort-rule with invalid direction is skipped
-            return ['field'=>$fieldName, 'direction'=>$dirValue, 'priority'=>$priority];
+            $priority = (int)substr($o, $p + 1);
+            $direction = strtoupper(substr($o, 0, $p));
+            $dirValue = array_search($direction, [Query::ORDER_ASC => 'ASC', Query::ORDER_DESC => 'DESC']);
+            if($dirValue === false) return null; // A sort-rule with invalid direction is skipped
+            return ['field' => $fieldName, 'direction' => $dirValue, 'priority' => $priority];
         }, $orders, array_keys($orders)));
-        usort($tempOrders, function($a,$b) { return $a['priority'] - $b['priority']; });
+        usort($tempOrders, function($a, $b) {
+            return $a['priority'] - $b['priority'];
+        });
 
         foreach($tempOrders as $ord) {
             $field = $ord['field'];
@@ -682,32 +691,30 @@ class Model extends BaseModel {
                 if($def = $orderDefinitions[$field]) {
                     if(is_array($def)) {
                         $cls = $orderDefinitions[$field];
-                        if (count($cls) != 2) {
+                        if(count($cls) != 2) {
                             throw new Exception("Custom order clause for field '$field' must have exactly two expression-list separated by ';', got '$orderDefinitions[$field]'");
                         }
                         // Depending on user intention, select the first or second part of the custom order definition, and parse it
                         $orderExpressions = explode(',', $cls[strtoupper($ord['direction']) == 1 ? 1 : 0]);
-                        foreach ($orderExpressions as $orderExpression) {
+                        foreach($orderExpressions as $orderExpression) {
                             $p = strrpos($orderExpression, ' ');
-                            if ($p) {
+                            if($p) {
                                 $direction = strtoupper(substr($orderExpression, $p + 1));
                                 $dirValue = array_search($direction, [Query::ORDER_ASC => 'ASC', Query::ORDER_DESC => 'DESC']);
                             }
-                            if (!$p || $dirValue === false) {
+                            if(!$p || $dirValue === false) {
                                 throw new Exception("Custom order clause for field '$field' must contain order expressions with a direction keyword separated by ' '");
                             }
                             $field = trim(substr($orderExpression, 0, $p));
                             $orderBy[] = [$field, $dirValue];
                         }
-                    }
-                    else {
+                    } else {
                         $field = $def;
                         $dir = $ord['direction'];
                         $orderBy[] = [$field, $dir];
                     }
                 }
-            }
-            else {
+            } else {
                 throw new Exception("Invalid ORDER field: $field, ");
             }
         }
@@ -727,7 +734,7 @@ class Model extends BaseModel {
      * @return Query
      * @throws Exception -- when $options is not array
      */
-    public static function createQuery($options=[]) {
+    public static function createQuery($options = []) {
         $query = new Query($options);
         $query->asModel(get_called_class());
         return $query;
@@ -738,7 +745,7 @@ class Model extends BaseModel {
      *
      * @throws Exception
      */
-    public static function getIdsAndTexts($nameField='name', $order=null) {
+    public static function getIdsAndTexts($nameField = 'name', $order = null) {
         return ArrayHelper::map(static::getAll(null, $order), 'id', $nameField);
     }
 
@@ -748,13 +755,13 @@ class Model extends BaseModel {
      * @throws Exception
      */
     public static function databaseValue($value) {
-        if($value===null) return null;
+        if($value === null) return null;
         if(is_scalar($value)) return $value;
         if($value instanceof DateTime) {
-            $format = $value->format('H:i:s')=='0:00:00' ? 'Y-m-d' : 'Y-m-d H:i:s';
+            $format = $value->format('H:i:s') == '0:00:00' ? 'Y-m-d' : 'Y-m-d H:i:s';
             return $value->format($format);
         }
-        throw new Exception('Database value of ' . (is_object($value) ? get_class($value): gettype($value)) . ' is not defined');
+        throw new Exception('Database value of ' . (is_object($value) ? get_class($value) : gettype($value)) . ' is not defined');
     }
 
     public function getConnection() {
