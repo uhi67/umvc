@@ -1337,7 +1337,7 @@ class Query extends Component
      *  - string beginning with '(' will be returned literally. No identifier quoting or model check will be applied.
      *  - string beginning with single quote or E' will be treated as string literal. Closing quote will be omitted and internal double single quotes are allowed
      *  - integer or float: a numeric literal
-     *  - '?' is a numeric-indexed parameters. Don't use, always use ':' named parameters.
+     *  - '?' is for numeric-indexed parameters. Don't use, always use ':' named parameters.
      *  - string beginning with a ':' is string-indexed parameter
      *  - any other string: a field name. Unqualified field name will be qualified with alias if alias is given.
      *  - array(OP, ...): operator with operands (expressions), only numeric indices {@see $_operators}
