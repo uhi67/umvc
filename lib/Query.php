@@ -739,7 +739,6 @@ class Query extends Component
         $index = $this->_indexField ?: false;
         while ($row = $this->stmt->fetch()) {
             if($index && !isset($row[$index])) throw new Exception("Invalid index column $index");
-            if(!$row[$index]) { var_dump("Empty index: ", $row); exit; }
             if($index) $result[$row[$index]] = $row[$column];
             else $result[] = $row[$column];
         }

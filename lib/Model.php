@@ -599,14 +599,36 @@ class Model extends BaseModel {
     /**
      * ## Validates model to uniqueness of the given field
      *
-     * Returns true if the given fields has a value of null.
+     * Returns true if any of the the given fields has a value of null.
      *
      * @param string $fieldName -- for single field (null if called as multiple)
+     * @param array $fieldNames -- field names for multiple-field validation
      *
      * @return bool -- model is valid
      * @throws Exception  -- when a DB request failed
      */
-    public function validateUnique($fieldName) {
+    public function validateUnique($fieldName, $fieldNames=[]) {
+        if($fieldName===null) {
+            // Multiple-field uniqueness
+            $fieldNames = $fieldNames ?: [$fieldName];
+            $values = $this->getAttributes($fieldNames);
+            foreach($values as $value) if(is_null($value)) return true;
+            if($this->isNew) {
+                $existingInstance = static::getOne($values);
+            } else {
+                // If already saved, itself must be ignored
+                $existingInstance = static::first(array_merge(
+                    ['and'],
+                    $this->db->asExpression($this->getAttributes($fieldNames)),
+                    [['not', [$this->db->asExpression($this->getOldPrimaryKey(true))]]]
+                ), null, null, $this->db);
+            }
+            if($existingInstance) {
+                $this->addError($fieldNames, App::l('umvc', '$1 must be unique'));
+                return false;
+            }
+            return true;
+        }
         $value = $this->$fieldName;
         if(is_null($value)) return true;
         $e = static::getOne([$fieldName=>$value]);
@@ -617,7 +639,7 @@ class Model extends BaseModel {
             foreach ($pk as $k => $v) if ($e->$k == $v) return true;
         }
         if($e) {
-            $this->addError($fieldName, App::l('umvc','must be unique'));
+            $this->addError($fieldName, App::l('umvc','$1 must be unique'));
             return false;
         }
         return true;

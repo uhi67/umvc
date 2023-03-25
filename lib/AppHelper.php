@@ -110,7 +110,7 @@ class AppHelper {
      * @param int|null $responseStatus -- HTTP response status, default is 500=HTTP_INTERNAL_SERVER_ERROR
      */
     static function showException($e, $responseStatus=null) {
-	    defined('ENV_DEV') || define('ENV_DEV', 'production');
+        defined('ENV_DEV') || define('ENV_DEV', 'production');
         $responseStatus = $responseStatus ?: HTTP::HTTP_INTERNAL_SERVER_ERROR;
         $title = HTTP::$statusTexts[$responseStatus] ?? 'Internal application error';
 
@@ -129,7 +129,7 @@ class AppHelper {
                 }
 
                 while($e = $e->getPrevious()) {
-	                $message = sprintf("%s in file '%s' at line '%d'", html_entity_decode($e->getMessage()), $e->getFile(), $e->getLine());
+                    $message = sprintf("%s in file '%s' at line '%d'", html_entity_decode($e->getMessage()), $e->getFile(), $e->getLine());
                     echo Ansi::color(PHP_EOL.PHP_EOL.$message, 'light purple').PHP_EOL;
                     $trace = explode(PHP_EOL, $e->getTraceAsString());
                     foreach($trace as $line) {
@@ -176,7 +176,7 @@ class AppHelper {
                 htmlspecialchars($e->getTraceAsString())
             );
             while ($e = $e->getPrevious()) {
-	            $message = sprintf("<b>%s</b> in file '%s' at line '%d'", htmlspecialchars($e->getMessage()), $e->getFile(), $e->getLine());
+                $message = sprintf("<b>%s</b> in file '%s' at line '%d'", htmlspecialchars($e->getMessage()), $e->getFile(), $e->getLine());
                 echo PHP_EOL, PHP_EOL, $message, PHP_EOL;
                 echo htmlspecialchars($e->getTraceAsString());
             }
@@ -224,42 +224,42 @@ class AppHelper {
         return strtr(ucwords(strtr($id, ['_' => ' ', '.' => '_ ', '\\' => '_ ', '-' => ' '])), [' ' => '']);
     }
 
-	/**
-	 * Converts a string to human-readable form, e.g. for an auto-generated field label
-	 *
-	 * Redundant '_id' or 'Id' postfix will be eliminated.
-	 *
-	 * @return string|null The camelized string
-	 */
-	public static function humanize($id): ?string {
-		if(is_null($id)) return null;
-		return static::mb_ucwords(preg_replace('~[_.-]~', ' ', preg_replace('/_id$/', '', static::underscore(static::camelize($id)))));
-	}
+    /**
+     * Converts a string to human-readable form, e.g. for an auto-generated field label
+     *
+     * Redundant '_id' or 'Id' postfix will be eliminated.
+     *
+     * @return string|null The camelized string
+     */
+    public static function humanize($id): ?string {
+        if(is_null($id)) return null;
+        return static::mb_ucwords(preg_replace('~[_.-]~', ' ', preg_replace('/_id$/', '', static::underscore(static::camelize($id)))));
+    }
 
-	/**
-	 * Converts a (camelized) string to underscore format.
-	 * Existing underscore ($separator) will be converted to '.'.
-	 * Replaces all non-name character to _.
-	 *
-	 * The result string should be appropriate for a filename or a Model attribute name (using _)
-	 *
-	 * Example: 'MyClass' --> 'my_class'
-	 * But: 'MyClass_id' --> 'my_class.id'
-	 *
-	 * If you want to keep existing separators, call camelize first.
-	 *
-	 * @param string|null $id -- an identifier in CamelCase
-	 * @param string $separator -- the separator character to be used between words, default is '_'
-	 * @return string|null The underscored string, e.g. camel_case
-	 */
-	public static function underscore(?string $id, string $separator='_'): ?string {
-		if(is_null($id)) return null;
-		$id = preg_replace('/[^A-Za-z\d.'.$separator.']+/', $separator, $id);
-		$id = preg_replace(['/([A-Z]+)([A-Z][a-z\d])/', '/([a-z\d])([A-Z])/'], ['\\1'.$separator.'\\2', '\\1'.$separator.'\\2'], $id);
-		return strtolower($id);
-	}
+    /**
+     * Converts a (camelized) string to underscore format.
+     * Existing underscore ($separator) will be converted to '.'.
+     * Replaces all non-name character to _.
+     *
+     * The result string should be appropriate for a filename or a Model attribute name (using _)
+     *
+     * Example: 'MyClass' --> 'my_class'
+     * But: 'MyClass_id' --> 'my_class.id'
+     *
+     * If you want to keep existing separators, call camelize first.
+     *
+     * @param string|null $id -- an identifier in CamelCase
+     * @param string $separator -- the separator character to be used between words, default is '_'
+     * @return string|null The underscored string, e.g. camel_case
+     */
+    public static function underscore(?string $id, string $separator='_'): ?string {
+        if(is_null($id)) return null;
+        $id = preg_replace('/[^A-Za-z\d.'.$separator.']+/', $separator, $id);
+        $id = preg_replace(['/([A-Z]+)([A-Z][a-z\d])/', '/([a-z\d])([A-Z])/'], ['\\1'.$separator.'\\2', '\\1'.$separator.'\\2'], $id);
+        return strtolower($id);
+    }
 
-	/**
+    /**
      * unicode-safe capitalize first letter of all words
      *
      * @param string $string
@@ -385,108 +385,108 @@ class AppHelper {
         return is_string($data) ? $data : '';
     }
 
-	/**
-	 * Substitutes {$key} patterns of the text to values of associative data
-	 * Used primarily for native language texts, but used for SQL generation where substitution is not based on SQL data syntax.
-	 * If no substitution possible, the pattern remains unchanged without error
-	 * Special cases:
-	 *    - {DMY$var} - convert hungarian date to english (deprecated)
-	 *  - {$var/subvar} - array resolution within array values (using multiple levels possible)
-	 *  - Using special characters if necessary: `{{}` -> `{`, `}` -> `}`
-	 *    - values of DateTime will be substituted as SHORT date of the application's language.
-	 *
-	 * @param string $text
-	 * @param array $data
-	 *
-	 * @return string
-	 */
-	public static function substitute($text, $data) {
-		return preg_replace_callback(/* @lang */'#{(DMY|MDY)?(\\$[a-zA-Z_]+[\\\\/a-zA-Z0-9_-]*)}#', function($mm) use($data) {
-			if($mm[2]=='{') return '{';
-			if(substr($mm[2],0,1)=='$') {
-				// a keyname
-				$subvars = explode('/', substr($mm[2],1));
-				$d = $data;
-				foreach($subvars as $subvar) {
-					if(is_array($d) && array_key_exists($subvar, $d)) $d = $d[$subvar]===null ? '#null#' : $d[$subvar];
-					else return $mm[0];
-				}
-			}
-			else {
-				// Other expression (not implemented)
-				return $mm[0];
-			}
-			if($d instanceof DateTime) $d = static::formatDateTime($d, IntlDateFormatter::SHORT, IntlDateFormatter::NONE);
-			if($mm[1]=='MDY') {
-				$d = static::formatDateTime($d, IntlDateFormatter::SHORT, IntlDateFormatter::NONE, 'en');
-			}
-			if($mm[1]=='DMY') {
-				$d = static::formatDateTime($d, IntlDateFormatter::SHORT, IntlDateFormatter::NONE, 'en-GB');
-			}
-			return $d;
-		}, $text);
-	}
+    /**
+     * Substitutes {$key} patterns of the text to values of associative data
+     * Used primarily for native language texts, but used for SQL generation where substitution is not based on SQL data syntax.
+     * If no substitution possible, the pattern remains unchanged without error
+     * Special cases:
+     *    - {DMY$var} - convert hungarian date to english (deprecated)
+     *  - {$var/subvar} - array resolution within array values (using multiple levels possible)
+     *  - Using special characters if necessary: `{{}` -> `{`, `}` -> `}`
+     *    - values of DateTime will be substituted as SHORT date of the application's language.
+     *
+     * @param string $text
+     * @param array $data
+     *
+     * @return string
+     */
+    public static function substitute($text, $data) {
+        return preg_replace_callback(/* @lang */'#{(DMY|MDY)?(\\$[a-zA-Z_]+[\\\\/a-zA-Z0-9_-]*)}#', function($mm) use($data) {
+            if($mm[2]=='{') return '{';
+            if(substr($mm[2],0,1)=='$') {
+                // a keyname
+                $subvars = explode('/', substr($mm[2],1));
+                $d = $data;
+                foreach($subvars as $subvar) {
+                    if(is_array($d) && array_key_exists($subvar, $d)) $d = $d[$subvar]===null ? '#null#' : $d[$subvar];
+                    else return $mm[0];
+                }
+            }
+            else {
+                // Other expression (not implemented)
+                return $mm[0];
+            }
+            if($d instanceof DateTime) $d = static::formatDateTime($d, IntlDateFormatter::SHORT, IntlDateFormatter::NONE);
+            if($mm[1]=='MDY') {
+                $d = static::formatDateTime($d, IntlDateFormatter::SHORT, IntlDateFormatter::NONE, 'en');
+            }
+            if($mm[1]=='DMY') {
+                $d = static::formatDateTime($d, IntlDateFormatter::SHORT, IntlDateFormatter::NONE, 'en-GB');
+            }
+            return $d;
+        }, $text);
+    }
 
-	/**
-	 * formats a DateTime value using given locale
-	 *
-	 * @param DateTime $datetime
-	 * @param int $datetype -- date format as IntlDateFormatter::NONE, type values are 'NONE', 'SHORT', 'MEDIUM', 'LONG', 'FULL'
-	 * @param int $timetype -- time format as IntlDateFormatter::NONE, type values are 'NONE', 'SHORT', 'MEDIUM', 'LONG', 'FULL'
-	 * @param string $locale -- locale in ll-cc format (ISO 639-1 && ISO 3166-1), null to use default
-	 * @return string
-	 */
-	public static function formatDateTime($datetime, $datetype, $timetype, $locale=null) {
-		if(!$locale) $locale = App::$app->locale;
-		if(!$locale) $locale="en-GB";
-		$pattern = null;
-		if(substr($locale, 0,2)=='hu') {
-			if($datetype == IntlDateFormatter::SHORT && $timetype == IntlDateFormatter::SHORT)
-				$pattern = 'yyyy.MM.dd. H:mm';
-			if($datetype == IntlDateFormatter::SHORT && $timetype == IntlDateFormatter::NONE)
-				$pattern = 'yyyy.MM.dd.';
-		}
-		$dateFormatter = new IntlDateFormatter($locale, $datetype, $timetype, null, null, $pattern);
-		return $dateFormatter->format($datetime);
-	}
+    /**
+     * formats a DateTime value using given locale
+     *
+     * @param DateTime $datetime
+     * @param int $datetype -- date format as IntlDateFormatter::NONE, type values are 'NONE', 'SHORT', 'MEDIUM', 'LONG', 'FULL'
+     * @param int $timetype -- time format as IntlDateFormatter::NONE, type values are 'NONE', 'SHORT', 'MEDIUM', 'LONG', 'FULL'
+     * @param string $locale -- locale in ll-cc format (ISO 639-1 && ISO 3166-1), null to use default
+     * @return string
+     */
+    public static function formatDateTime($datetime, $datetype, $timetype, $locale=null) {
+        if(!$locale) $locale = App::$app->locale;
+        if(!$locale) $locale="en-GB";
+        $pattern = null;
+        if(substr($locale, 0,2)=='hu') {
+            if($datetype == IntlDateFormatter::SHORT && $timetype == IntlDateFormatter::SHORT)
+                $pattern = 'yyyy.MM.dd. H:mm';
+            if($datetype == IntlDateFormatter::SHORT && $timetype == IntlDateFormatter::NONE)
+                $pattern = 'yyyy.MM.dd.';
+        }
+        $dateFormatter = new IntlDateFormatter($locale, $datetype, $timetype, null, null, $pattern);
+        return $dateFormatter->format($datetime);
+    }
 
-	/**
-	 * Waits for a test to satisfy (i.e. to return a truthy value)
-	 *
-	 * See usage example in {@see MigrateController::actionWait()}
-	 *
-	 * @param Closure $test -- test to run. Must return truthy value on success
-	 * @param int $timeout -- seconds to giving up waiting, the minimum allowed value is 1
-	 * @param int $interval -- seconds between retry attempts, the minimum allowed value is 1
-	 * @return bool -- true if test succeeded within timeout, false otherwise
-	 */
-	public static function waitFor($test, $timeout=60, $interval=1) {
-		$startTime = time();
-		$interval = max(1, $interval);
-		$timeout = max(1, $timeout);
-		$timeoutPassed = $startTime+$timeout;
-		do {
-			$lastTry = time();
-			if($test()) return true;
-			sleep(max(0, min($timeoutPassed - time(), $lastTry+$interval - time())));
-		}
-		while(time() < $timeoutPassed);
-		return false;
-	}
+    /**
+     * Waits for a test to satisfy (i.e. to return a truthy value)
+     *
+     * See usage example in {@see MigrateController::actionWait()}
+     *
+     * @param Closure $test -- test to run. Must return truthy value on success
+     * @param int $timeout -- seconds to giving up waiting, the minimum allowed value is 1
+     * @param int $interval -- seconds between retry attempts, the minimum allowed value is 1
+     * @return bool -- true if test succeeded within timeout, false otherwise
+     */
+    public static function waitFor($test, $timeout=60, $interval=1) {
+        $startTime = time();
+        $interval = max(1, $interval);
+        $timeout = max(1, $timeout);
+        $timeoutPassed = $startTime+$timeout;
+        do {
+            $lastTry = time();
+            if($test()) return true;
+            sleep(max(0, min($timeoutPassed - time(), $lastTry+$interval - time())));
+        }
+        while(time() < $timeoutPassed);
+        return false;
+    }
 
-	/**
-	 * Returns true if path is absolute, false if not (relative).
-	 * Empty string considered as relative.
-	 * Can be used for file system and URL paths as well.
-	 * Both Windows and Linux file system paths are detected.
-	 * The path itself is not validated, malformed paths can be either absolute or relative.
-	 * Note: Paths beginning with drive letter on Windows but not \\ still considered as absolute.
-	 *
-	 * @param string $path
-	 * @return bool
-	 */
-	public static function pathIsAbsolute(string $path): bool {
-		return preg_match('~^(/|\\\\|[\w]+:)~', $path);
-	}
+    /**
+     * Returns true if path is absolute, false if not (relative).
+     * Empty string considered as relative.
+     * Can be used for file system and URL paths as well.
+     * Both Windows and Linux file system paths are detected.
+     * The path itself is not validated, malformed paths can be either absolute or relative.
+     * Note: Paths beginning with drive letter on Windows but not \\ still considered as absolute.
+     *
+     * @param string $path
+     * @return bool
+     */
+    public static function pathIsAbsolute(string $path): bool {
+        return preg_match('~^(/|\\\\|[\w]+:)~', $path);
+    }
 
 }
