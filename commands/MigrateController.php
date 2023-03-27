@@ -393,6 +393,8 @@ EOT;
 	/**
 	 * Waits for database (container) to be ready for connection
 	 *
+	 * See also: tests/docker/readme.md
+	 *
 	 * @param int $timeout -- seconds to giving up
 	 * @param int $interval -- seconds between connection attempts
 	 * @return int -- 0 on success, 1 otherwise
@@ -401,9 +403,8 @@ EOT;
 		$result = AppHelper::waitFor(function() use ($interval) {
 			try {
 				echo "Trying to connect...\n";
-				sleep($interval);
-				//$this->app->db->connectNow(); // TODO
-				//echo "Connected\n";
+				if(!$this->app->db->pdo) return false;
+				echo "Connected\n";
 				return true;
 			}
 			catch(Throwable $e) {

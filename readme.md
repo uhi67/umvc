@@ -1,7 +1,7 @@
 UMVC framework
 ==============
 
-Version 1.3 -- 2022-12-03
+Version 1.3.1 -- 2023-03-27
 
 A simple web-application framework implementing model-view-controller (MVC) architectural pattern.
 
@@ -116,12 +116,19 @@ A built-in dockerized testing environment can be used to test with different php
 1. configure the needed database version in `tests/docker-compose.yml` (make clones of this template file)  
 2. configure the php version in `tests/docker/Dockerfile` (extension installation steps may change)
 3. configure the used ports and base-url in `tests/.env`
-4. build the stack using `docker compose up --build -d` (in the tests dir)
+4. build the stack using `docker compose up --build -d` (in the `tests` dir)
 5. your php container should now be 'umvc-php-1'
 6. run unit tests with `docker exec -it umvc-php-1 php vendor/bin/codecept run unit`
 
 Change log
 ----------
+### Version 1.3.1 -- 2023-03-27
+
+- SQL Builder: use tablename as default alias
+- migrate/wait command added
+- postponed connection of Connection
+- localized render
+
 ### Version 1.3 -- 2022-12-03
 
 - Migration SQL transaction issues

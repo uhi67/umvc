@@ -42,7 +42,7 @@ class Session extends Component {
 	 */
 	public function prepare() {
 		if($this->cookie_domain === true && $this->parent instanceof App) $this->cookie_domain = parse_url($this->parent->baseUrl, PHP_URL_HOST);
-		if(php_sapi_name() == "cli") return;
+		if(App::isCLI()) return;
 		ini_set("session.gc_maxlifetime", $this->lifetime + 900);
 		ini_set("session.lifetime", $this->lifetime);
 		ini_set("session.gc_probability", "100");
@@ -81,7 +81,7 @@ class Session extends Component {
 	}
 
 	public static function is_started() {
-		if(php_sapi_name() !== 'cli') {
+		if(App::isCLI()) {
 			if(version_compare(phpversion(), '5.4.0', '>=')) {
 				return session_status() === PHP_SESSION_ACTIVE;
 			} else {
