@@ -1,7 +1,7 @@
 UMVC framework
 ==============
 
-Version 1.3 -- 2022-12-03
+Version 1.3.1 -- 2023-03-27
 
 A simple web-application framework implementing model-view-controller (MVC) architectural pattern.
 
@@ -122,10 +122,12 @@ A built-in dockerized testing environment can be used to test with different php
 
 Change log
 ----------
-### Next
+### Version 1.3.1 -- 2023-03-27
 
+- SQL Builder: use tablename as default alias
 - migrate/wait command added
 - postponed connection of Connection
+- localized render
 
 ### Version 1.3 -- 2022-12-03
 
