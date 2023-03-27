@@ -1146,7 +1146,7 @@ class Query extends Component
         // Generate aliases for FROM tables
         if(!empty($this->joins) || is_array($this->_from) && count($this->_from)>1) {
             if(is_string($this->_from)) {
-                $aliases[] = $alias = lcfirst(($this->_from)::shortName());
+                $aliases[] = $alias = ($this->_from)::tableName();
                 $this->_from = array($alias => $this->_from);
             }
             else if(is_array($this->_from)) {
@@ -1156,7 +1156,7 @@ class Query extends Component
                  */
                 foreach($this->_from as $i=>$model) {
                     if(is_int($i)) {
-                        $aliases[] = $alias = $this->findUniqueAlias(lcfirst($model::shortName()), $aliases);
+                        $aliases[] = $alias = $this->findUniqueAlias($model::tableName(), $aliases);
                         $this->_from[$alias] = $model;
                         unset($this->_from[$i]);
                     }
@@ -1168,7 +1168,7 @@ class Query extends Component
         if(is_array($this->_joins)) {
             foreach ($this->_joins as $i => $joinDef) {
                 if(is_int($i)) {
-                    $aliases[] = $alias = $this->findUniqueAlias(lcfirst(Model::shortName($joinDef[0])), $aliases);
+                    $aliases[] = $alias = $this->findUniqueAlias($joinDef[0]::tableName(), $aliases);
                     $this->_joins[$alias] = $joinDef;
                     unset($this->_joins[$i]);
                 }
