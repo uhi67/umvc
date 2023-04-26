@@ -54,9 +54,6 @@ class Install {
         catch (Exception $e) {
             echo "Failed to clear the asset cache. ".$e->getMessage(), PHP_EOL;
         }
-
-        // File owners. Runs only if www-data user exists.
-        shell_exec('bash -c "if id -u www-data &>/dev/null; then chown www-data:www-data .env ; chown -R www-data:www-data runtime ; fi"');
 	}
 
     /**
