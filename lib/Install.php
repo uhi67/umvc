@@ -5,29 +5,29 @@ namespace uhi67\umvc;
 use Exception;
 
 class Install {
-	/**
-	 * Run by composer after install.
+    /**
+     * Run by composer after install.
      * Warning: composer may be run by root, be careful with owners of created files
      *
-	 * 1. create runtime dir
+     * 1. create runtime dir
      * 2. Empty cache
      * 3. Empty assets cache
      *
-	 * @throws Exception
-	 */
-	public static function postInstall() {
+     * @throws Exception
+     */
+    public static function postInstall() {
         $configFile = dirname(__DIR__, 4) . '/config/config.php';
         $config = include $configFile;
         defined('ENV') || define('ENV', $config['application_env'] ?? 'production');
         defined('ENV_DEV') || define('ENV_DEV', ENV != 'production');
 
-		echo "Running application's postInstall\n";
-		$root = dirname(__DIR__, 3);
+        echo "Running application's postInstall\n";
+        $root = dirname(__DIR__, 3);
 
-		// 1. Create runtime dir
-		if(!file_exists($root.'/runtime')) {
-			mkdir($root.'/runtime', 0774);
-		}
+        // 1. Create runtime dir
+        if(!file_exists($root.'/runtime')) {
+            mkdir($root.'/runtime', 0774);
+        }
 
         // 2. Empty cache
         try {
@@ -54,7 +54,7 @@ class Install {
         catch (Exception $e) {
             echo "Failed to clear the asset cache. ".$e->getMessage(), PHP_EOL;
         }
-	}
+    }
 
     /**
      * Clear the directory with files
