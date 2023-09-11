@@ -28,6 +28,7 @@ use ReflectionMethod;
  * - jsonErrorResponse(): generates a JSON-formatted error response (HTTP status is still 200 in this case)
  * - render(): same as ->app->render();
  *
+ * @property-read string $actionPath -- controller/action, e.g. 'course/update'
  * @package UMVC Simple Application Framework
  */
 class Controller extends Component
@@ -43,9 +44,26 @@ class Controller extends Component
 
     /** @var Asset[] $assets -- registered assets indexed by name */
     public $assets = [];
+    /** @var string $classPath -- the controller id path for controller Id property */
+    public $classPath = null;
 
     public function init() {
+        if(!$this->classPath) $this->classPath = static::getClasspath();
         $this->registerAssets();
+    }
+
+    public static function getClassPath() {
+        return AppHelper::underscore(preg_replace('/Controller$/', '', static::shortName()), '-');
+    }
+
+    /**
+     * The full qualified identifier of the action (`"path"/"controller"/"action"`, eg. 'admin/teacher/create')
+     * to use as a permission name in access control
+     *
+     * @return string
+     */
+    public function getActionPath(): string {
+        return $this->classPath.'/'.$this->action;
     }
 
     /**
@@ -61,7 +79,7 @@ class Controller extends Component
      * Determines and performs the requested action using $this controller
      *
      * @throws Exception if no matching action
-     * @return int -- HTTP response status
+     * @return string|int -- output string or exit status
      */
     public function go() {
         // Search for action method to call
@@ -80,7 +98,7 @@ class Controller extends Component
 
         // Call the action method with the required parameters from the request
         if($methodName) {
-            if(!$this->beforeAction()) return 0;
+            if(!$this->beforeAction()) return HTTP::HTTP_FORBIDDEN; // Silently failed 
             $args = [];
             $ref = new ReflectionMethod($this, $methodName);
             foreach($ref->getParameters() as $param) {
@@ -94,7 +112,7 @@ class Controller extends Component
                 }
             }
             $status = call_user_func_array([$this, $methodName], $args);
-            return $status ?: ($this->app->responseStatus ?: 200);
+            return $status ?: $this->app->responseStatus;
         }
 
         // We are here if no action method was found for the request
@@ -126,7 +144,7 @@ class Controller extends Component
      *
      * @param array|object $response -- array or object containing the output data. Null is not permitted, use empty array for empty data
      * @param array $headers -- more custom headers to send
-     * @return int
+     * @return string
      * @throws Exception -- if the response is not a valid data to convert to JSON.
      */
     public function jsonResponse($response, $headers=[]) {
@@ -134,9 +152,7 @@ class Controller extends Component
         $this->app->sendHeader('Content-Type: application/json');
         $result = json_encode($response);
         if(!$result) throw new Exception('Invalid data');
-        echo $result;
-        //Debug::debug('[JSON result] '.$result);
-        return 0;
+        return $result;
     }
 
     /**
@@ -146,7 +162,7 @@ class Controller extends Component
      *
      * @param array[] $models -- array containing the output data. Null is not permitted, use empty array for empty data
      * @param array $headers -- more custom headers to send
-     * @return int
+     * @return int -- exit status
      * @throws Exception -- if the response is not a valid data to convert to JSON.
      */
     public function csvResponse($models, $headers=[]) {
@@ -165,7 +181,7 @@ class Controller extends Component
             }
             fclose($s);
         }
-        return 0;
+        return App::EXIT_STATUS_OK;
     }
 
     /**
@@ -219,46 +235,46 @@ class Controller extends Component
      * @param array $layoutParams -- optional parameters for the layout view
      * @param string|bool|null $locale -- use localized layout selection (ISO 639-1 language / ISO 3166-1-a2 locale), see above
      *
-     * @return false|string
-     * @throws Exception
+     * @return string -- output
+     * @throws Exception -- if view does not exist or other error occurs
      */
     public function render($viewName, $params=[], $layout=null, $layoutParams=[], $locale=null) {
-	    if($locale === null || $locale===true) $locale = $this->app->locale;
-		if($locale) {
-			// Priority order: 1. Localized view (with long or short locale) / 2. untranslated / 3. default-locale view (long/short)
-			$lv = $this->localizedView($viewName, $locale);
-			if(!$lv && !($this->app->viewFile($viewName) && file_exists($this->app->viewFile($viewName)))) {
-				$lv = $this->localizedView($viewName, App::$app->source_locale);
-			}
-			if($lv) $viewName = $lv;
-		}
+        if($locale === null || $locale===true) $locale = $this->app->locale;
+        if($locale) {
+            // Priority order: 1. Localized view (with long or short locale) / 2. untranslated / 3. default-locale view (long/short)
+            $lv = $this->localizedView($viewName, $locale);
+            if(!$lv && !($this->app->viewFile($viewName) && file_exists($this->app->viewFile($viewName)))) {
+                $lv = $this->localizedView($viewName, App::$app->source_locale);
+            }
+            if($lv) $viewName = $lv;
+        }
         return $this->app->render($viewName, $params, $layout, $layoutParams);
     }
 
-	/**
-	 * Returns localized view name using long or short locale. Checks if the view file exists.
-	 * Returns null if none of them exists.
-	 *
-	 * @param string $viewName
-	 * @param string $locale
-	 * @return string|null
-	 * @throws Exception
-	 */
-	private function localizedView($viewName, $locale) {
-		// Look up view file using full locale
-		$lv = $this->localizedViewName($viewName, $locale);
-		if ($this->app->viewFile($lv) && file_exists($this->app->viewFile($lv))) return $lv;
-		// Look up view file using short language code
-		$lv = $this->localizedViewName($viewName, substr($locale,0,2));
-		if($this->app->viewFile($lv) && file_exists($this->app->viewFile($lv))) return $lv;
-		return null;
-	}
+    /**
+     * Returns localized view name using long or short locale. Checks if the view file exists.
+     * Returns null if none of them exists.
+     *
+     * @param string $viewName
+     * @param string $locale
+     * @return string|null
+     * @throws Exception
+     */
+    private function localizedView($viewName, $locale) {
+        // Look up view file using full locale
+        $lv = $this->localizedViewName($viewName, $locale);
+        if ($this->app->viewFile($lv) && file_exists($this->app->viewFile($lv))) return $lv;
+        // Look up view file using short language code
+        $lv = $this->localizedViewName($viewName, substr($locale,0,2));
+        if($this->app->viewFile($lv) && file_exists($this->app->viewFile($lv))) return $lv;
+        return null;
+    }
 
-	private function localizedViewName($viewName, $locale) {
-		$p = strrpos($viewName, '/');
-		if($p===false) $p = -1;
-		return substr($viewName,0, $p+1) . $locale . '/'.substr($viewName, $p+1);
-	}
+    private function localizedViewName($viewName, $locale) {
+        $p = strrpos($viewName, '/');
+        if($p===false) $p = -1;
+        return substr($viewName,0, $p+1) . $locale . '/'.substr($viewName, $p+1);
+    }
 
     /**
      * @param Asset $asset
@@ -308,5 +324,4 @@ class Controller extends Component
 
         return $html;
     }
-
 }

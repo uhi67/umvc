@@ -12,7 +12,7 @@ namespace uhi67\umvc;
  *     ...
  * }
  * ```
- *
+ * @property-read string $userId
  */
 interface UserInterface {
     /**

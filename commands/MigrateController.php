@@ -2,7 +2,6 @@
 
 namespace uhi67\umvc\commands;
 
-use Codeception\Util\Debug;
 use Exception;
 use Throwable;
 use uhi67\umvc\AppHelper;
@@ -103,7 +102,9 @@ class MigrateController extends Command {
         // Execute new migrations
         $n = 0;
         foreach($new as $file) {
-            $this->connection->pdo->beginTransaction();
+            if(!$this->connection->pdo->beginTransaction()) {
+				echo "Error starting transaction\n";
+            }
             $name = pathinfo($file, PATHINFO_FILENAME);
             $ext = pathinfo($file, PATHINFO_EXTENSION);
             $filename = $this->migrationPath.'/'.$file;
@@ -167,15 +168,23 @@ class MigrateController extends Command {
                         break;
                     }
                 }
-				// Note: MySQL auto-commits transactions on DDL statements. Therefore we may find our transaction already gone
 	            if($this->connection->pdo->inTransaction()) {
-					$this->connection->pdo->commit();
+		            $this->connection->pdo->commit();
 	            }
+				else {
+					if($this->verbose > 1) echo "Transaction lost...\n";
+				}
             }
             catch(Throwable $e) {
-                if($this->connection->pdo->inTransaction()) $this->connection->pdo->rollBack();
-				if(ENV_DEV) Debug::debug(sprintf("Exception in migration: '%s' in file '%s' at line '%d'", $e->getMessage(), $e->getFile(), $e->getLine()));
-                printf("Exception: %s in file %s at line %d\n", $e->getMessage(), $e->getFile(), $e->getLine());
+				echo "Applying migration '". $name."' caused an exception\n";
+				printf("'%s' in file %s at line %d\n", $e->getMessage(), $e->getFile(), $e->getLine());
+
+	            if($this->connection->pdo->inTransaction()) {
+                $this->connection->pdo->rollBack();
+	            }
+	            else {
+		            if($this->verbose > 1) echo "Transaction lost...\n";
+	            }
                 throw new Exception("Applying migration '". $name."' caused an exception", 500, $e);
             }
         }

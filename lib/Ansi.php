@@ -89,7 +89,7 @@ class Ansi {
 	 * @param bool $close -- restore color after the message
 	 * @return string -- string with pre- and appended ansi color commands
 	 */
-	public static function color($string, $fg, $bg='null', $close=true) {
+    public static function color($string, $fg, $bg='', $close=true) {
 		if(!$fg) $fg = $bg=='white' ? 'black' : 'white';
 		if(!is_string($fg)) return $string.'*'; //throw new InternalException('fg must be string');
 		$color = self::$colors[trim(strtolower($fg))] ?? '0';

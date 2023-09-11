@@ -12,7 +12,7 @@ use uhi67\umvc\Field;
 $hasErrors = $field->error ? 'has-error' : '';
 ?>
 <div class="form-group field-<?= $field->type ?> <?= $field->divClass ?><?= $hasErrors ?>" <?= $field->renderOptions($field->divOptions) ?>>
-    <?php if($field->type != 'submit'): ?>
+    <?php if($field->type != 'submit' && $field->label!==false): ?>
         <label for="<?= $field->id ?>" <?= $field->labelClass() ?>><?= $field->label ?><?= $field->requiredMark ?></label>
     <?php endif; ?>
     <?= $field->renderInput(); ?>

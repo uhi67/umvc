@@ -66,7 +66,7 @@ class AppConnector extends AbstractBrowser {
         $this->app->path = null;
         $this->app->url = null;
         $this->app->query = null;
-        $this->app->baseUrl = null;
+        $this->app->currentUrl = null;
     }
 
 	/**

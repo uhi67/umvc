@@ -6,6 +6,8 @@ use Exception;
 /**
  * Form class is a simple widget, currently a simple wrapper for the field method.
  *
+ * Form visuel elements are compatible with Bootstrap 3
+ *
  * **Example**
  *
  * The following example renders some fields of different types in a form:

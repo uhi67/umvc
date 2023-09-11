@@ -295,12 +295,11 @@ abstract class Component {
 
     /**
      * Returns class name without namespace of the caller class.
-     * Callable dynamically and statically as well.
+     * The proper static call is static::shortName()
      *
      * @return string
      */
     public function getShortName() {
-        if(!isset($this)) return static::shortName(get_class());
         $reflect = new ReflectionClass($this);
         return $reflect->getShortName();
     }

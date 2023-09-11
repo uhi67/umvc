@@ -13,6 +13,7 @@ use Exception;
 class Request extends Component {
 	/** @var string $request -- original full request uri */
 	public $url;
+	/** @var string -- base URL of the application's landing page (Default is auto-detected) */
 	public $baseUrl;
 	/** @var array $query -- get query variables */
 	public $query;
@@ -24,8 +25,9 @@ class Request extends Component {
 		if(!$this->url) $this->url = ArrayHelper::getValue($_SERVER, 'REQUEST_URI');
 
 		// Determines original baseurl (canonic)
+		if(!$this->baseUrl && $this->parent->baseUrl) $this->baseUrl = $this->parent->baseUrl;
 		if(!$this->baseUrl && isset($_SERVER['HTTP_HOST'])) {
-			$prot = isset($_SERVER['REQUEST_SCHEME']) ? $_SERVER['REQUEST_SCHEME'] : 'http';
+			$prot = $_SERVER['REQUEST_SCHEME'] ?? 'http';
 			$prot = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] ? "https" : $prot;
 			$this->baseUrl = $prot . "://" . $_SERVER['HTTP_HOST'] . ArrayHelper::getValue($_SERVER, 'SCRIPT_NAME', '');
 			if(substr($this->baseUrl,-10)=='/index.php') $this->baseUrl = substr($this->baseUrl, 0, -10);

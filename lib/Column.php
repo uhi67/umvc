@@ -26,6 +26,7 @@ use Exception;
  * - string **$class** -- custom class for value cell
  * - string **$headerClass** -- custom header class
  * - string|Model **$model** the model name used in the table
+ * - string **$format** -- set to 'raw' to display HTML content, otherwise htmlspecialchars filter is applied
  *
  * @package UMVC Simple Application Framework
  */
@@ -60,6 +61,8 @@ class Column extends Component
     public $model;
     /** @var string|null|bool -- display null value as. default is Grid's. Set false to disable (=empty string) */
     public $emptyValue;
+    /** @var string $format -- currently only 'raw' is supported to supress htmlspecialchar filtering */
+    public $format;
 
     /**
      * @param Grid|null $grid
@@ -110,18 +113,18 @@ class Column extends Component
         if($this->emptyValue===false) $this->emptyValue = '';
     }
 
-	/**
-	 * Renders the search cell
-	 *
-	 * - boolean: display default filter input or none
-	 * - string: display in filter cell as it is
-	 * - array: display a selection
-	 *
-	 * @param array|BaseModel $search -- the search Model or an array with actual search values indexed by field names
-	 *
-	 * @return string
-	 * @throws Exception
-	 */
+    /**
+     * Renders the search cell
+     *
+     * - boolean: display default filter input or none
+     * - string: display in filter cell as it is
+     * - array: display a selection
+     *
+     * @param array|BaseModel $search -- the search Model or an array with actual search values indexed by field names
+     *
+     * @return string
+     * @throws Exception
+     */
     public function renderSearch($search) {
         $searchModel = 'search';
         $fieldName = $searchModel.'['.$this->searchField.']';
@@ -158,7 +161,7 @@ class Column extends Component
         else {
             if(is_string($this->value)) $content = $model->{$this->value};
             else $content = $model->{$this->field};
-            if($content!==null) $content = htmlspecialchars($content);
+            if($content!==null) $content = $this->format=='raw' ? $content : htmlspecialchars($content);
         }
         // Distinguish null value from empty string
         if($content===null) $content = $this->emptyValue;
@@ -166,16 +169,16 @@ class Column extends Component
         return Html::tag('td', $content, $options);
     }
 
-	/**
-	 * Renders the table header cell. Using priority multiple orders can be applied.
-	 *
-	 * $orders is the $actualColumnOrder values by field names.
-	 * $actualColumnOrder is null, or actual order direction, with an optional priority postfix separated by ;
-	 * Example: ['id'=>null, 'name'=>'ASC;1', ...]
-	 *
-	 * @param array|null $orders
-	 * @throws Exception
-	 */
+    /**
+     * Renders the table header cell. Using priority multiple orders can be applied.
+     *
+     * $orders is the $actualColumnOrder values by field names.
+     * $actualColumnOrder is null, or actual order direction, with an optional priority postfix separated by ;
+     * Example: ['id'=>null, 'name'=>'ASC;1', ...]
+     *
+     * @param array|null $orders
+     * @throws Exception
+     */
     public function renderHeader($orders) {
         $class = $this->order ? 'header-ordered' : '';
         if($this->headerClass) $class .= ($class ? ' ': '') . $this->headerClass;

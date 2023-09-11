@@ -23,8 +23,8 @@ class Field extends Component
     public $modelName;
     /** @var string $divClass -- the additional classnames for the enclosing div */
     public $divClass = '';
-    /** @var string $label -- the label text, default is the attribute label defined in the Model class */
-    public $label;
+    /** @var string $label -- the label text, default is the attribute label defined in the Model class. Null: use default label from model. False: No label displayed at all. */
+    public $label = null;
     /** @var string|array $labelClass -- the additional classnames for the field label */
     public $labelClass = '';
     /** @var string $notice -- a notice text between the label and the input */
@@ -68,7 +68,7 @@ class Field extends Component
     public function init() {
         if($this->model) {
             if(!$this->modelName) $this->modelName = $this->model->tableName();
-            if(!$this->label) $this->label = $this->model->attributeLabel($this->fieldName);
+            if($this->label===null) $this->label = $this->model->attributeLabel($this->fieldName);
             if($this->fieldName) {
                 if(!$this->id) $this->id = 'field-' . $this->modelName . '-' . $this->fieldName;
                 if(!$this->value) $this->value = $this->model->{$this->fieldName};
