@@ -304,7 +304,8 @@ class App extends Component {
 
             // Last resort: main controller action, if exists
             $action = $this->path[0]??'default';
-            if($this->mainControllerClass && is_callable([$this->mainControllerClass, 'action'.$action])) {
+            $actionMethod = 'action'.AppHelper::camelize($action);
+            if($this->mainControllerClass && method_exists($this->mainControllerClass, $actionMethod)) {
                 return $this->runController($this->mainControllerClass, $this->path, $this->query);
             }
 
