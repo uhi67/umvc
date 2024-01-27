@@ -221,12 +221,18 @@ class MigrateController extends Command {
      * @throws Exception
      */
     public function createMigrationTable() {
+        try {
+            $this->connection->pdo;
+        } catch(Exception $e) {
+            printf("Failed to connect to database with DSN %s\n", $this->connection->dsn);
+            return false;
+        }
         if(!$this->connection->tableExists($this->migrationTable)) {
-            if($this->confirm!='yes' && !CliHelper::confirm('The `migration` table does not exist. Create?')) exit;
+            if($this->confirm!='yes' && !CliHelper::confirm("The `$this->migrationTable` table does not exist. Create?")) exit;
             echo "Creating `migration` table...", PHP_EOL;
             $this->connection->pdo->query('CREATE TABLE '.$this->migrationTable.' (name varchar(100) unique primary key, applied int)');
             if(!$this->connection->tableExists($this->migrationTable)) {
-                echo "Creating `migration` table failed", PHP_EOL;
+                echo "Creating `$this->migrationTable` table failed", PHP_EOL;
                 return false;
             }
         }
