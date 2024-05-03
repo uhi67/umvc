@@ -33,7 +33,7 @@ class Install {
         try {
             /** @var App $app */
             $app = App::create(['config'=>$config]);
-            if ($app->cache) {
+            if ($app->hasComponent('cache')) {
                 $c = $app->cache->clear();
                 echo "$c items deleted from the cache.", PHP_EOL;
             } else {
