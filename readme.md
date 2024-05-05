@@ -39,6 +39,7 @@ First steps to build your application using UMVC
 ------------------------------------------------
 
 **Warning: This part is under construction.**
+Learn more about the mentioned classes in the docblock of the class definition.
 
 1. Create `composer.json` of your application, and include `uh67/umvc`, e.g `composer init --name myname/myapp --require uhi67/umvc:*`.
 2. Run `composer update`.
@@ -61,6 +62,12 @@ First steps to build your application using UMVC
 3. You can define CLI commands in `commands` directory, deriving from `\uhi67\umvc\Command` class. There are some built-in command in the framework. `php app` command lists all available commands, both built-in and custom ones.
 4. A simple file-based localization support is built-in. Place your translations into `messges/la.php` files where "la" is the language you want to translate to.
 
+#### Component configurations and properties
+
+All components,most of UMVC classes, including the main App class itself, is a `\uhi67\umvc\Component`.
+`Component` implements **property** features: magic getter and setter uses getProperty and setProperty methods.
+`Component` is **configurable**: constructor accepts a configuration array containing values for public properties.
+
 #### Built-in components
 
 1. `MySqlConnection` -- to connect to database. Includes SQL query builder. Currently the only implementation of `Connection`.
@@ -76,11 +83,65 @@ First steps to build your application using UMVC
 3. `Query` -- Represents a parametrized and flexible SQL query in php structure. SQL command can be built from it.
 4. `Request` -- Represents the HTTP request, can be used to fetch GET and POST parameters.
 5. `Session` -- Represents the current PHP session, can be used to get and set variables.
-    
+
+#### Entry scripts, URLs and routing
+
+The single entry script for the web application is the `www/index.php`.
+Respectively, the single entry script for the CLI application is the `app` file.
+Both of them must be copied into your application directory from the `vendor/uhi67/umvc/` directory.
+
+The `www/.htaccess` rules redirect all not-found requests to the `www/index.php`.
+However, static assets are served directly from the www directory. Learn more about serving library assets later.
+
+The `index.php` initializes the autoloader, load the main configuration, creates the main object 
+(class defined in the configuration, usually `uhi67/umvc/App` or its descendant).
+The main configuration follows the rules of the configurable `Component`.
+
+##### Routing
+
+All URL formed as https://myapp/acontroller/anaction is processed the following way:
+
+`uhi67/umvc/App` parses the request, computes the actual controller class (derived from `uhi67/umvc/Controller`) to use, 
+creates the controller and runs the requested action method. As in the example above, **acontroller** refers to your controller 
+class in your `controllers` directory as _AcontrollerController_, and **anaction** refers to the action method (as _actionAnaction_).
+
+If the action name is missing from the URL, the `actionDefault` will be run. If the controller name is missing as well, 
+the configured _mainController_ will be used. It is also possible to create a URL with an action name of the 
+default controller without specifying the controller name - the only restriction you cannot have a controller with the same name as this action.
+
+Al CLI command formed as `php app acontroller/anaction` is processed the following way:
+
+`uhi67/umvc/App` parses the request, computes the actual controller class (derived from `uhi67/umvc/Command`) to use,
+creates the controller and runs the requested action method. As in the example above, **acontroller** refers to your controller
+class in your `commands` directory as _AcontrollerController_, and **anaction** refers to the action method (as _actionAnaction_).
+Built-in commands can be run the same way. A command with the same name in our application overrides the built-in command.
+
+##### using URLs in your controller action
+
+The parts of the current URL request can be accessed as:
+- path: the path portion passed to the controller (controller name already shifted out)
+- query: the query part of the original request, as an associative array
+
+To create a new URL using controller and action names, and optioanl qurey parameters, use one of the following:
+- $this->app->createUrl(['controller/action', 'key'=>'queryvalue', ..., '#'=>'fragment']) -- all parts are optional
+- return $this->app->redirect([...]) -- to terminate the action with a redirection
+
+#### Serving library assets
+
+In your view files, you can refer your static assets located under `www` directory in static way, e.g `<link href="/assets/css/app.css" rel="stylesheet">`.
+On the contrary, if you want to refer to an asset file located somewhere in the composer-created vendor library, you can use them this way:
+- `<script src="<?= $this->linkAssetFile('npm-asset/bootstrap/dist', 'js/bootstrap.bundle.min.js') ?>"></script>`
+
+The `linkAssetFile` function copies all the files from the directory in the first argument into the asset 
+cache directory under the `www` , and creates a valid URL to the file int the second argument.
+Note:  The first argument identifias an asset package. Only the first call for any package copies the files. 
+All subsequent calls to the same package generates only the link for the file.
+
+The asset cache is emptied by the `composer install` command.
+The asset cache is always `www/asset/cache` and is not configurable.
+
 #### Other topics (coming soon)
 
-- Component configurations and properties
-- URLs and routing
 - Logging
 - Basic structure to update a Model using Form
 - Grid pagination and filtering
