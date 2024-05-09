@@ -55,7 +55,7 @@ class MigrateController extends Command {
     public function actionDefault() {
         if($this->verbose) {
 	        echo "The migrate command keeps database changes in sync with source code.", PHP_EOL;
-	        echo "Run `php app migrate help` for more details.", PHP_EOL, PHP_EOL;
+	        echo "Run `php app migrate/help` for more details.", PHP_EOL, PHP_EOL;
         }
         return $this->actionUp();
     }
