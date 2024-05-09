@@ -33,7 +33,8 @@ Run commands as `php app $command $action $parameters`
 
 Installation
 ------------
-The framework can be included into your project with composer. Run `composer require uhi67/umvc:dev-master`
+The framework can be included into your project with composer. Run `composer require uhi67/umvc:dev-master`.
+New, empty project can be created using `composer create-project --prefer-dist uhi67/umvc-app name`. This will deliver you a new empty application using UMVC framework into the named directory. Choose any name you prefer.
 
 First steps to build your application using UMVC
 ------------------------------------------------
