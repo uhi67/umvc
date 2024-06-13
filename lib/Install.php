@@ -67,7 +67,7 @@ class Install {
         if(!is_dir($path)) throw new Exception('Invalid directory: '.$path);
         $dh = opendir($path);
         while (($file = readdir($dh)) !== false) {
-            if(in_array($file, ['.', '..'])) continue;
+            if(in_array($file, ['.', '..', '.gitignore', '.gitkeep'])) continue;
             if(filetype($path . '/' . $file)== 'dir') {
                 self::clearDir($path.'/'.$file);
                 rmdir($path.'/'.$file);

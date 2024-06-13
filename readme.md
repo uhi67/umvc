@@ -184,6 +184,14 @@ A built-in dockerized testing environment can be used to test with different php
 
 Change log
 ----------
+
+### Next
+
+- Empty caches: skip .gitignore files
+- UMVC guide and refer umvc app
+- php 8 compatibility fix
+- Other bugfixes
+
 ### Version 1.3.1 -- 2023-03-27
 
 - SQL Builder: use tablename as default alias
