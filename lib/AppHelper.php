@@ -58,7 +58,7 @@ class AppHelper {
      * to prevent xss
      */
     public static function xss_clean($string) {
-        return htmlspecialchars($string, ENT_QUOTES);
+        return htmlspecialchars($string??'', ENT_QUOTES);
     }
 
     /**

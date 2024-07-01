@@ -655,7 +655,7 @@ class App extends Component {
     public function createUrl(array $url, $absolute=false): string {
         $baseUrl = $url[0] ?? $this->url;
         unset($url[0]);
-        parse_str(parse_url($baseUrl, PHP_URL_QUERY), $query);
+        parse_str(parse_url($baseUrl, PHP_URL_QUERY)??'', $query);
         $baseUrl = parse_url($baseUrl, PHP_URL_PATH);
 
         if($absolute) {
