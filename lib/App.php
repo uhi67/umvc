@@ -247,7 +247,7 @@ class App extends Component {
                 $err = new ErrorException($errstr, 0, $severity, $errfile, $errline);
                 AppHelper::showException($err);
                 exit(500);
-            });
+            },error_reporting());
             register_shutdown_function(function() {
                 $error = error_get_last();
                 if($error !== NULL) {
@@ -830,7 +830,7 @@ class App extends Component {
                 $err = new ErrorException($errstr, 0, $severity, $errfile, $errline);
                 AppHelper::showException($err);
                 exit(500);
-            });
+            },error_reporting());
 
             /** @var App $app */
             $app = App::create(['config'=>$config]);
