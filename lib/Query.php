@@ -2114,6 +2114,7 @@ class Query extends Component
 
     /**
      * Adds an "In-the-referred-table" type filtering rule to the query, if value is not empty
+     * The searched foreign field can only be an SQL field. To use virtual field, see {@see filterInReferredModel}
      *
      * @param string|null $value -- the value to find in the "name" field of the referred Model
      * @param string $field -- the field referring to the foreign model
@@ -2134,5 +2135,32 @@ class Query extends Component
             $this->andWhere(['IN', $field, array_map([$this->connection, 'quoteValue'], $candidatesQuery->column)]);
         }
         return $this;
+    }
+
+    /**
+     * Adds an "In-the-referred-table" type filtering rule to the query, if value is not empty.
+     * Works with virtual fields, but loads the entire referred table, so use only with small datasets.
+     * The comparison method is "value is substring of the value of $foreignValueField" in case-insensitive manner and UTF8-safe.
+     * The searched foreign field can be a virtual field, unlike in {@see filterInReferred}
+     *
+     * @param string|null $value -- the value to find in the "name" ($foreignValueField) field of the referred Model
+     * @param string $field -- the field referring to the foreign model
+     * @param string|Model $foreignClass -- the referred Model
+     * @param string $foreignValueField -- the "name" field to search in the foreign model (can also be a virtual field)
+     * @param string|null $foreignIdField -- default is primary key: works only with a single primary key
+     * @return void
+     * @throws Exception
+     */
+    public function filterInReferredModels($value, string $field, string $foreignClass, string $foreignValueField, ?string $foreignIdField=null) {
+        if($value!='') {
+            if(!$foreignIdField) $foreignIdField = $foreignClass::primaryKey()[0];
+            $referenceValues = [];
+            foreach($foreignClass::getAll() as $referredModel) {
+                if(mb_strpos(mb_strtolower($referredModel->$foreignValueField), mb_strtolower($value))!==false) {
+                    $referenceValues[] = $referredModel->$foreignIdField;
+                }
+            }
+            $this->andWhere(['IN', $field, array_map([$this->connection, 'quoteValue'], $referenceValues)]);
+        }
     }
 }
