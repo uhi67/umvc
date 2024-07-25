@@ -1,7 +1,7 @@
 UMVC framework
 ==============
 
-Version 1.3.1 -- 2023-03-27
+Version 1.4 -- 2023-07-25
 
 A simple web-application framework implementing model-view-controller (MVC) architectural pattern.
 
@@ -185,7 +185,7 @@ A built-in dockerized testing environment can be used to test with different php
 Change log
 ----------
 
-### Next
+### version 1.4 -- 2024-07-25
 
 - Query::filterInReferredModels() added
 - Empty caches: skip .gitignore files
