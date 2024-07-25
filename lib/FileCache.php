@@ -243,7 +243,7 @@ class FileCache extends Component implements CacheInterface {
         $path = $this->path.$subPath;
 		$dh = opendir($path);
 		while (($file = readdir($dh)) !== false) {
-            if(in_array($file, ['.', '..'])) continue;
+            if(in_array($file, ['.', '..', '.gitignore', '.gitkeep'])) continue;
             if(filetype($path . '/' . $file)== 'dir') {
                 $c += self::clear('/'.$file);
                 rmdir($path.'/'.$file);

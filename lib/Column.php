@@ -104,7 +104,7 @@ class Column extends Component
         if($this->label===false) $this->label='';
         else if($this->label===null) $this->label = $originalLabel;
 
-        if(!$this->searchField) $this->searchField = str_replace('.', '_', $this->field);
+        if(!$this->searchField) $this->searchField = str_replace('.', '_', $this->field??'');
 
         if($this->emptyValue===null) $this->emptyValue = $this->grid->emptyValue;
         if($this->emptyValue===false) $this->emptyValue = '';
@@ -195,7 +195,7 @@ class Column extends Component
      */
     private function renderSorting($orders) {
         if(!$this->order) return '';
-        $actualColumnOrder = explode(';', ArrayHelper::getValue($orders, $this->field));
+        $actualColumnOrder = explode(';', ArrayHelper::getValue($orders, $this->field)??'');
         $actualColumnDir = $actualColumnOrder[0] ?? '';
         $actualColumnPriority = $actualColumnOrder[1] ?? 0;
         $orderSerial = $actualColumnDir && $actualColumnPriority ? '<u>'.(int)$actualColumnPriority.'</u>' : '';

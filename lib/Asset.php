@@ -6,7 +6,7 @@ use Exception;
 
 /**
  * Asset class manages external (composer-loaded) asset files (~ asset package)
- * These files in the vendor-path, they must be copied to a web-accessible directory.
+ * These files are located in the vendor-path, they must be copied to a web-accessible directory.
  *
  * @property-read $name
  */

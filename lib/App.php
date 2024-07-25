@@ -304,7 +304,8 @@ class App extends Component {
 
             // Last resort: main controller action, if exists
             $action = $this->path[0]??'default';
-            if($this->mainControllerClass && is_callable([$this->mainControllerClass, 'action'.$action])) {
+            $actionMethod = 'action'.AppHelper::camelize($action);
+            if($this->mainControllerClass && method_exists($this->mainControllerClass, $actionMethod)) {
                 return $this->runController($this->mainControllerClass, $this->path, $this->query);
             }
 
@@ -654,8 +655,8 @@ class App extends Component {
     public function createUrl(array $url, $absolute=false): string {
         $baseUrl = $url[0] ?? $this->url;
         unset($url[0]);
-        parse_str(parse_url($baseUrl, PHP_URL_QUERY), $query);
-        $baseUrl = parse_url($baseUrl, PHP_URL_PATH);
+        parse_str(parse_url($baseUrl??'', PHP_URL_QUERY)??'', $query);
+        $baseUrl = parse_url($baseUrl??'', PHP_URL_PATH);
 
         if($absolute) {
             $isRelative = strncmp($baseUrl, '//', 2) && strpos($baseUrl, '://') === false;

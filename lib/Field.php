@@ -117,7 +117,7 @@ class Field extends Component
         foreach($options as $name=>$value) {
             if($value===true) $value = null;
             if($value===false) continue;
-            $result .= ' '.htmlspecialchars($name).'="'.htmlspecialchars($value).'"';
+            $result .= ' '.htmlspecialchars($name??'').'="'.htmlspecialchars($value??'').'"';
         }
         return $result;
     }
