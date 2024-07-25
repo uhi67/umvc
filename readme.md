@@ -187,9 +187,10 @@ Change log
 
 ### Next
 
+- Query::filterInReferredModels() added
 - Empty caches: skip .gitignore files
 - UMVC guide and refer umvc app
-- php 8 compatibility fix
+- php 8 compatibility fixes
 - Other bugfixes
 
 ### Version 1.3.1 -- 2023-03-27
