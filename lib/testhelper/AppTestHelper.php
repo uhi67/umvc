@@ -40,8 +40,8 @@ use ReflectionException;
  * @package UMVC Simple Application Framework
  */
 class AppTestHelper extends Framework {
-	protected $requiredFields = ['configFile'];
-	protected $config = ['loader'=>'core', 'sapi'=>'apache']; // optional parameters and defaults of module
+	protected array $requiredFields = ['configFile'];
+	protected array $config = ['loader'=>'core', 'sapi'=>'apache']; // optional parameters and defaults of module
 
     /** @var App $app -- the application instance started by client */
 	public $app;
@@ -304,7 +304,7 @@ class AppTestHelper extends Framework {
 	/**
 	 * @param string|array $page
 	 */
-	public function amOnPage($page) {
+	public function amOnPage(string $page): void {
 		parent::amOnPage($page);
 	}
 
