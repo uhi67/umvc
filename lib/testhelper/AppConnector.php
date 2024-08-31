@@ -90,7 +90,8 @@ class AppConnector extends AbstractBrowser {
 			$this->app->init();
 			return;
 		}
-		$this->app = new App(['config' => $this->appConfig, 'sapi'=>$sapi]);
+        $appClass = $this->appConfig['class'] ?? ($this->appConfig[0] ?? App::class);
+        $this->app = App::create(['class'=>$appClass, 'config'=>$this->appConfig, 'sapi'=>$sapi]);
     }
 
 	public function destroyApplication() {

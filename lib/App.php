@@ -212,7 +212,6 @@ class App extends Component {
     /**
      * Displays an error message and never returns
      *
-     * @noinspection PhpReturnDocTypeMismatchInspection*
      * @throws Exception
      */
     public function error(int $status, string $message) {

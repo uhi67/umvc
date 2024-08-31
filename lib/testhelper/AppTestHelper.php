@@ -406,5 +406,8 @@ class AppTestHelper extends Framework {
             new JsonContains($json)
         );
     }
+    public function getApp() {
+        return $this->app;
+    }
 
 }
