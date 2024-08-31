@@ -51,7 +51,7 @@ class Asset extends Component {
 
         if(!$this->id) $this->id = substr(md5($this->dir),0,16);
         if(!$this->cacheDir) $this->cacheDir = App::$app->basePath.'/www/assets/cache/'.$this->id;
-        if(!$this->cacheUrl) $this->cacheUrl = '/assets/cache/'.$this->id;
+        if(!$this->cacheUrl) $this->cacheUrl = App::$app->baseUrl.'/assets/cache/'.$this->id;
 
         if(!is_dir($this->cacheDir)) mkdir($this->cacheDir, 0774, true);
         if(!$this->patterns) $this->patterns = ['*'];

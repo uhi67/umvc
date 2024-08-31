@@ -281,7 +281,12 @@ class App extends Component {
             if(!$this->baseUrl) $this->baseUrl = isset($_SERVER['REQUEST_URI']) ? parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) : null;
             if(!$this->query) $this->query = $_GET;
             if(!$this->path) $this->path = parse_url($this->url, PHP_URL_PATH);
+            $baseUrlPath = explode('/', trim(parse_url($this->baseUrl, PHP_URL_PATH), '/'));
             $this->path = $this->path ? explode('/', trim($this->path, '/')) : [];
+            while($baseUrlPath && $this->path && $baseUrlPath[array_key_last($baseUrlPath)] == $this->path[array_key_last($this->path)]) {
+                array_pop($baseUrlPath);
+                array_pop($this->path);
+            }
 
             if(ENV_DEV) Debug::debug('[url] '.$this->url);
 
