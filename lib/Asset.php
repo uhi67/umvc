@@ -218,7 +218,7 @@ class Asset extends Component {
      * @return string|false
      */
     public function url($fileName) {
-        $url = '/assets/' . $this->path;
+        $url = App::$app->baseUrl.'/assets/' . $this->path;
         if(!$fileName) return $url;
         if(!file_exists($this->dir.'/'.$fileName)) return false;
         return $this->cacheUrl . '/' . $this->copyFile($fileName);
