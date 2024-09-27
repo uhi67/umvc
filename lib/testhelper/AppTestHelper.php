@@ -68,8 +68,8 @@ class AppTestHelper extends Framework {
 		if(!is_array($this->appConfig)) throw new ModuleException(__CLASS__, "The App test config is invalid: `$this->configFile` (may be return is missing)");
 		$this->appConfig['params']['testsuite'] = $this->config;
 
-        defined('ENV') || define('ENV', $this->appConfig['application_env'] ?? 'production');
-        defined('ENV_DEV') || define('ENV_DEV', ENV != 'production');
+        defined('ENV') || define('ENV', 'development');
+        defined('ENV_DEV') || define('ENV_DEV', true);
 	}
 
 	/** @noinspection PhpMethodNamingConventionInspection */

@@ -369,7 +369,7 @@ abstract class Connection extends Component {
 				$this->reset();
 			}
 			catch(Throwable $e) {
-				throw new Exception('Connection failed', 0, $e);
+				throw new Exception("Connection failed to '$this->dsn' with user '$this->_user'", 0, $e);
 			}
 		}
 		return $this->_pdo;
