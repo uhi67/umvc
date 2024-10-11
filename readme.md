@@ -12,7 +12,7 @@ Key features
 - easy-to-use Model classes
 - simple URL-path to Controller/method translation with automatic parameter passing
 - database migration support
-- user login via SAML (Using this feature needs `composer require "simplesamlphp/simplesamlphp:^1.19.2"`)
+- user login via SAML (Using this feature needs `composer require "simplesamlphp/simplesamlphp:^2.2"`)
 
 ### Modules
 
