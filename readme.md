@@ -1,7 +1,7 @@
 UMVC framework
 ==============
 
-Version 1.4 -- 2023-07-25
+Version 2.0 -- 2024-10-11
 
 A simple web-application framework implementing model-view-controller (MVC) architectural pattern.
 
@@ -12,7 +12,7 @@ Key features
 - easy-to-use Model classes
 - simple URL-path to Controller/method translation with automatic parameter passing
 - database migration support
-- user login via SAML (Using this feature needs `composer require "simplesamlphp/simplesamlphp:^1.19.2"`)
+- user login via SAML (Using this feature needs `composer require "simplesamlphp/simplesamlphp:^2.2"`)
 
 ### Modules
 
@@ -184,6 +184,11 @@ A built-in dockerized testing environment can be used to test with different php
 
 Change log
 ----------
+
+### version 2.0 -- "2024-10-11"
+
+- requires php 8.2
+- fix baseUrl usage 
 
 ### version 1.4 -- 2024-07-25
 

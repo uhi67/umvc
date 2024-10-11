@@ -212,7 +212,6 @@ class App extends Component {
     /**
      * Displays an error message and never returns
      *
-     * @noinspection PhpReturnDocTypeMismatchInspection*
      * @throws Exception
      */
     public function error(int $status, string $message) {
@@ -247,7 +246,7 @@ class App extends Component {
                 $err = new ErrorException($errstr, 0, $severity, $errfile, $errline);
                 AppHelper::showException($err);
                 exit(500);
-            });
+            },error_reporting());
             register_shutdown_function(function() {
                 $error = error_get_last();
                 if($error !== NULL) {
@@ -282,7 +281,12 @@ class App extends Component {
             if(!$this->baseUrl) $this->baseUrl = isset($_SERVER['REQUEST_URI']) ? parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) : null;
             if(!$this->query) $this->query = $_GET;
             if(!$this->path) $this->path = parse_url($this->url, PHP_URL_PATH);
+            $baseUrlPath = explode('/', trim(parse_url($this->baseUrl, PHP_URL_PATH), '/'));
             $this->path = $this->path ? explode('/', trim($this->path, '/')) : [];
+            while($baseUrlPath && $this->path && $baseUrlPath[0] == $this->path[0]) {
+                array_shift($baseUrlPath);
+                array_shift($this->path);
+            }
 
             if(ENV_DEV) Debug::debug('[url] '.$this->url);
 
@@ -830,7 +834,7 @@ class App extends Component {
                 $err = new ErrorException($errstr, 0, $severity, $errfile, $errline);
                 AppHelper::showException($err);
                 exit(500);
-            });
+            },error_reporting());
 
             /** @var App $app */
             $app = App::create(['config'=>$config]);

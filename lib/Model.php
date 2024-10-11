@@ -159,7 +159,7 @@ class Model extends BaseModel {
      * - associative array: [fieldName=>value, ...]
      * - expression array: [operator, expression, ...] example: ['AND', ['OR', ['name'=>''], ['name'=>null]], ['=', 'name', 'login']]
      *
-     * @param array|null $condition -- returns null if record with condition not found
+     * @param scalar|array|null $condition -- returns null if record with condition not found
      * @return static
      * @see Query::buildExpression()
      * @throws Exception -- when the PDO operation failed

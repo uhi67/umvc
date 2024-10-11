@@ -13,7 +13,7 @@
     }
   ],
   "require": {
-    "php": ">=7.2",
+    "php": ">=8.2",
     "ext-iconv": "*",
     "ext-intl": "*",
     "ext-json": "*",
@@ -23,7 +23,7 @@
     "ext-pdo_sqlite": "*",
     "ext-pdo": "*",
     "ext-simplexml": "*",
-    "psr/log": "^1.1"
+    "psr/log": "*"
   },
   "require-dev": {
     "codeception/codeception": "^4.0",
@@ -32,7 +32,6 @@
     "codeception/module-filesystem": "^1.0",
     "codeception/lib-innerbrowser": "^1.0",
     "codeception/module-rest": "*",
-    "simplesamlphp/simplesamlphp": ">=v1.17.5"
   },
   "scripts": {
   },
@@ -45,9 +44,4 @@
       "testapp\\": "tests/_data/testapp"
     }
   },
-  "config": {
-    "allow-plugins": {
-      "simplesamlphp/composer-module-installer": true
-    }
-  }
 }

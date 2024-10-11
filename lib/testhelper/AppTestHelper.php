@@ -40,8 +40,8 @@ use ReflectionException;
  * @package UMVC Simple Application Framework
  */
 class AppTestHelper extends Framework {
-	protected $requiredFields = ['configFile'];
-	protected $config = ['loader'=>'core', 'sapi'=>'apache']; // optional parameters and defaults of module
+	protected array $requiredFields = ['configFile'];
+	protected array $config = ['loader'=>'core', 'sapi'=>'apache']; // optional parameters and defaults of module
 
     /** @var App $app -- the application instance started by client */
 	public $app;
@@ -68,8 +68,8 @@ class AppTestHelper extends Framework {
 		if(!is_array($this->appConfig)) throw new ModuleException(__CLASS__, "The App test config is invalid: `$this->configFile` (may be return is missing)");
 		$this->appConfig['params']['testsuite'] = $this->config;
 
-        defined('ENV') || define('ENV', $this->appConfig['application_env'] ?? 'production');
-        defined('ENV_DEV') || define('ENV_DEV', ENV != 'production');
+        defined('ENV') || define('ENV', 'development');
+        defined('ENV_DEV') || define('ENV_DEV', true);
 	}
 
 	/** @noinspection PhpMethodNamingConventionInspection */
@@ -304,7 +304,7 @@ class AppTestHelper extends Framework {
 	/**
 	 * @param string|array $page
 	 */
-	public function amOnPage($page) {
+	public function amOnPage(string $page): void {
 		parent::amOnPage($page);
 	}
 
@@ -405,6 +405,9 @@ class AppTestHelper extends Framework {
             $responseContent,
             new JsonContains($json)
         );
+    }
+    public function getApp() {
+        return $this->app;
     }
 
 }
