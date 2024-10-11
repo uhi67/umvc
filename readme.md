@@ -185,7 +185,7 @@ A built-in dockerized testing environment can be used to test with different php
 Change log
 ----------
 
-### version 2.0 -- 2024-10-11
+### version 2.0 -- "2024-10-11"
 
 - requires php 8.2
 - fix baseUrl usage 
