@@ -185,6 +185,11 @@ A built-in dockerized testing environment can be used to test with different php
 Change log
 ----------
 
+### next
+
+- requires php 8.2
+- fix baseUrl usage 
+
 ### version 1.4 -- 2024-07-25
 
 - Query::filterInReferredModels() added
