@@ -31,7 +31,7 @@
     "php-webdriver/webdriver": "^1.0.1",
     "codeception/module-filesystem": "^1.0",
     "codeception/lib-innerbrowser": "^1.0",
-    "codeception/module-rest": "*",
+    "codeception/module-rest": "*"
   },
   "scripts": {
   },
@@ -43,5 +43,5 @@
       "Helper\\": "lib/testhelper",
       "testapp\\": "tests/_data/testapp"
     }
-  },
+  }
 }
