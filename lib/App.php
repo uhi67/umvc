@@ -138,7 +138,7 @@ class App extends Component {
         error_reporting(E_ALL);
 
         // Other configurable settings
-	    $conf = ['title', 'mainControllerClass', 'layout', 'basePath', 'runtimePath'];
+	    $conf = ['title', 'mainControllerClass', 'layout', 'basePath', 'baseUrl', 'runtimePath'];
         foreach($conf as $key) {
             if(array_key_exists($key, $this->config)) $this->$key = $this->config[$key];
         }
@@ -146,7 +146,7 @@ class App extends Component {
 		if(!$this->runtimePath) $this->runtimePath = $this->basePath.'/runtime';
 
 	    if($this->sapi != 'cli') {
-            $this->baseUrl = isset($_SERVER['REQUEST_URI']) ? parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) : null;
+            $this->baseUrl = $this->baseUrl ?: (isset($_SERVER['REQUEST_URI']) ? parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) : null);
 		    if(!is_dir($logDir = $this->runtimePath.'/logs')) {
 			    if(!@mkdir($logDir, 0774, true)) {
 				    throw new Exception("Failed to create dir `$logDir`");
@@ -277,19 +277,18 @@ class App extends Component {
      */
     public function run() {
         try {
+            // TODO: not works with nginx
             if(!$this->url) $this->url = ArrayHelper::getValue($_SERVER, 'REQUEST_URI');
             if(!$this->baseUrl) $this->baseUrl = isset($_SERVER['REQUEST_URI']) ? parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) : null;
             if(!$this->query) $this->query = $_GET;
             if(!$this->path) $this->path = parse_url($this->url, PHP_URL_PATH);
-            $baseUrlPath = explode('/', trim(parse_url($this->baseUrl, PHP_URL_PATH), '/'));
+            $baseUrlPath = explode('/', trim(parse_url($this->baseUrl, PHP_URL_PATH)??'', '/'));
             $this->path = $this->path ? explode('/', trim($this->path, '/')) : [];
             while($baseUrlPath && $this->path && $baseUrlPath[0] == $this->path[0]) {
                 array_shift($baseUrlPath);
                 array_shift($this->path);
             }
-
             if(ENV_DEV) Debug::debug('[url] '.$this->url);
-
             if($this->path==[''] && $this->mainControllerClass) {
                 // The default action of main page can be called in the short way
                 return $this->runController($this->mainControllerClass, [], $this->query);
