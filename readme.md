@@ -1,7 +1,7 @@
 UMVC framework
 ==============
 
-Version 2.0 -- 2024-10-11
+Version 2.0.1 -- 2024-12-04
 
 A simple web-application framework implementing model-view-controller (MVC) architectural pattern.
 
@@ -184,6 +184,10 @@ A built-in dockerized testing environment can be used to test with different php
 
 Change log
 ----------
+
+### version 2.0.1 -- "2024-12-04"
+
+- Install::crearDir() now deletes also .gitkeep and .gitignore files
 
 ### version 2.0 -- "2024-10-11"
 
