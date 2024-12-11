@@ -286,12 +286,11 @@ class App extends Component {
     public function run() {
         try {
             // TODO: not works with nginx
-            $requestUrlPathElements = explode('/', trim(parse_url($this->urlPath??'', PHP_URL_PATH)??'', '/'));
-            while($requestUrlPathElements && $this->path && $requestUrlPathElements[0] == $this->path[0]) {
-                array_shift($requestUrlPathElements);
+            $baseUrlPathElements = explode('/', trim(parse_url($this->baseUrl??'', PHP_URL_PATH)??'', '/'));
+            while($baseUrlPathElements && $this->path && $baseUrlPathElements[0] == $this->path[0]) {
+                array_shift($baseUrlPathElements);
                 array_shift($this->path);
             }
-
             if($this->path==[''] && $this->mainControllerClass) {
                 // The default action of main page can be called in the short way
                 return $this->runController($this->mainControllerClass, [], $this->query);
