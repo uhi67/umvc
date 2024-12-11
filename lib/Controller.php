@@ -135,7 +135,6 @@ class Controller extends Component
         $result = json_encode($response);
         if(!$result) throw new Exception('Invalid data');
         echo $result;
-        //Debug::debug('[JSON result] '.$result);
         return 0;
     }
 

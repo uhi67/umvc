@@ -291,7 +291,7 @@ class App extends Component {
                 array_shift($requestUrlPathElements);
                 array_shift($this->path);
             }
-            if(ENV_DEV) Debug::debug('[url] '.$this->url);
+
             if($this->path==[''] && $this->mainControllerClass) {
                 // The default action of main page can be called in the short way
                 return $this->runController($this->mainControllerClass, [], $this->query);

@@ -107,7 +107,7 @@ abstract class Migration extends Component {
 			$stmt = $this->connection->pdo->query($cmd);
 		}
 		catch(Throwable $e) {
-			if(ENV_DEV) Debug::debug("\nSQL in file $filename at line $line was:\n$cmd");
+            App::log('error', sprintf("Exception '%s' in file %s at line %s occurred at SQL '%s' in file %s at line %s", $e->getMessage(), $e->getFile(), $e->getLine(), $cmd, $filename, $line));
 			throw $e;
 		}
 		if($stmt===false) {
