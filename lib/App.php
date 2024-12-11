@@ -2,7 +2,6 @@
 
 namespace uhi67\umvc;
 
-use Codeception\Util\Debug;
 use ErrorException;
 use Exception;
 use Throwable;
@@ -77,7 +76,7 @@ class App extends Component {
     /** @var string|null -- The actual request URL including the query parameters */
     public ?string $url = null;
     /** @var string -- URL path of the current request without query parameters */
-    public string $urlPath;
+    public string $urlPath = '';
     /** @var array|null */
     public ?array $query = null;
     /** @var string[] -- elements in URL path */
