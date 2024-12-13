@@ -2,7 +2,6 @@
 
 namespace uhi67\umvc;
 
-use Codeception\Util\Debug;
 use ErrorException;
 use Exception;
 use Throwable;
@@ -61,22 +60,25 @@ class App extends Component {
     /** @var string|Controller|null -- the default controller of the application */
     public $mainControllerClass = null;
 
-    /** @var string -- base path of the application */
-    public $basePath;
+    /** @var string|null -- base path of the application */
+    public ?string $basePath = null;
 	/** @var string -- path of the runtime directory, default is $basePath.'/runtime' */
 	public $runtimePath;
-    /** @var string -- URL of the current page without query parameters */
-    public $baseUrl;
+
     /** @var UserInterface|Model|null $user -- The logged-in user or null */
     public $user;
 
     /** @var App $app -- The single instance of the App. Read only, please don't overwrite it runtime */
     public static $app;
 
-    /** @var string -- The actual request URL */
-    public $url;
-    /** @var array */
-    public $query;
+    /** @var string|null -- base url of the application */
+    public ?string $baseUrl = null;
+    /** @var string|null -- The actual request URL including the query parameters */
+    public ?string $url = null;
+    /** @var string -- URL path of the current request without query parameters */
+    public string $urlPath = '';
+    /** @var array|null */
+    public ?array $query = null;
     /** @var string[] -- elements in URL path */
     public $path;
     /** @var Controller|Command|null -- the currently executed controller */
@@ -138,23 +140,28 @@ class App extends Component {
         error_reporting(E_ALL);
 
         // Other configurable settings
-	    $conf = ['title', 'mainControllerClass', 'layout', 'basePath', 'baseUrl', 'runtimePath'];
+        $conf = ['title', 'mainControllerClass', 'layout', 'basePath', 'baseUrl', 'runtimePath'];
         foreach($conf as $key) {
             if(array_key_exists($key, $this->config)) $this->$key = $this->config[$key];
         }
-	    if(!$this->basePath) $this->basePath = dirname(__DIR__, 4);
-		if(!$this->runtimePath) $this->runtimePath = $this->basePath.'/runtime';
+        if(!$this->basePath) $this->basePath = dirname(__DIR__, 4);
+        if(!$this->runtimePath) $this->runtimePath = $this->basePath.'/runtime';
 
+        if(!is_dir($logDir = $this->runtimePath.'/logs')) {
+            if(!@mkdir($logDir, 0774, true)) {
+                throw new Exception("Failed to create dir `$logDir`");
+            }
+        }
+
+        if($this->baseUrl===null) $this->baseUrl = '';
+        if(!$this->url) $this->url = ArrayHelper::getValue($_SERVER, 'REQUEST_URI','');
 	    if($this->sapi != 'cli') {
-            $this->baseUrl = $this->baseUrl ?: (isset($_SERVER['REQUEST_URI']) ? parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) : null);
-		    if(!is_dir($logDir = $this->runtimePath.'/logs')) {
-			    if(!@mkdir($logDir, 0774, true)) {
-				    throw new Exception("Failed to create dir `$logDir`");
-			    }
-		    }
+            $this->urlPath = parse_url($this->url, PHP_URL_PATH);
             if(!$this->request) $this->request = new Request();
             if(!$this->session) $this->session = new Session();
         }
+        if(!$this->query) $this->query = $_GET;
+        $this->path = $this->urlPath ? explode('/', trim($this->urlPath, '/')) : [];
 
         $components = $this->config['components'] ?? [];
         $referredComponents = [];
@@ -278,17 +285,11 @@ class App extends Component {
     public function run() {
         try {
             // TODO: not works with nginx
-            if(!$this->url) $this->url = ArrayHelper::getValue($_SERVER, 'REQUEST_URI');
-            if(!$this->baseUrl) $this->baseUrl = isset($_SERVER['REQUEST_URI']) ? parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) : null;
-            if(!$this->query) $this->query = $_GET;
-            if(!$this->path) $this->path = parse_url($this->url, PHP_URL_PATH);
-            $baseUrlPath = explode('/', trim(parse_url($this->baseUrl, PHP_URL_PATH)??'', '/'));
-            $this->path = $this->path ? explode('/', trim($this->path, '/')) : [];
-            while($baseUrlPath && $this->path && $baseUrlPath[0] == $this->path[0]) {
-                array_shift($baseUrlPath);
+            $baseUrlPathElements = explode('/', trim(parse_url($this->baseUrl??'', PHP_URL_PATH)??'', '/'));
+            while($baseUrlPathElements && $this->path && $baseUrlPathElements[0] == $this->path[0]) {
+                array_shift($baseUrlPathElements);
                 array_shift($this->path);
             }
-            if(ENV_DEV) Debug::debug('[url] '.$this->url);
             if($this->path==[''] && $this->mainControllerClass) {
                 // The default action of main page can be called in the short way
                 return $this->runController($this->mainControllerClass, [], $this->query);

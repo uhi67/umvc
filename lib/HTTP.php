@@ -311,7 +311,7 @@ class HTTP {
 	 * 2. Compute from php environment
 	 *
 	 * Behind a reverse proxy terminating https, use the following pattern in the config.
-	 * Make sure to set `HTTPS` enviroment variable if the external protocol is https.
+	 * Make sure to set `HTTPS` environment variable if the external protocol is https.
 	 * ```
 	 * $scheme = (!isset($_SERVER['HTTPS']) || $_SERVER['HTTPS'] != "on") ? 'http' : 'https';
 	 * $config = [
@@ -321,7 +321,7 @@ class HTTP {
 	 * @return string
 	 */
 	public static function getSelfURL() {
-		$baseurl = App::$app->baseUrl;
+		$baseurl = App::$app->urlPath;
 		if (!empty($baseurl)) {
 			$protocol = parse_url($baseurl, PHP_URL_SCHEME);
 			$hostname = parse_url($baseurl, PHP_URL_HOST);

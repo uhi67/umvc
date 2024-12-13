@@ -174,7 +174,6 @@ class MigrateController extends Command {
             }
             catch(Throwable $e) {
                 if($this->connection->pdo->inTransaction()) $this->connection->pdo->rollBack();
-				if(ENV_DEV) Debug::debug(sprintf("Exception in migration: '%s' in file '%s' at line '%d'", $e->getMessage(), $e->getFile(), $e->getLine()));
                 printf("Exception: %s in file %s at line %d\n", $e->getMessage(), $e->getFile(), $e->getLine());
                 throw new Exception("Applying migration '". $name."' caused an exception", 500, $e);
             }

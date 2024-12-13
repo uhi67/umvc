@@ -489,4 +489,22 @@ class AppHelper {
 		return preg_match('~^(/|\\\\|[\w]+:)~', $path);
 	}
 
+    /**
+     * Determines the base URL of the application considering the reverse proxy effect
+     * @return string -- the valid base URL
+     */
+    public static function baseUrl(): string {
+        $https = getenv('HTTPS') ?? 'off';
+        $protocol = ($https=='on' || ($_SERVER['SERVER_PORT']??80) == 443) ? "https" : "http";
+        if(isset($_SERVER['HTTP_X_FORWARDED_PROTO']) || $https=='on') {
+            $protocol = $_SERVER['HTTP_X_FORWARDED_PROTO'] ?? $protocol;
+            if($https == "on") {
+                $protocol = 'https';
+                $_SERVER['SERVER_PORT'] = 443;
+                $_SERVER['HTTPS'] = 'on'; // SimpleSAMLphp will apply wrong RelayState URL after login/logout if it's missing
+            }
+        }
+        $baseurlpath = $protocol . '://' . $_SERVER["HTTP_HOST"];
+        return $baseurlpath;
+    }
 }
