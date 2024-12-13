@@ -41,7 +41,7 @@ class Session extends Component {
 	 * @throws Exception
 	 */
 	public function prepare() {
-		if($this->cookie_domain === true && $this->parent instanceof App) $this->cookie_domain = parse_url($this->parent->baseUrl, PHP_URL_HOST);
+		if($this->cookie_domain === true && $this->parent instanceof App) $this->cookie_domain = parse_url($this->parent->urlPath??'', PHP_URL_HOST);
 		if(App::isCLI()) return;
 		ini_set("session.gc_maxlifetime", $this->lifetime + 900);
 		ini_set("session.lifetime", $this->lifetime);
