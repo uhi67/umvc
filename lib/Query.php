@@ -1570,7 +1570,7 @@ class Query extends Component {
      * Conditions are the remained parts of a $join array.
      * Condition may be a `mainField=>foreignField` associative pair, or any numeric-indexed other expression
      *
-     * @param array|string $model -- main table's model-name (single table only)
+     * @param array|string|null $model -- main table's model-name (single table only)
      * @param string|null $mainAlias -- main table's alias
      * @param array $joins -- list of joined models as [alias=>[model, join-type, condition, ...], ...]
      *
@@ -1578,7 +1578,7 @@ class Query extends Component {
      * @throws Exception -- if any of the join types is invalid, or the condition is missing or invalid
      * @see Self::buildJoin() for join item details
      */
-    public function buildJoins(array|string $model, string|null $mainAlias, array $joins): string {
+    public function buildJoins(array|string|null $model, string|null $mainAlias, array $joins): string {
         if (empty($joins)) return '';
         $result = '';
 

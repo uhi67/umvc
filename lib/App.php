@@ -67,7 +67,7 @@ class App extends Component {
     /** @var string|null -- base path of the application */
     public ?string $basePath = null;
     /** @var string -- path of the runtime directory, default is $basePath.'/runtime' */
-    public string $runtimePath;
+    public string $runtimePath = '';
 
     /** @var UserInterface|Model|null $user -- The logged-in user or null */
     public Model|null|UserInterface $user = null;
@@ -88,7 +88,7 @@ class App extends Component {
     /** @var Controller|Command|null -- the currently executed controller */
     public Command|null|Controller $controller;
     /** @var string */
-    public string $sapi;
+    public string $sapi = '';
     /** @var int|null $responseStatus -- the http response status sent after completing the request */
     public ?int $responseStatus = null;
     /** @var array $headers -- the http headers will be sent after completing the request */

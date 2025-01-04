@@ -6,6 +6,7 @@ namespace uhi67\umvc;
 
 use Closure;
 use DateTime;
+use Error;
 use Exception;
 use IntlDateFormatter;
 use PHPUnit\Event\Code\Throwable;
@@ -109,10 +110,10 @@ class AppHelper {
     /**
      * Displays an Exception on CLI or HTML output.
      *
-     * @param Exception|Throwable $e
+     * @param Exception|Throwable|Error $e
      * @param int|null $responseStatus -- HTTP response status, default is 500=HTTP_INTERNAL_SERVER_ERROR
      */
-    static function showException(Exception|Throwable $e, int $responseStatus = null): void {
+    static function showException(Exception|Throwable|Error $e, int $responseStatus = null): void {
         defined('ENV_DEV') || define('ENV_DEV', 'production');
         $responseStatus = $responseStatus ?: HTTP::HTTP_INTERNAL_SERVER_ERROR;
         $title = HTTP::$statusTexts[$responseStatus] ?? 'Internal application error';
@@ -401,10 +402,10 @@ class AppHelper {
      *
      * @return string
      */
-    public static function substitute($text, $data) {
+    public static function substitute(string $text, array $data): string {
         return preg_replace_callback(/* @lang */ '#{(DMY|MDY)?(\\$[a-zA-Z_]+[\\\\/a-zA-Z0-9_-]*)}#', function ($mm) use ($data) {
             if ($mm[2] == '{') return '{';
-            if (substr($mm[2], 0, 1) == '$') {
+            if (str_starts_with($mm[2], '$')) {
                 // a keyname
                 $subvars = explode('/', substr($mm[2], 1));
                 $d = $data;
@@ -433,14 +434,14 @@ class AppHelper {
      * @param DateTime $datetime
      * @param int $datetype -- date format as IntlDateFormatter::NONE, type values are 'NONE', 'SHORT', 'MEDIUM', 'LONG', 'FULL'
      * @param int $timetype -- time format as IntlDateFormatter::NONE, type values are 'NONE', 'SHORT', 'MEDIUM', 'LONG', 'FULL'
-     * @param string $locale -- locale in ll-cc format (ISO 639-1 && ISO 3166-1), null to use default
+     * @param string|null $locale -- locale in ll-cc format (ISO 639-1 && ISO 3166-1), null to use default
      * @return string
      */
-    public static function formatDateTime($datetime, $datetype, $timetype, $locale = null) {
+    public static function formatDateTime(DateTime $datetime, int $datetype, int $timetype, string $locale = null): string {
         if (!$locale) $locale = App::$app->locale;
         if (!$locale) $locale = "en-GB";
         $pattern = null;
-        if (substr($locale, 0, 2) == 'hu') {
+        if (str_starts_with($locale, 'hu')) {
             if ($datetype == IntlDateFormatter::SHORT && $timetype == IntlDateFormatter::SHORT)
                 $pattern = 'yyyy.MM.dd. H:mm';
             if ($datetype == IntlDateFormatter::SHORT && $timetype == IntlDateFormatter::NONE)
@@ -460,7 +461,7 @@ class AppHelper {
      * @param int $interval -- seconds between retry attempts, the minimum allowed value is 1
      * @return bool -- true if test succeeded within timeout, false otherwise
      */
-    public static function waitFor($test, $timeout = 60, $interval = 1) {
+    public static function waitFor(Closure $test, int $timeout = 60, int $interval = 1): bool {
         $startTime = time();
         $interval = max(1, $interval);
         $timeout = max(1, $timeout);
@@ -503,7 +504,6 @@ class AppHelper {
                 $_SERVER['HTTPS'] = 'on'; // SimpleSAMLphp will apply wrong RelayState URL after login/logout if it's missing
             }
         }
-        $baseurlpath = $protocol . '://' . $_SERVER["HTTP_HOST"];
-        return $baseurlpath;
+        return $protocol . '://' . $_SERVER["HTTP_HOST"];
     }
 }
