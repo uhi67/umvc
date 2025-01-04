@@ -1,11 +1,13 @@
 <?php
 /** @noinspection PhpIllegalPsrClassPathInspection */
+
 /** @noinspection PhpUnused */
 
 namespace uhi67\umvc;
 
 use Closure;
 use DateTime;
+use Error;
 use Exception;
 use Throwable;
 use IntlDateFormatter;
@@ -118,10 +120,10 @@ class AppHelper
     /**
      * Displays an Exception on CLI or HTML output.
      *
-     * @param Exception|Throwable $e
+     * @param Exception|Throwable|Error $e
      * @param int|null $responseStatus -- HTTP response status, default is 500=HTTP_INTERNAL_SERVER_ERROR
      */
-    static function showException(Exception|Throwable $e, int $responseStatus = null): void
+    static function showException(Exception|Throwable|Error $e, int $responseStatus = null): void
     {
         defined('ENV_DEV') || define('ENV_DEV', 'production');
         $responseStatus = $responseStatus ?: HTTP::HTTP_INTERNAL_SERVER_ERROR;
@@ -475,7 +477,7 @@ class AppHelper
                 if ($mm[2] == '{') {
                     return '{';
                 }
-                if (substr($mm[2], 0, 1) == '$') {
+                if (str_starts_with($mm[2], '$')) {
                     // a keyname
                     $subvars = explode('/', substr($mm[2], 1));
                     $d = $data;
@@ -511,7 +513,7 @@ class AppHelper
      * @param DateTime $datetime
      * @param int $datetype -- date format as IntlDateFormatter::NONE, type values are 'NONE', 'SHORT', 'MEDIUM', 'LONG', 'FULL'
      * @param int $timetype -- time format as IntlDateFormatter::NONE, type values are 'NONE', 'SHORT', 'MEDIUM', 'LONG', 'FULL'
-     * @param string $locale -- locale in ll-cc format (ISO 639-1 && ISO 3166-1), null to use default
+     * @param string|null $locale -- locale in ll-cc format (ISO 639-1 && ISO 3166-1), null to use default
      * @return string
      */
     public static function formatDateTime(
@@ -519,7 +521,7 @@ class AppHelper
         int $datetype = IntlDateFormatter::SHORT,
         int $timetype = IntlDateFormatter::SHORT,
         string $locale = null
-    ) {
+    ): string {
         if (!$locale) {
             $locale = App::$app->locale;
         }
@@ -527,7 +529,7 @@ class AppHelper
             $locale = "en-GB";
         }
         $pattern = null;
-        if (substr($locale, 0, 2) == 'hu') {
+        if (str_starts_with($locale, 'hu')) {
             if ($datetype == IntlDateFormatter::SHORT && $timetype == IntlDateFormatter::SHORT) {
                 $pattern = 'yyyy.MM.dd. H:mm';
             }
@@ -576,8 +578,10 @@ class AppHelper
      * @param string $path
      * @return bool
      */
-    public static function pathIsAbsolute(string $path): bool
-    {
+    public
+    static function pathIsAbsolute(
+        string $path
+    ): bool {
         return preg_match('~^(/|\\\\|[\w]+:)~', $path);
     }
 
@@ -585,7 +589,8 @@ class AppHelper
      * Determines the base URL of the application considering the reverse proxy effect
      * @return string -- the valid base URL
      */
-    public static function baseUrl(): string
+    public
+    static function baseUrl(): string
     {
         $baseurl = getenv('APP_BASEURL');
         if ($baseurl) {
