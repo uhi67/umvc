@@ -1,4 +1,4 @@
-<?php
+<?php /** @noinspection PhpIllegalPsrClassPathInspection */
 
 namespace uhi67\umvc\models;
 
@@ -15,7 +15,7 @@ class Migration extends Model {
      *
      * @return array of field names
      */
-    public static function primaryKey() {
+    public static function primaryKey(): array {
         return ['name'];
     }
     /**
@@ -24,7 +24,7 @@ class Migration extends Model {
      *
      * @return array
      */
-    public static function autoIncrement() {
+    public static function autoIncrement(): array {
         return [];
     }
 }

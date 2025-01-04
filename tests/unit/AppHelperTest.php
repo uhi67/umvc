@@ -1,4 +1,5 @@
-<?php
+<?php /** @noinspection PhpIllegalPsrClassPathInspection */
+
 namespace unit;
 
 use uhi67\umvc\AppHelper;
@@ -30,14 +31,16 @@ class AppHelperTest extends \Codeception\Test\Unit
 		$start = time();
 		$end = $start + $length;
 	    $a = 0;
+        // Call the function periodically until it returns true. Result is false if timeout occurred.
 	    $result = AppHelper::waitFor(function() use($end, &$a) {
 			$a++;
 		    return time() >= $end;
 	    }, $timeout, $interval);
+        $e = time()-$start;
 
 		$this->assertEquals($success, $result);
-		$this->assertEquals($attempts, $a);
-		$this->assertEqualsWithDelta($elapsed, time()-$start, 1.0);
+		$this->assertEqualsWithDelta($attempts, $a, 1.0);
+		$this->assertEqualsWithDelta($elapsed, $e, 1.0);
 
     }
 	public function provWaitFor() {

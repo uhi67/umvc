@@ -1,8 +1,9 @@
-<?php
+<?php /** @noinspection PhpIllegalPsrClassPathInspection */
 
 namespace uhi67\umvc;
 
 use DateTime;
+use DateTimeInterface;
 use Exception;
 use JsonSerializable;
 use ReflectionClass;
@@ -23,17 +24,16 @@ use ReflectionProperty;
  * @property-read array $errors -- field-name indexed array of numeric indexed error messages
  * @package UMVC Simple Application Framework
  */
-class BaseModel extends Component implements JsonSerializable
-{
+class BaseModel extends Component implements JsonSerializable {
     // These constants are used in validators
     const VALID_EMAIL = '/^\w+[\w\-.]*@\w+[\w\-.]+$/';
     const VALID_URL = '/^(https?|ftp):\/\/[^\s\/$.?#].[^\s]*$/iS';
 
     /** @var array[] $_attributes -- attributes are memory-cached */
-    private static $_attributes=[];
+    private static array $_attributes = [];
 
     /** @var array[] $_errors -- validation errors indexed by field-name */
-    private $_errors =[];
+    private array $_errors = [];
 
     /**
      * Returns the list of all attribute names of the model.
@@ -42,9 +42,9 @@ class BaseModel extends Component implements JsonSerializable
      * @return array list of attribute names.
      * @throws Exception
      */
-    public static function attributes() {
-        if(static::class == 'app\lib\BaseModel') throw new Exception('Call this from a derived class.');
-        if(array_key_exists(static::class, self::$_attributes)) return self::$_attributes[static::class];
+    public static function attributes(): array {
+        if (static::class == 'app\lib\BaseModel') throw new Exception('Call this from a derived class.');
+        if (array_key_exists(static::class, self::$_attributes)) return self::$_attributes[static::class];
         $class = new ReflectionClass(static::class);
         $names = array();
         foreach ($class->getProperties(ReflectionProperty::IS_PUBLIC) as $property) {
@@ -62,10 +62,9 @@ class BaseModel extends Component implements JsonSerializable
      * @param string $name the name of the attribute
      *
      * @return bool whether the model has an attribute with the specified name.
-
      * @throws Exception
      */
-    public static function hasAttribute($name) {
+    public static function hasAttribute(string $name): bool {
         Assertions::assertString($name);
         return in_array($name, static::attributes(), true);
     }
@@ -81,7 +80,7 @@ class BaseModel extends Component implements JsonSerializable
      *
      * @return array attribute labels (name => label)
      */
-    public static function attributeLabels() {
+    public static function attributeLabels(): array {
         return [];
     }
 
@@ -99,11 +98,11 @@ class BaseModel extends Component implements JsonSerializable
      * @throws Exception
      * @see attributeLabels()
      */
-    public static function attributeLabel($attribute) {
+    public static function attributeLabel(string $attribute): string {
         $labels = static::attributeLabels();
-        if(isset($labels[$attribute])) return $labels[$attribute];
-        if(substr($attribute,-3)=='_id') return static::attributeLabel(substr($attribute, 0,-3));
-        if($p = strpos($attribute, '.')) return static::attributeLabel(substr($attribute, 0,$p));
+        if (isset($labels[$attribute])) return $labels[$attribute];
+        if (str_ends_with($attribute, '_id')) return static::attributeLabel(substr($attribute, 0, -3));
+        if ($p = strpos($attribute, '.')) return static::attributeLabel(substr($attribute, 0, $p));
         return AppHelper::humanize($attribute);
     }
 
@@ -134,7 +133,7 @@ class BaseModel extends Component implements JsonSerializable
      *
      * See {@see Model::validate()} to perform validation.
      */
-    public static function rules() {
+    public static function rules(): array {
         return [];
     }
 
@@ -147,13 +146,12 @@ class BaseModel extends Component implements JsonSerializable
      *
      * @param string $name the property name
      * @return mixed the property value
-
      * @throws Exception if the property is not defined
      * @throws ReflectionException
      */
     public function __get($name) {
         // Reference composition (e.g. 'ref.name')
-        if(strpos($name, '.')) {
+        if (strpos($name, '.')) {
             return ArrayHelper::getValue($this, $name);
         }
         // Other
@@ -163,14 +161,14 @@ class BaseModel extends Component implements JsonSerializable
     /**
      * Returns attribute values.
      *
-     * @param array $names -- list of attributes whose value needs to be returned.
+     * @param array|null $names -- list of attributes whose value needs to be returned.
      * Default all attributes will be returned. (Can be read as '->attribute' property).
      *
      * @return array attribute values (name => value).
      * @throws ReflectionException
      * @throws Exception
      */
-    public function getAttributes($names = null) {
+    public function getAttributes(array $names = null): array {
         $values = [];
         if ($names === null) {
             $names = static::attributes();
@@ -194,14 +192,12 @@ class BaseModel extends Component implements JsonSerializable
      * @see refreshRelated()
      * @see attributes()
      */
-    public function setAttributes($values) {
-        if (is_array($values)) {
-            $attributes = array_flip($this->attributes());
-            foreach ($values as $name => $value) {
-                if (isset($attributes[$name])) {
-                    /** @noinspection PhpVariableVariableInspection */
-                    $this->$name = $value;
-                }
+    public function setAttributes(array $values): static {
+        $attributes = array_flip($this->attributes());
+        foreach ($values as $name => $value) {
+            if (isset($attributes[$name])) {
+                /** @noinspection PhpVariableVariableInspection */
+                $this->$name = $value;
             }
         }
         return $this;
@@ -215,7 +211,7 @@ class BaseModel extends Component implements JsonSerializable
      *
      * @throws Exception
      */
-    public function setAttribute($name, $value) {
+    public function setAttribute(string $name, mixed $value): void {
         Assertions::assertString($name);
         /** @noinspection PhpVariableVariableInspection */
         $this->$name = $value;
@@ -230,12 +226,12 @@ class BaseModel extends Component implements JsonSerializable
      * @return bool -- the model data is loaded from the source
      * @throws Exception
      */
-    public function loadFrom(array $source, $instanceName=null) {
-        if($instanceName===null) $instanceName = static::tableName();
+    public function loadFrom(array $source, string $instanceName = null): bool {
+        if ($instanceName === null) $instanceName = static::tableName();
         if ($instanceName === '' && !empty($source)) {
             $this->setAttributes($source);
             return true;
-        } elseif(isset($source[$instanceName])) {
+        } elseif (isset($source[$instanceName])) {
             $this->setAttributes($source[$instanceName]);
             return true;
         }
@@ -251,14 +247,14 @@ class BaseModel extends Component implements JsonSerializable
      * @return false -- always
      * @throws Exception
      */
-    public function addError($fieldName, $message) {
+    public function addError(string $fieldName, string $message): false {
         $message = str_replace('$1', $fieldName, $message);
-        if(!isset($this->_errors[$fieldName])) $this->_errors[$fieldName] = [];
+        if (!isset($this->_errors[$fieldName])) $this->_errors[$fieldName] = [];
         $this->_errors[$fieldName][] = $message;
         return false;
     }
 
-    public function hasError() {
+    public function hasError(): bool {
         return !empty($this->_errors);
     }
 
@@ -269,12 +265,12 @@ class BaseModel extends Component implements JsonSerializable
      *
      * @return array[] -- ['fieldName'=>['message', ...], ...], or ['message', ...] if a fieldName is specified
      */
-    public function getErrors($fieldName=null) {
-        if(!$fieldName) return $this->_errors;
+    public function getErrors(string $fieldName = null): array {
+        if (!$fieldName) return $this->_errors;
         return $this->_errors[$fieldName] ?? [];
     }
 
-    public function resetErrors() {
+    public function resetErrors(): void {
         $this->_errors = array();
     }
 
@@ -288,31 +284,30 @@ class BaseModel extends Component implements JsonSerializable
      *
      * For syntax of rule definitions, and the list of built-in validation methods, see {@see Model::rules()}
      *
-     * @param array $attributeNames -- if an array is specified, validates only given fields (ignores unknown field names)
+     * @param array|null $attributeNames -- if an array is specified, validates only given fields (ignores unknown field names)
      *
      * @return boolean -- true if data is valid and may be saved to the database.
      * @throws Exception
      */
-    public function validate($attributeNames=null) {
+    public function validate(array $attributeNames = null): bool {
         $this->_errors = [];
         $valid = true;
         $rules = static::rules();
-        foreach($rules as $field=>$def) {
-            if($def===null) continue; // Overridden rule may be null
+        foreach ($rules as $field => $def) {
+            if ($def === null) continue; // Overridden rule may be null
             // Global rules (skips if individual fields are specified)
-            if(is_numeric($field)) {
-                if($attributeNames) continue;
+            if (is_numeric($field)) {
+                if ($attributeNames) continue;
                 // Global rule is 'ruleName' or ['ruleName', arg1, arg2, ...]
                 $ruleName = is_array($def) ? array_shift($def) : $def;
                 Assertions::assertString($ruleName);
                 $args = is_array($def) ? $def : [];
-                $functionName = 'validate'.AppHelper::camelize($ruleName);
-                if(!is_callable([$this, $functionName])) throw new Exception("Validator function `$functionName` is missing");
-                if(!call_user_func_array([$this, $functionName], array_merge([null], $args))) {
+                $functionName = 'validate' . AppHelper::camelize($ruleName);
+                if (!is_callable([$this, $functionName])) throw new Exception("Validator function `$functionName` is missing");
+                if (!call_user_func_array([$this, $functionName], array_merge([null], $args))) {
                     $valid = false;
                 }
-            }
-            else if(!$attributeNames || is_array($attributeNames) && in_array($field, $attributeNames)) {
+            } else if (!$attributeNames || is_array($attributeNames) && in_array($field, $attributeNames)) {
                 $valid = $this->validate_rules($field, $def) && $valid; // Order is important!
             }
         }
@@ -326,19 +321,18 @@ class BaseModel extends Component implements JsonSerializable
      * @return bool
      * @throws Exception
      */
-    public function validate_rules($fieldName, $def) {
+    public function validate_rules(string $fieldName, array $def): bool {
         $valid = true;
         Assertions::assertArray($def);
-        foreach($def as $rule) {
+        foreach ($def as $rule) {
             $ruleName = is_array($rule) ? $rule[0] : $rule;
             try {
                 $valid = ($valid1 = $this->validate_rule($fieldName, $rule)) && $valid;
-            }
-            catch (Exception $e) {
-                throw new Exception('Invalid rule '.$ruleName.': '.$e->getMessage(), 0, $e);
+            } catch (Exception $e) {
+                throw new Exception('Invalid rule ' . $ruleName . ': ' . $e->getMessage(), 0, $e);
             }
             $ruleName = is_array($rule) ? array_shift($rule) : $rule;
-            if(!$valid1 && $ruleName=='mandatory') break; // If mandatory failed, no more check.
+            if (!$valid1 && $ruleName == 'mandatory') break; // If mandatory failed, no more check.
         }
         return $valid;
     }
@@ -347,18 +341,18 @@ class BaseModel extends Component implements JsonSerializable
      * Validates a field against a rule definition
      *
      * @param string $fieldName
-     * @param string|array $rule -- rule-name or array(ruleName, params...)
+     * @param array|string $rule -- rule-name or array(ruleName, params...)
      *
      * @return bool
      * @throws Exception
      */
-    public function validate_rule($fieldName, $rule) {
+    public function validate_rule(string $fieldName, array|string $rule): bool {
         $ruleName = is_array($rule) ? array_shift($rule) : $rule;
-        $functionName = 'validate'.AppHelper::camelize($ruleName);
-        if(!ctype_alnum($functionName)) throw new Exception("Invalid validator rule: `$ruleName`.");
+        $functionName = 'validate' . AppHelper::camelize($ruleName);
+        if (!ctype_alnum($functionName)) throw new Exception("Invalid validator rule: `$ruleName`.");
         $args = is_array($rule) ? $rule : array();
-        if(!is_callable(array($this, $functionName))) throw new Exception("Validator function `$functionName` is missing");
-        if(!call_user_func_array(array($this, $functionName), array_merge(array($fieldName), $args))) {
+        if (!is_callable(array($this, $functionName))) throw new Exception("Validator function `$functionName` is missing");
+        if (!call_user_func_array(array($this, $functionName), array_merge(array($fieldName), $args))) {
             return false;
         }
         return true;
@@ -369,26 +363,26 @@ class BaseModel extends Component implements JsonSerializable
      *
      * @param string $fieldName
      * @param int $minlength -- 0 or null to skip check
-     * @param int $maxlength -- 0 or null to skip check
+     * @param int|null $maxlength -- 0 or null to skip check
      *
      * @return bool
      * @throws Exception
      */
-    public function validateLength($fieldName, $minlength=-1, $maxlength=null) {
-        if($minlength===-1) throw new Exception('Missing min length argument in length validator rule');
+    public function validateLength(string $fieldName, int $minlength = -1, int $maxlength = null): bool {
+        if ($minlength === -1) throw new Exception('Missing min length argument in length validator rule');
         /** @noinspection PhpVariableVariableInspection */
         $value = $this->$fieldName;
-        if($value===null) return true;
+        if ($value === null) return true;
 
-        if(is_array($value)) {
-            if($maxlength && count($value)>$maxlength) return $this->addError($fieldName, App::l('umvc', 'must have at most {maxlen} elements', ['maxlen'=>$maxlength]));
-            if($minlength && count($value)<$minlength) return $this->addError($fieldName, App::l('umvc', 'must have at least {minlen} elements', ['minlen'=>$minlength]));
+        if (is_array($value)) {
+            if ($maxlength && count($value) > $maxlength) return $this->addError($fieldName, App::l('umvc', 'must have at most {maxlen} elements', ['maxlen' => $maxlength]));
+            if ($minlength && count($value) < $minlength) return $this->addError($fieldName, App::l('umvc', 'must have at least {minlen} elements', ['minlen' => $minlength]));
             return true;
         }
 
-        if(!is_scalar($value)) return $this->addError($fieldName, '$1 is not a scalar');
-        if($maxlength && strlen($value)>$maxlength) return $this->addError($fieldName, App::l('umvc', 'must be at most {maxlen} characters long', ['maxlen'=>$maxlength]));
-        if($minlength && strlen($value)<$minlength) return $this->addError($fieldName, App::l('umvc', 'must be at least {minlen} characters long', ['minlen'=>$minlength]));
+        if (!is_scalar($value)) return $this->addError($fieldName, '$1 is not a scalar');
+        if ($maxlength && strlen($value) > $maxlength) return $this->addError($fieldName, App::l('umvc', 'must be at most {maxlen} characters long', ['maxlen' => $maxlength]));
+        if ($minlength && strlen($value) < $minlength) return $this->addError($fieldName, App::l('umvc', 'must be at least {minlen} characters long', ['minlen' => $minlength]));
         return true;
     }
 
@@ -404,27 +398,27 @@ class BaseModel extends Component implements JsonSerializable
      * @return bool
      * @throws Exception
      */
-    public function validateInt($fieldName) {
-        if($this->$fieldName=='') $this->$fieldName=null;
+    public function validateInt(string $fieldName): bool {
+        if ($this->$fieldName == '') $this->$fieldName = null;
         $value = $this->$fieldName;
-        if($value===null) return true;
-        if(is_int($value)) {
+        if ($value === null) return true;
+        if (is_int($value)) {
             /** @noinspection PhpVariableVariableInspection */
             $this->$fieldName = (string)$value;
             return true;
         }
-        if(is_numeric($value) && is_float($value + 0)) {
+        if (is_numeric($value) && is_float($value + 0)) {
             /** @noinspection PhpVariableVariableInspection */
             $this->$fieldName = number_format(floor($value), 0, '', '');
             return true;
         }
-        if(is_bool($value)) {
+        if (is_bool($value)) {
             /** @noinspection PhpVariableVariableInspection */
-            $this->$fieldName = ($value ? '1': '0');
+            $this->$fieldName = ($value ? '1' : '0');
             return true;
         }
-        if(!is_string($value) || !preg_match('~^((:?+|-)?[0-9]+)$~', $value)) {
-            return $this->addError($fieldName, App::l('umvc','is invalid integer'));
+        if (!is_string($value) || !preg_match('~^((:?+|-)?[0-9]+)$~', $value)) {
+            return $this->addError($fieldName, App::l('umvc', 'is invalid integer'));
         }
         return true;
     }
@@ -439,11 +433,11 @@ class BaseModel extends Component implements JsonSerializable
      * @return bool
      * @throws Exception
      */
-    public function validateLowercase($fieldName) {
+    public function validateLowercase(string $fieldName): bool {
         /** @noinspection PhpVariableVariableInspection */
         $value = $this->$fieldName;
-        if($value===null) return true;
-        if(!is_string($value)) return true;
+        if ($value === null) return true;
+        if (!is_string($value)) return true;
         /** @noinspection PhpVariableVariableInspection */
         $this->$fieldName = strtolower($value);
         return true;
@@ -457,11 +451,11 @@ class BaseModel extends Component implements JsonSerializable
      * @return boolean
      * @throws Exception
      */
-    function validateTrim($fieldName) {
+    function validateTrim(string $fieldName): bool {
         /** @noinspection PhpVariableVariableInspection */
         $value = $this->$fieldName;
-        if($value===null) return true;
-        if(!is_string($value)) return true;
+        if ($value === null) return true;
+        if (!is_string($value)) return true;
         /** @noinspection PhpVariableVariableInspection */
         $this->$fieldName = trim($value);
         return true;
@@ -476,11 +470,11 @@ class BaseModel extends Component implements JsonSerializable
      * @return bool
      * @throws Exception
      */
-    public function validateDefaultNow($fieldName) {
+    public function validateDefaultNow(string $fieldName): bool {
         /** @noinspection PhpVariableVariableInspection */
         $value = $this->$fieldName;
-        if($value instanceof DateTime) return true;
-        if($value===null || $value==='') {
+        if ($value instanceof DateTime) return true;
+        if ($value === null || $value === '') {
             /** @noinspection PhpVariableVariableInspection */
             $this->$fieldName = new DateTime();
             return true;
@@ -496,20 +490,19 @@ class BaseModel extends Component implements JsonSerializable
      *
      * @param string $field
      * @param string $pattern
-     * @param string $customMessage
+     * @param string|null $customMessage
      *
      * @return bool
      * @throws Exception
      */
-    public function validatePattern($field, $pattern, $customMessage=null) {
+    public function validatePattern(string $field, string $pattern, string $customMessage = null): bool {
         $value = $this->$field;
-        if(is_null($value)) return true;
+        if (is_null($value)) return true;
         try {
             Assertions::assertString($pattern);
-            if(preg_match($pattern, $value)==1) return true;
+            if (preg_match($pattern, $value) == 1) return true;
             return $this->addError($field, $customMessage ?: 'has invalid format');
-        }
-        catch(Exception $e) {
+        } catch (Exception $e) {
             throw new Exception(sprintf('Field `%s`: %s', $field, $e->getMessage()), 0, $e);
         }
     }
@@ -523,23 +516,22 @@ class BaseModel extends Component implements JsonSerializable
      *
      * @param string $field
      * @param string[] $patterns
-     * @param string $customMessage
+     * @param string|null $customMessage
      *
      * @return bool
      * @throws Exception
      */
-    public function validatePatterns($field, $patterns, $customMessage=null) {
+    public function validatePatterns(string $field, array $patterns, string $customMessage = null): bool {
         $value = $this->$field;
-        if(is_null($value)) return true;
+        if (is_null($value)) return true;
         try {
             Assertions::assertArray($patterns);
-            foreach($patterns as $pattern) {
+            foreach ($patterns as $pattern) {
                 Assertions::assertString($pattern);
-                if(preg_match($pattern, $value) == 1) return true;
+                if (preg_match($pattern, $value) == 1) return true;
             }
-            return $this->addError($field, $customMessage ?: App::l('umvc','has invalid format'));
-        }
-        catch(Exception $e) {
+            return $this->addError($field, $customMessage ?: App::l('umvc', 'has invalid format'));
+        } catch (Exception $e) {
             throw new Exception(sprintf('Field `%s`: %s', $field, $e->getMessage()), 0, $e);
         }
     }
@@ -552,9 +544,9 @@ class BaseModel extends Component implements JsonSerializable
      * @return boolean
      * @throws Exception
      */
-    public function validateMandatory($fieldName) {
+    public function validateMandatory(string $fieldName): bool {
         $value = $this->$fieldName;
-        if($value !== false && empty($value)) {
+        if ($value !== false && empty($value)) {
             return $this->addError($fieldName, App::l('umvc', 'is mandatory'));
         }
         return true;
@@ -567,9 +559,9 @@ class BaseModel extends Component implements JsonSerializable
      * @param string $fieldName
      * @return true
      */
-    public function validateNullable($fieldName) {
+    public function validateNullable(string $fieldName): true {
         $value = $this->$fieldName;
-        if($value === '') $this->$fieldName = null;
+        if ($value === '') $this->$fieldName = null;
         return true;
     }
 
@@ -579,17 +571,17 @@ class BaseModel extends Component implements JsonSerializable
      *
      * @param string $fieldName
      * @param mixed $min
-     * @param mixed $max
+     * @param mixed|null $max
      *
      * @return boolean
      * @throws Exception
      */
-    public function validateBetween($fieldName, $min, $max=null) {
+    public function validateBetween(string $fieldName, mixed $min, mixed $max = null): bool {
         /** @noinspection PhpVariableVariableInspection */
         $value = $this->$fieldName;
-        if(is_null($value)) return true;
-        $valid = ($min===null || $value >= $min) && ($max===null || $value <= $max);
-        return $valid || $this->addError($fieldName, App::l('umvc','must be between {min} and {max}', ['min'=>$min, 'max'=>$max]));
+        if (is_null($value)) return true;
+        $valid = ($min === null || $value >= $min) && ($max === null || $value <= $max);
+        return $valid || $this->addError($fieldName, App::l('umvc', 'must be between {min} and {max}', ['min' => $min, 'max' => $max]));
     }
 
     /**
@@ -601,10 +593,10 @@ class BaseModel extends Component implements JsonSerializable
      *
      * @return true
      */
-    public function validateDefault($fieldName, $default) {
+    public function validateDefault(string $fieldName, mixed $default): true {
         /** @noinspection PhpVariableVariableInspection */
         $value = $this->$fieldName;
-        if(empty($value)) {
+        if (empty($value)) {
             /** @noinspection PhpVariableVariableInspection */
             $this->$fieldName = is_callable($default) ? call_user_func($default, $this) : $default;
         }
@@ -619,7 +611,7 @@ class BaseModel extends Component implements JsonSerializable
      * @return bool
      * @throws Exception
      */
-    public function validateEmail($fieldName) {
+    public function validateEmail(string $fieldName): bool {
         return $this->validatePattern($fieldName, self::VALID_EMAIL, 'is invalid e-mail address');
     }
 
@@ -631,7 +623,7 @@ class BaseModel extends Component implements JsonSerializable
      * @return bool
      * @throws Exception
      */
-    public function validateUrl($fieldName) {
+    public function validateUrl(string $fieldName): bool {
         return $this->validatePattern($fieldName, self::VALID_URL, 'is invalid url address');
     }
 
@@ -643,7 +635,7 @@ class BaseModel extends Component implements JsonSerializable
      * @return bool
      * @throws Exception
      */
-    public function validateEmailOrUrl($fieldName) {
+    public function validateEmailOrUrl(string $fieldName): bool {
         return $this->validatePatterns($fieldName, [self::VALID_URL, self::VALID_EMAIL], 'is invalid url or e-mail address');
     }
 
@@ -653,22 +645,22 @@ class BaseModel extends Component implements JsonSerializable
      * @return bool
      * @throws Exception
      */
-    public function validateDate($fieldName) {
-        if($this->$fieldName=='') $this->$fieldName=null;
+    public function validateDate(string $fieldName): bool {
+        if ($this->$fieldName == '') $this->$fieldName = null;
         $value = $this->$fieldName;
-        if($value===null) return true;
-        if($value instanceof DateTime) return true;
+        if ($value === null) return true;
+        if ($value instanceof DateTime) return true;
         $formats = ['Y-m-d', 'm/d/Y', 'd/m/Y', 'd.m.Y', 'Y. m. d.', 'Y.m.d.', 'Y.m.d'];
-		foreach($formats as $format) {
+        foreach ($formats as $format) {
             $value1 = DateTime::createFromFormat($format, $value);
-            if($value1) break;
+            if ($value1) break;
         }
-        if($value1!==false) {
-            $value1->setTime(0,0);
+        if ($value1 !== false) {
+            $value1->setTime(0, 0);
             $this->$fieldName = $value1;
             return true;
         }
-        return $this->addError($fieldName, App::l('umvc','is invalid date'));
+        return $this->addError($fieldName, App::l('umvc', 'is invalid date'));
     }
 
     /**
@@ -680,27 +672,27 @@ class BaseModel extends Component implements JsonSerializable
      * @return bool
      * @throws Exception
      */
-    public function validateDatetime($fieldName) {
-        if($this->$fieldName=='') $this->$fieldName=null;
+    public function validateDatetime(string $fieldName): bool {
+        if ($this->$fieldName == '') $this->$fieldName = null;
         $value = $this->$fieldName;
-        if($value===null) return true;
-        if($value instanceof DateTime) return true;
+        if ($value === null) return true;
+        if ($value instanceof DateTime) return true;
         Assertions::assertString($value);
-        $formats = array(DateTime::ATOM, 'Y-m-d H:i:s', 'Y-m-d H:i', 'Y.m.d. H:i:s', 'd-M-y H:i:s', 'Y.m.d. H:i', 'd-M-y H:i',
+        $formats = array(DateTimeInterface::ATOM, 'Y-m-d H:i:s', 'Y-m-d H:i', 'Y.m.d. H:i:s', 'd-M-y H:i:s', 'Y.m.d. H:i', 'd-M-y H:i',
             'Y.m.d.', 'd-M-y', 'Y. m. d. H:i', 'Y. m. d.');
-        foreach($formats as $i=>$format) {
+        foreach ($formats as $i => $format) {
             $v = DateTime::createFromFormat($format, $value);
-            if($v!==false) {
-                if($i > 6) $v->setTime(0, 0);
+            if ($v !== false) {
+                if ($i > 6) $v->setTime(0, 0);
                 break;
             }
         }
-        if($v!==false) {
+        if ($v !== false) {
             /** @noinspection PhpVariableVariableInspection */
             $this->$fieldName = $v;
             return true;
         }
-        return $this->addError($fieldName, App::l('umvc','is invalid date and time'));
+        return $this->addError($fieldName, App::l('umvc', 'is invalid date and time'));
     }
 
     /**
@@ -708,15 +700,15 @@ class BaseModel extends Component implements JsonSerializable
      *
      * If `$recursive` is true, embedded objects will also be converted into arrays.
      *
-     * @param array $fields the fields being requested. If empty, all attributes
+     * @param array|null $fields the fields being requested. If empty, all attributes
      * @param bool $recursive whether to recursively return array representation of embedded objects.
      *
      * @return array the associative array representation of the object
      * @throws ReflectionException
      * @throws Exception
      */
-    public function toArray($fields = null, $recursive = false) {
-        if(!$fields) $fields = static::attributes();
+    public function toArray(array $fields = null, bool $recursive = false): array {
+        if (!$fields) $fields = static::attributes();
         $data = [];
         foreach ($fields as $field) {
             $data[$field] = $this->$field;
@@ -727,10 +719,10 @@ class BaseModel extends Component implements JsonSerializable
     /**
      * Serializes model data for json_encode
      *
-     * @return mixed
+     * @return array
      * @throws ReflectionException
      */
-    public function jsonSerialize(): mixed {
+    public function jsonSerialize(): array {
         return $this->toArray();
     }
 
@@ -740,7 +732,7 @@ class BaseModel extends Component implements JsonSerializable
      * @param $field
      * @return bool
      */
-    public function isSafe($field) {
+    public function isSafe($field): bool {
         return array_key_exists($field, static::rules());
     }
 }

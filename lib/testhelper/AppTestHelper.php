@@ -3,6 +3,7 @@
 namespace Helper;
 
 use Codeception\Lib\Framework;
+use Codeception\Lib\ModuleContainer;
 use Symfony\Component\BrowserKit\Response;
 use Symfony\Component\DomCrawler\Crawler;
 use uhi67\umvc\App;
@@ -40,9 +41,6 @@ use ReflectionException;
  * @package UMVC Simple Application Framework
  */
 class AppTestHelper extends Framework {
-	protected array $requiredFields = ['configFile'];
-	protected array $config = ['loader'=>'core', 'sapi'=>'apache']; // optional parameters and defaults of module
-
     /** @var App $app -- the application instance started by client */
 	public $app;
     /** @var string $configFile -- path of your configFile */
@@ -52,11 +50,17 @@ class AppTestHelper extends Framework {
 
 	/** @noinspection PhpMethodNamingConventionInspection */
 
+    public function __construct(ModuleContainer $moduleContainer, $config = null) {
+        $this->config = ['loader'=>'core', 'sapi'=>'apache'];
+        $this->requiredFields = ['configFile'];
+        parent::__construct($moduleContainer, $config);
+    }
+
 	/**
 	 * @throws ModuleConfigException
 	 * @throws ModuleException
 	 */
-	public function _initialize() {
+	public function _initialize(): void {
 		$this->configFile = Configuration::projectDir() . $this->config['configFile'];
 		if (!is_file($this->configFile)) {
 			throw new ModuleConfigException(
@@ -304,7 +308,7 @@ class AppTestHelper extends Framework {
 	/**
 	 * @param string|array $page
 	 */
-	public function amOnPage(string $page): void {
+	public function amOnPage($page): void {
 		parent::amOnPage($page);
 	}
 
