@@ -1,4 +1,5 @@
-<?php
+<?php /** @noinspection PhpIllegalPsrClassPathInspection */
+
 namespace app\models;
 
 use uhi67\umvc\UserInterface;
@@ -21,7 +22,7 @@ class User extends Model implements UserInterface {
      *
      * @return string
      */
-    public static function tableName() {
+    public static function tableName(): string {
         return 'user';
     }
 
@@ -33,13 +34,13 @@ class User extends Model implements UserInterface {
      *
      * @return array[]
      */
-    public static function rules() {
+    public static function rules(): array {
         return [
             'uid' => ['unique', ['pattern', '/^[\w.-]+@[\w.-]+$/']],
         ];
     }
 
-    public static function attributeLabels() {
+    public static function attributeLabels(): array {
         return [
             'id' => 'ID',
             'uid' => 'UID (EPPN)',
@@ -54,7 +55,7 @@ class User extends Model implements UserInterface {
      * @return string
      * @throws Exception
      */
-    public function getScope() {
+    public function getScope(): string {
         return AppHelper::substring_after($this->uid, '@');
     }
 
@@ -63,8 +64,7 @@ class User extends Model implements UserInterface {
      *
      * @throws Exception
      */
-    public static function findUser($uid)
-    {
+    public static function findUser(mixed $uid): ?UserInterface {
         return static::getOne(['uid'=>$uid]);
     }
 
@@ -74,8 +74,7 @@ class User extends Model implements UserInterface {
      * @throws ReflectionException
      * @throws Exception
      */
-    public static function createUser($uid, $attributes)
-    {
+    public static function createUser(mixed $uid, array $attributes): UserInterface|null {
         $data = [
             'uid' => $uid,
             'name' => isset($attributes['displayName']) ? $attributes['displayName'][0] : $uid,
@@ -93,14 +92,13 @@ class User extends Model implements UserInterface {
     /**
      * Return the uid of the user object (used in session)
      *
-     * @return mixed
+     * @return string
      */
-    public function getUserId()
-    {
+    public function getUserId(): string {
         return $this->uid;
     }
 
-	public function updateUser($attributes) {
+	public function updateUser(array $attributes): string {
 		return $this->uid;
 	}
 }

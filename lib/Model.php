@@ -1,11 +1,12 @@
 <?php
+/** @noinspection PhpIllegalPsrClassPathInspection */
+
 /** @noinspection PhpUnused */
 
 namespace uhi67\umvc;
 
 use DateTime;
 use Exception;
-use PDO;
 use ReflectionException;
 use Throwable;
 
@@ -27,23 +28,23 @@ use Throwable;
  */
 class Model extends BaseModel
 {
-    /** @var Query -- the last executed Query */
-    public $lastQuery;
+    /** @var Query|null -- the last executed Query */
+    public ?Query $lastQuery = null;
 
     /** @var array $attribute values indexed by attribute names */
-    protected $_attributes = array();
+    protected array $_attributes = [];
 
     /** @var array $_metadata -- Cached metadata of tables indexed by tableName */
-    private static $_metadata = [];
+    private static array $_metadata = [];
 
-    /** @var Connection $_connection -- The explicit set database connection. If not set, App:::$app->connection is used */
-    private $_connection;
+    /** @var Connection|null $_connection -- The explicit set database connection. If not set, App:::$app->connection is used */
+    private ?Connection $_connection = null;
 
     /**
      * @var array|null old attribute values (populated from the database) indexed by attribute names.
      * This is `null` if the record is new.
      */
-    private $_oldAttributes;
+    private ?array $_oldAttributes = null;
 
     /**
      * Must return the name of the table.
@@ -51,7 +52,7 @@ class Model extends BaseModel
      *
      * @return string
      */
-    public static function tableName()
+    public static function tableName(): string
     {
         return AppHelper::underscore(static::shortName());
     }
@@ -63,7 +64,7 @@ class Model extends BaseModel
      *
      * @return array of field-names
      */
-    public static function primaryKey()
+    public static function primaryKey(): array
     {
         return ['id'];
     }
@@ -77,7 +78,7 @@ class Model extends BaseModel
      *
      * @return array
      */
-    public static function autoIncrement()
+    public static function autoIncrement(): array
     {
         $pk = static::primaryKey();
         if (count($pk) > 1) {
@@ -94,7 +95,7 @@ class Model extends BaseModel
      * @return array list of attribute names.
      * @throws Exception
      */
-    public static function attributes()
+    public static function attributes(): array
     {
         return static::databaseAttributes();
     }
@@ -109,7 +110,7 @@ class Model extends BaseModel
      * @return array list of attribute names alphabetically sorted
      * @throws Exception
      */
-    public static function databaseAttributes()
+    public static function databaseAttributes(): array
     {
         $tableName = static::tableName();
         if ($tableName == 'model') {
@@ -122,7 +123,7 @@ class Model extends BaseModel
         }
 
         $fields = array_filter(array_keys($metadata), function ($name) {
-            return substr($name, 0, 1) != '_';
+            return !str_starts_with($name, '_');
         });
         sort($fields);
 
@@ -146,11 +147,11 @@ class Model extends BaseModel
      * ```
      *
      * Memory-cached (short-term) and app-cached (long-term, 1h)
-     *
+     * @param Connection $connection
      * @return array|null if not found
      * @throws Exception
      */
-    public static function tableMetaData($connection = null)
+    public static function tableMetaData(Connection $connection = null): ?array
     {
         if (!$connection) {
             $connection = App::$app->getConnection(true);
@@ -180,12 +181,13 @@ class Model extends BaseModel
      * - associative array: [fieldName=>value, ...]
      * - expression array: [operator, expression, ...] example: ['AND', ['OR', ['name'=>''], ['name'=>null]], ['=', 'name', 'login']]
      *
-     * @param scalar|array|null $condition --
+     * @param scalar|array|null $condition
+     * @param Connection|null $connection
      * @return static|null -- returns null on null condition or if record with condition not found
      * @throws Exception -- when the PDO operation failed
      * @see Query::buildExpression()
      */
-    public static function getOne($condition = null, $connection = null)
+    public static function getOne(mixed $condition = null, ?Connection $connection = null): static|null
     {
         if (!$connection) {
             $connection = App::$app->getConnection(true);
@@ -197,13 +199,13 @@ class Model extends BaseModel
     /**
      * Returns all records as an array of Models
      *
-     * @param array $condition -- fieldName=>value pairs or other expression
+     * @param array|null $condition -- fieldName=>value pairs or other expression
      * @param array|null $orders
      * @param Connection|null $connection
      * @return array|null -- array of Model instances or null on failure (not indexed by primary key)
      * @throws Exception|ReflectionException
      */
-    public static function getAll($condition = null, $orders = null, $connection = null)
+    public static function getAll(array $condition = null, array $orders = null, Connection $connection = null): ?array
     {
         if (!$connection) {
             $connection = App::$app->getConnection(true);
@@ -216,7 +218,7 @@ class Model extends BaseModel
      * Returns a value indicating whether the current record is new.
      * @return bool whether the record is new and should be inserted when calling save().
      */
-    public function getIsNew()
+    public function getIsNew(): bool
     {
         return $this->_oldAttributes === null;
     }
@@ -226,7 +228,7 @@ class Model extends BaseModel
      * @param bool $value whether the record is new and should be inserted when calling save().
      * @see getIsNew()
      */
-    public function setIsNew($value)
+    public function setIsNew(bool $value): void
     {
         $this->_oldAttributes = $value ? null : $this->_attributes;
     }
@@ -246,12 +248,12 @@ class Model extends BaseModel
      * $customer->insert();
      * ```
      *
-     * @param array $attributes list of attributes that need to be saved. Defaults to `null` = all fields
+     * @param array|null $attributes list of attributes that need to be saved. Defaults to `null` = all fields
      *
      * @return bool the record is inserted successfully.
      * @throws Exception in case insert failed.
      */
-    public function insert($attributes = null)
+    public function insert(array $attributes = null): bool
     {
         /** the changed fieldName=>value pairs */
         $values = $this->getDirtyAttributes($attributes);
@@ -332,7 +334,7 @@ class Model extends BaseModel
      * }
      * ```
      *
-     * @param array $attributeNames list of attribute names that need to be saved. Defaults to null,
+     * @param array|null $attributeNames list of attribute names that need to be saved. Defaults to null,
      * meaning all attributes that are loaded from DB will be saved. If empty array, no operation will be performed, and returns 0.
      * Only changed (dirty) attributes will be included, if there isn't any, no operation will be performed, and returns 0.
      *
@@ -340,15 +342,15 @@ class Model extends BaseModel
      * @throws Exception in case update failed.
      * @throws ReflectionException
      */
-    public function update($attributeNames = null)
+    public function update(array $attributeNames = null): bool
     {
-        if ($attributeNames === array()) {
-            return 0;
+        if ($attributeNames === []) {
+            return true;
         }
 
         $values = $this->getDirtyAttributes($attributeNames);
-        if ($values === array()) {
-            return 0;
+        if ($values === []) {
+            return true;
         }
         $condition = $this->getOldPrimaryKey(true);
         if (!$condition) {
@@ -372,13 +374,17 @@ class Model extends BaseModel
      *  - [fieldName=>value, ...]
      *  - literal value of single primary key
      *  - other expression formats
-     * @param PDO|null $connection
-     * @param null $query -- (output only) return the query created. Affected rows are accessible as $query->affected
+     * @param Connection|null $connection
+     * @param Query|null $query -- (output only) return the query created. Affected rows are accessible as $query->affected
      * @return bool -- success
      * @throws Exception
      */
-    public static function updateAll($values, $condition, $connection = null, &$query = null)
-    {
+    public static function updateAll(
+        array $values,
+        array|int $condition,
+        Connection $connection = null,
+        ?Query &$query = null
+    ): bool {
         if (!$connection) {
             $connection = App::$app->getConnection(true);
         }
@@ -405,7 +411,7 @@ class Model extends BaseModel
      * @return bool -- success
      * @throws Exception
      */
-    public function delete()
+    public function delete(): bool
     {
         $condition = $this->getOldPrimaryKey(true);
         $result = static::deleteAll($condition, null, null, $this->lastQuery);
@@ -437,14 +443,18 @@ class Model extends BaseModel
      *  - [fieldName=>value, ...]
      *  - literal value of single primary key
      *  - other expression formats
-     * @param array $params the parameter values for $1 parameters or name=>value pairs for $name parameters
+     * @param array|null $params the parameter values for $1 parameters or name=>value pairs for $name parameters
      * @param Connection|null $connection -- database connection. Default is from App.
      * @param Query|null $query -- (output only) return the query created. Affected rows are accessible as $query->affected
      * @return bool success
      * @throws Exception
      */
-    public static function deleteAll($condition = null, $params = array(), $connection = null, &$query = null)
-    {
+    public static function deleteAll(
+        mixed $condition = null,
+        ?array $params = array(),
+        Connection $connection = null,
+        ?Query &$query = null
+    ): bool {
         if (!$connection) {
             $connection = App::$app->getConnection(true);
         }
@@ -470,14 +480,14 @@ class Model extends BaseModel
      * $customer->save();
      * ```
      *
-     * @param array $attributeNames list of attribute names that need to be saved. Defaults to null,
+     * @param array|null $attributeNames list of attribute names that need to be saved. Defaults to null,
      * meaning all attributes that are loaded from DB will be saved.
      *
      * @return bool whether the saving succeeded
      * @throws Exception
      * @throws ReflectionException
      */
-    public function save($attributeNames = null)
+    public function save(array $attributeNames = null): bool
     {
         if ($this->isNew) {
             return $this->insert($attributeNames);
@@ -499,7 +509,7 @@ class Model extends BaseModel
      * is composite or `$asArray` is `true`. A string is returned otherwise (null will be returned if
      * the key value is null or if there's no primary key of the model).
      */
-    public function getOldPrimaryKey($asArray = false)
+    public function getOldPrimaryKey(bool $asArray = false): mixed
     {
         $keys = $this->primaryKey();
         if (empty($keys)) {
@@ -529,7 +539,7 @@ class Model extends BaseModel
      * @return array the changed name-value pairs
      * @throws Exception
      */
-    public function getDirtyAttributes($names = null)
+    public function getDirtyAttributes(array $names = null): array
     {
         $databaseAttributes = static::databaseAttributes();
         Assertions::assertArray($databaseAttributes);
@@ -566,7 +576,7 @@ class Model extends BaseModel
      * @param array|null $values old attribute values to be set.
      * If set to `null` this record is considered to be new.
      */
-    public function setOldAttributes($values)
+    public function setOldAttributes(?array $values): void
     {
         $this->_oldAttributes = $values;
     }
@@ -576,7 +586,7 @@ class Model extends BaseModel
      * The old values are retrieved from database, and not overwritten yet by actual values with an update()
      * If the record is new, null value will be returned
      */
-    public function getOldAttributes()
+    public function getOldAttributes(): ?array
     {
         return $this->_oldAttributes;
     }
@@ -588,7 +598,7 @@ class Model extends BaseModel
      * @return mixed -- the old attribute value. `null` if the attribute is not loaded before or does not exist.
      * @see hasAttribute()
      */
-    public function getOldAttribute($name)
+    public function getOldAttribute(string $name): mixed
     {
         return $this->_oldAttributes[$name] ?? null;
     }
@@ -602,7 +612,7 @@ class Model extends BaseModel
      * @throws Exception if the named attribute does not exist.
      * @see hasAttribute()
      */
-    public function setOldAttribute($name, $value)
+    public function setOldAttribute(string $name, mixed $value): void
     {
         if (isset($this->_oldAttributes[$name]) || $this->hasAttribute($name)) {
             $this->_oldAttributes[$name] = $value;
@@ -679,24 +689,34 @@ class Model extends BaseModel
      * @return bool -- model is valid
      * @throws Exception  -- when a DB request failed
      */
-    public function validateUnique($fieldName, $fieldNames=[]) {
-        if($fieldName===null) {
+    public function validateUnique(string $fieldName, array $fieldNames = []): bool
+    {
+        if ($fieldName === null) {
             // Multiple-field uniqueness
             $fieldNames = $fieldNames ?: [$fieldName];
             $values = $this->getAttributes($fieldNames);
-            foreach($values as $value) if(is_null($value)) return true;
-            if($this->isNew) {
+            foreach ($values as $value) {
+                if (is_null($value)) {
+                    return true;
+                }
+            }
+            if ($this->isNew) {
                 $existingInstance = static::getOne($values);
             } else {
                 // If already saved, itself must be ignored
-                $existingInstance = static::first(array_merge(
-                    ['and'],
-                    $this->db->asExpression($this->getAttributes($fieldNames)),
-                    [['not', [$this->db->asExpression($this->getOldPrimaryKey(true))]]]
-                ), null, null, $this->db);
+                $existingInstance = static::first(
+                    array_merge(
+                        ['and'],
+                        $this->db->asExpression($this->getAttributes($fieldNames)),
+                        [['not', [$this->db->asExpression($this->getOldPrimaryKey(true))]]]
+                    ),
+                    null,
+                    null,
+                    $this->db
+                );
             }
-            if($existingInstance) {
-                $this->addError($fieldName, App::l('umvc','$1 must be unique'));
+            if ($existingInstance) {
+                $this->addError($fieldName, App::l('umvc', '$1 must be unique'));
                 return false;
             }
             return true;
@@ -735,7 +755,7 @@ class Model extends BaseModel
      * @return bool
      * @throws Exception
      */
-    public function validateReferences($fieldName, $referencedModel)
+    public function validateReferences(string $fieldName, Model|string $referencedModel): bool
     {
         /** @noinspection PhpVariableVariableInspection */
         $value = $this->$fieldName;
@@ -764,11 +784,11 @@ class Model extends BaseModel
      * - example: 'modified'=> ['deleted_at asc, modified_at asc, created_at asc', 'deleted_at desc, modified_at desc, created_at desc']
      *
      * @param array $orders -- [fieldName=>'DIR;PRIORITY', notSorted=>null, ...] as it got from the HTML form
-     * @param array $orderDefinitions -- enabled and custom order clauses by fields, directions separated by ;
+     * @param array|null $orderDefinitions -- enabled and custom order clauses by fields, directions separated by ;
      * @return array -- [[fieldName, order-direction, nulls], ...] -- value prepared for {@see Query::orderBy()}
      * @throws Exception -- if $customOrders is given but not valid
      */
-    public static function orderDef($orders, $orderDefinitions = null)
+    public static function orderDef(array $orders, array $orderDefinitions = null): array
     {
         if ($orderDefinitions === null) {
             $orderDefinitions = array_keys(Model::rules());
@@ -845,17 +865,17 @@ class Model extends BaseModel
     /**
      * get Models by query parameters
      *
-     * @param null $options -- SQL parts (all of them are optional. Default returns all models)
+     * @param array|null $options -- SQL parts (all of them are optional. Default returns all models)
      *  - joins -- array of [type, tableName, onCondition] triplets. OnCondition is similar to where.
      *  - where -- array of SQL expressions to be AND-ed
      *  - orders -- array of order-by expressions or a single one
      *  - limit -- limit value or null
      *  - offset -- offset value or null
-     *  - params -- array of query parameters (':'-parameters in the expressions)
+     *  - params -- array of query parameters (`:`-parameters in the expressions)
      * @return Query
      * @throws Exception -- when $options is not array
      */
-    public static function createQuery($options = [])
+    public static function createQuery(?array $options = []): Query
     {
         $query = new Query($options);
         $query->asModel(get_called_class());
@@ -867,7 +887,7 @@ class Model extends BaseModel
      *
      * @throws Exception
      */
-    public static function getIdsAndTexts($nameField = 'name', $order = null)
+    public static function getIdsAndTexts($nameField = 'name', $order = null): array
     {
         return ArrayHelper::map(static::getAll(null, $order), 'id', $nameField);
     }
@@ -894,12 +914,12 @@ class Model extends BaseModel
         );
     }
 
-    public function getConnection()
+    public function getConnection(): Connection
     {
         return $this->_connection ?: App::$app->connection; // A model may have no connection
     }
 
-    public function setConnection($connection)
+    public function setConnection($connection): void
     {
         $this->_connection = $connection;
     }

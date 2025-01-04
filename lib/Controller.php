@@ -16,7 +16,7 @@ use ReflectionMethod;
  * **Example:**
  * - Suppose the HTTP request is /user/create
  * - The dispatcher finds the UserController class, creates an instance of it, and invokes its go() method
- * - The UserController finds the actionCreate() method, based on the remainder of the path ('/create')
+ * - The UserController finds the actionCreate() method, based on the remainder of the path (`/create`)
  * - The actionCreate() method performs the desired function
  *
  * ### Most important properties and methods:
@@ -32,23 +32,14 @@ use ReflectionMethod;
  * @package UMVC Simple Application Framework
  * @property-read string $actionPath -- controller/action, e.g. 'course/update'
  */
-class Controller extends Component
+class Controller extends BaseController
 {
-    /** @var App $app -- the parent application object */
-    public $app;
-    /** @var string[] $path -- unused path elements after controller (or action) name */
-    public $path;
-    /** @var array -- query parameters to use */
-    public $query;
-    /** @var string|null -- name of the currently executed action (without 'action' prefix) */
-    public $action;
-
     /** @var Asset[] $assets -- registered assets indexed by name */
-    public $assets = [];
+    public array $assets = [];
     /** @var string $classPath -- the controller id path for controller Id property */
     public $classPath = null;
 
-    public function init()
+    public function init(): void
     {
         if (!$this->classPath) {
             $this->classPath = static::getClasspath();
@@ -81,6 +72,8 @@ class Controller extends Component
     {
         // This function is intentionally empty. Descendants need not call it.
     }
+
+    // TODO: compare with BaseController!
 
     /**
      * Determines and performs the requested action using $this controller
@@ -164,7 +157,7 @@ class Controller extends Component
      * @return string
      * @throws Exception -- if the response is not a valid data to convert to JSON.
      */
-    public function jsonResponse($data, $headers = [])
+    public function jsonResponse(object|array $data, array $headers = []): int
     {
         foreach ($headers as $header) {
             $this->app->sendHeader($header);
@@ -187,7 +180,7 @@ class Controller extends Component
      * @return int -- exit status
      * @throws Exception -- if the response is not a valid data to convert to JSON.
      */
-    public function csvResponse($models, $headers = [])
+    public function csvResponse(array $models, array $headers = []): int
     {
         foreach ($headers as $header) {
             $this->app->sendHeader($header);
@@ -216,7 +209,7 @@ class Controller extends Component
      * @return int
      * @throws Exception
      */
-    public function jsonErrorResponse($message, $status = 500): int
+    public function jsonErrorResponse(mixed $message, int $status = HTTP::HTTP_INTERNAL_SERVER_ERROR): int
     {
         $protocol = ($_SERVER['SERVER_PROTOCOL'] ?? 'HTTP/1.0');
         $title = HTTP::$statusTexts[$status] ?? '';
@@ -236,8 +229,11 @@ class Controller extends Component
      * @return int
      * @throws Exception -- in case of HTML (Exception will be caught and displayed as HTML)
      */
-    public function errorResponse($error, $format = 'HTML', $status = 500): int
-    {
+    public function errorResponse(
+        string $error,
+        string $format = 'HTML',
+        int $status = HTTP::HTTP_INTERNAL_SERVER_ERROR
+    ): int {
         if ($format == 'JSON') {
             return $this->jsonErrorResponse($error, $status);
         }
@@ -254,7 +250,7 @@ class Controller extends Component
      *
      * **Rules for locale and language codes**
      * - If current locale is 'en-GB', the path with 'en-GB' is preferred, otherwise 'en' is used.
-     * - If current locale is 'en', the path with 'en' is used, no any 'en-*' is recognised.
+     * - If current locale is 'en', the path with 'en' is used, no any 'en-*' is recognized.
      * - If current locale is 'en-US', the path with 'en-US' is preferred, but no other 'en-*' is used.
      *
      * **Locale selection:**
@@ -264,15 +260,20 @@ class Controller extends Component
      *
      * @param string $viewName -- basename of a php view-file in the `views` directory, without extension and without localization code
      * @param array $params -- parameters to assign to variables used in the view
-     * @param string $layout -- the layout applied to this render after the view rendered. If false, no layout will be applied.
+     * @param string|null $layout -- the layout applied to this render after the view rendered. If false, no layout will be applied.
      * @param array $layoutParams -- optional parameters for the layout view
-     * @param string|bool|null $locale -- use localized layout selection (ISO 639-1 language / ISO 3166-1-a2 locale), see above
+     * @param bool|string|null $locale -- use localized layout selection (ISO 639-1 language / ISO 3166-1-a2 locale), see above
      *
      * @return false|string
      * @throws Exception
      */
-    public function render($viewName, $params = [], $layout = null, $layoutParams = [], $locale = null)
-    {
+    public function render(
+        string $viewName,
+        array $params = [],
+        string $layout = null,
+        array $layoutParams = [],
+        bool|string $locale = null
+    ): false|string {
         if ($locale === null || $locale === true) {
             $locale = $this->app->locale;
         }
@@ -298,7 +299,7 @@ class Controller extends Component
      * @return string|null
      * @throws Exception
      */
-    private function localizedView($viewName, $locale)
+    private function localizedView(string $viewName, string $locale): ?string
     {
         // Look up view file using full locale
         $lv = $this->localizedViewName($viewName, $locale);
@@ -313,7 +314,7 @@ class Controller extends Component
         return null;
     }
 
-    private function localizedViewName($viewName, $locale)
+    private function localizedViewName(string $viewName, string $locale): string
     {
         $p = strrpos($viewName, '/');
         if ($p === false) {
@@ -326,7 +327,7 @@ class Controller extends Component
      * @param Asset $asset
      * @return void
      */
-    public function registerAsset(Asset $asset)
+    public function registerAsset(Asset $asset): void
     {
         $this->assets[$asset->name] = $asset;
     }
@@ -334,11 +335,11 @@ class Controller extends Component
     /**
      * Link registered assets (optionally filtered by extensions)
      *
-     * @param string|string[] $extensions -- extension name(s), e.g. 'css', default is null == all extensions
+     * @param string|string[]|null $extensions -- extension name(s), e.g. 'css', default is null == all extensions
      * @return string -- the generated html code
      * @throws Exception
      */
-    public function linkAssets($extensions = null)
+    public function linkAssets(array|string $extensions = null): string
     {
         $html = '';
         foreach ($this->assets as $asset) {
@@ -346,23 +347,17 @@ class Controller extends Component
                 // Iterate file pattern in the cache (use extension filter)
                 Asset::matchPattern($asset->dir, '', $file, function ($file) use ($asset, $extensions, &$html) {
                     $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
-                    if (!$extensions || in_array($ext, (array)$extensions)) {
-                        switch ($ext) {
-                            // Create link based on extension
-                            case 'css':
-                                $html .= Html::link([
-                                    'rel' => 'stylesheet',
-                                    'href' => $asset->url($file)
-                                ]);
-                                break;
-                            case 'js':
-                                $html .= Html::tag('script', '', [
-                                    'src' => $asset->url($file)
-                                ]);
-                                break;
-                            default:
-                                throw new Exception("Unknown asset extension `$ext`");
-                        }
+                    if(!$extensions || in_array($ext, (array)$extensions)) {
+                        $html .= match ($ext) {
+                            'css' => Html::link([
+                                'rel' => 'stylesheet',
+                                'href' => $asset->url($file)
+                            ]),
+                            'js' => Html::tag('script', '', [
+                                'src' => $asset->url($file)
+                            ]),
+                            default => throw new Exception("Unknown asset extension `$ext`"),
+                        };
                     }
                 });
             }

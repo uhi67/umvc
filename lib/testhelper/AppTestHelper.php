@@ -1,9 +1,11 @@
-<?php /** @noinspection PhpIllegalPsrClassPathInspection */
+<?php
+/** @noinspection PhpIllegalPsrClassPathInspection */
 
 namespace Helper;
 
 use Codeception\Lib\Framework;
 use Codeception\Lib\InnerBrowser;
+use Codeception\Lib\ModuleContainer;
 use Symfony\Component\BrowserKit\Response;
 use Symfony\Component\DomCrawler\Crawler;
 use uhi67\umvc\App;
@@ -40,61 +42,77 @@ use ReflectionException;
  * @property AppConnector $client
  * @package UMVC Simple Application Framework
  */
-class AppTestHelper extends Framework {
-	protected $requiredFields = ['configFile'];
-	protected $config = ['loader'=>'core', 'sapi'=>'apache']; // optional parameters and defaults of module
+class AppTestHelper extends Framework
+{
+    protected array $requiredFields = ['configFile'];
+    protected array $config = ['loader' => 'core', 'sapi' => 'apache']; // optional parameters and defaults of module
 
     /** @var App $app -- the application instance started by client */
-	public $app;
+    public $app;
     /** @var string $configFile -- path of your configFile */
     protected $configFile;
     /** @var array $appConfig -- config of your App application */
     protected $appConfig;
 
-	/** @noinspection PhpMethodNamingConventionInspection */
+    /** @noinspection PhpMethodNamingConventionInspection */
 
-	/**
-	 * @throws ModuleConfigException
-	 * @throws ModuleException
-	 */
-	public function _initialize() {
-		$this->configFile = Configuration::projectDir() . $this->config['configFile'];
-		if (!is_file($this->configFile)) {
-			throw new ModuleConfigException(
-			    __CLASS__,
-			    "The application config file does not exist: " . $this->configFile
-			);
-		}
-		$this->appConfig = require($this->configFile);
-		if(!is_array($this->appConfig)) throw new ModuleException(__CLASS__, "The App test config is invalid: `$this->configFile` (may be return is missing)");
-		$this->appConfig['params']['testsuite'] = $this->config;
+    public function __construct(ModuleContainer $moduleContainer, $config = null)
+    {
+        $this->config = ['loader' => 'core', 'sapi' => 'apache'];
+        $this->requiredFields = ['configFile'];
+        parent::__construct($moduleContainer, $config);
+    }
+
+    /**
+     * @throws ModuleConfigException
+     * @throws ModuleException
+     */
+    public function _initialize(): void
+    {
+        $this->configFile = Configuration::projectDir() . $this->config['configFile'];
+        if (!is_file($this->configFile)) {
+            throw new ModuleConfigException(
+                __CLASS__,
+                "The application config file does not exist: " . $this->configFile
+            );
+        }
+        $this->appConfig = require($this->configFile);
+        if (!is_array($this->appConfig)) {
+            throw new ModuleException(
+                __CLASS__,
+                "The App test config is invalid: `$this->configFile` (may be return is missing)"
+            );
+        }
+        $this->appConfig['params']['testsuite'] = $this->config;
 
         defined('ENV') || define('ENV', 'development');
         defined('ENV_DEV') || define('ENV_DEV', true);
-	}
+    }
 
-	/** @noinspection PhpMethodNamingConventionInspection */
+    /** @noinspection PhpMethodNamingConventionInspection */
 
-	/**
-	 * Run before each test
-	 *
-	 * @param TestInterface $test
-	 *
-	 * @throws Exception
-	 */
-	public function _before(TestInterface $test) {
+    /**
+     * Run before each test
+     *
+     * @param TestInterface $test
+     *
+     * @throws Exception
+     */
+    public function _before(TestInterface $test)
+    {
         $this->client = new AppConnector([]);
-		$this->client->appConfig = $this->appConfig;
-		$this->client->sapi = $this->config['sapi'];
-		$this->app = $this->client->getApplication();
-	}
+        $this->client->appConfig = $this->appConfig;
+        $this->client->sapi = $this->config['sapi'];
+        $this->app = $this->client->getApplication();
+    }
 
-	/** @noinspection PhpMethodNamingConventionInspection */
+    /** @noinspection PhpMethodNamingConventionInspection */
 
-	/**
-	 * @param TestInterface $test
-	 */
-	public function _after(TestInterface $test) {
+    /**
+     * @param TestInterface $test
+     */
+    public function _after(TestInterface $test)
+    {
         $_SESSION = [];
         $_FILES = [];
         $_GET = [];
@@ -102,212 +120,236 @@ class AppTestHelper extends Framework {
         $_COOKIE = [];
         $_REQUEST = [];
 
-		if($this->app) {
-			Debug::debug('Destroying application');
-			$this->client->destroyApplication();
-		}
-		else {
-			Debug::debug('Application instance not found');
-		}
+        if ($this->app) {
+            Debug::debug('Destroying application');
+            $this->client->destroyApplication();
+        } else {
+            Debug::debug('Application instance not found');
+        }
 
-		parent::_after($test);
-	}
+        parent::_after($test);
+    }
 
-	/** @noinspection PhpMethodNamingConventionInspection */
+    /** @noinspection PhpMethodNamingConventionInspection */
 
-	/**
-	 * @param array $settings
-	 *
-	 * @throws Exception
-	 */
-	public function _beforeSuite($settings = []) {
-		Debug::debug('_beforeSuite');
-	}
-
-
-	/** @noinspection PhpMethodNamingConventionInspection */
-
-	public function _afterSuite() {
-		Debug::debug('_afterSuite');
-	}
+    /**
+     * @param array $settings
+     *
+     * @throws Exception
+     */
+    public function _beforeSuite($settings = [])
+    {
+        Debug::debug('_beforeSuite');
+    }
 
 
-	/** @noinspection PhpMethodNamingConventionInspection */
+    /** @noinspection PhpMethodNamingConventionInspection */
 
-	public function _beforeStep(Step $step) {
+    public function _afterSuite()
+    {
+        Debug::debug('_afterSuite');
+    }
 
-	}
+
+    /** @noinspection PhpMethodNamingConventionInspection */
+
+    public function _beforeStep(Step $step)
+    {
+    }
 
 
-	/** @noinspection PhpMethodNamingConventionInspection */
+    /** @noinspection PhpMethodNamingConventionInspection */
 
     /**
      * Called only in functional tests after $I->... steps
      */
-	public function _afterStep(Step $step) {
+    public function _afterStep(Step $step)
+    {
         Debug::debug('_afterStep');
-        Debug::debug('# Session is '.json_encode($_SESSION ?? null));
+        Debug::debug('# Session is ' . json_encode($_SESSION ?? null));
     }
 
 
-	/** @noinspection PhpMethodNamingConventionInspection */
+    /** @noinspection PhpMethodNamingConventionInspection */
 
-	/**
-	 * @param TestInterface $test
-	 * @param $fail
-	 *
-	 */
-	public function _failed(TestInterface $test, $fail) {
-		Debug::debug('_failed');
-	}
+    /**
+     * @param TestInterface $test
+     * @param $fail
+     *
+     */
+    public function _failed(TestInterface $test, $fail)
+    {
+        Debug::debug('_failed');
+    }
 
 
-	/** @noinspection PhpMethodNamingConventionInspection */
+    /** @noinspection PhpMethodNamingConventionInspection */
 
-	public function _cleanup() {
-		Debug::debug('_cleanup');
-	}
+    public function _cleanup()
+    {
+        Debug::debug('_cleanup');
+    }
 
-	/**
-	 * To support to use the behavior of urlManager component
-	 * for the methods like this: amOnPage(), sendAjaxRequest(), etc.
-	 *
-	 * @param $method
-	 * @param $uri
-	 * @param array $parameters
-	 * @param array $files
-	 * @param array $server
-	 * @param string|null $content
-	 * @param bool $changeHistory
-	 *
-	 * @return Crawler
-	 * @throws Exception
-	 */
-	protected function clientRequest($method, $uri, array $parameters = [], array $files = [], array $server = [], $content = null, $changeHistory = true): Crawler
-	{
-		if (is_array($uri)) {
-			$uri = $this->app->createUrl($uri);
-		}
-		return parent::clientRequest($method, $uri, $parameters, $files, $server, $content, $changeHistory);
-	}
+    /**
+     * To support to use the behavior of urlManager component
+     * for the methods like this: amOnPage(), sendAjaxRequest(), etc.
+     *
+     * @param $method
+     * @param $uri
+     * @param array $parameters
+     * @param array $files
+     * @param array $server
+     * @param string|null $content
+     * @param bool $changeHistory
+     *
+     * @return Crawler
+     * @throws Exception
+     */
+    protected function clientRequest(
+        $method,
+        $uri,
+        array $parameters = [],
+        array $files = [],
+        array $server = [],
+        $content = null,
+        $changeHistory = true
+    ): Crawler {
+        if (is_array($uri)) {
+            $uri = $this->app->createUrl($uri);
+        }
+        return parent::clientRequest($method, $uri, $parameters, $files, $server, $content, $changeHistory);
+    }
 
-	/**
-	 * @param int|array|null $userid -- null to log out
-	 * @throws ReflectionException
-	 * @throws Exception
-	 */
-	public function amLoggedInAs($userid=null) {
-        if(!$this->app->hasComponent('auth')) throw new Exception('No user authentication component is configured');
-		if($userid===null) $this->app->logout();
-		else {
+    /**
+     * @param int|array|null $userid -- null to log out
+     * @throws ReflectionException
+     * @throws Exception
+     */
+    public function amLoggedInAs($userid = null)
+    {
+        if (!$this->app->hasComponent('auth')) {
+            throw new Exception('No user authentication component is configured');
+        }
+        if ($userid === null) {
+            $this->app->logout();
+        } else {
             $this->app->auth->login($userid);
         }
-	}
+    }
 
     /**
      * @throws Exception
      */
-    public function amLoggedOut() {
+    public function amLoggedOut()
+    {
         $this->app->logout();
     }
 
-	/**
-	 * Inserts record into the database.
-	 *
-	 * ``` php
-	 * <?php
-	 * $user_id = $I->haveRecord('User', ['uid'=>'dilbert@test.test', 'displayname' => 'Dilbert']);
-	 * ?>
-	 * ```
-	 *
-	 * @param string $model - model classname
-	 * @param array $attributes
-	 *
-	 * @return boolean
-	 * @throws Exception
-	 */
-	public function haveRecord($model, $attributes = []) {
-		if(!is_a($model, Model::class, true)) throw new Exception('Invalid model name '.$model);
-		/** @var Model $record */
-		$record = new $model($attributes);
-		return $record->save();
-	}
+    /**
+     * Inserts record into the database.
+     *
+     * ``` php
+     * <?php
+     * $user_id = $I->haveRecord('User', ['uid'=>'dilbert@test.test', 'displayname' => 'Dilbert']);
+     * ?>
+     * ```
+     *
+     * @param string $model - model classname
+     * @param array $attributes
+     *
+     * @return boolean
+     * @throws Exception
+     */
+    public function haveRecord($model, $attributes = [])
+    {
+        if (!is_a($model, Model::class, true)) {
+            throw new Exception('Invalid model name ' . $model);
+        }
+        /** @var Model $record */
+        $record = new $model($attributes);
+        return $record->save();
+    }
 
-	/**
-	 * Checks that record exists in database.
-	 *
-	 * ``` php
-	 * $I->seeRecord('User', ['name' => 'Dilbert']);
-	 * ```
-	 *
-	 * @param       $model
-	 * @param array $attributes
-	 *
-	 * @throws Exception
-	 */
-	public function seeRecord($model, $attributes = []) {
-		$this->assertNotNull($this->app->connection);
-	    $record = $this->findRecord($model, $attributes);
-	    if (!$record) {
-	        $this->fail("Couldn't find $model with " . json_encode($attributes));
-	    }
-	    $this->debugSection($model, json_encode($record));
-	}
+    /**
+     * Checks that record exists in database.
+     *
+     * ``` php
+     * $I->seeRecord('User', ['name' => 'Dilbert']);
+     * ```
+     *
+     * @param       $model
+     * @param array $attributes
+     *
+     * @throws Exception
+     */
+    public function seeRecord($model, $attributes = [])
+    {
+        $this->assertNotNull($this->app->connection);
+        $record = $this->findRecord($model, $attributes);
+        if (!$record) {
+            $this->fail("Couldn't find $model with " . json_encode($attributes));
+        }
+        $this->debugSection($model, json_encode($record));
+    }
 
-	/**
-	 * Checks that record does not exist in database.
-	 *
-	 * ``` php
-	 * $I->dontSeeRecord('app\models\User', ['name' => 'Dilbert']);
-	 * ```
-	 *
-	 * @param       $model
-	 * @param array $attributes
-	 *
-	 * @part orm
-	 * @throws Exception
-	 */
-	public function dontSeeRecord($model, $attributes = [])
-	{
-	    $record = $this->findRecord($model, $attributes);
-	    $this->debugSection($model, json_encode($record));
-	    if ($record) {
-	        $this->fail("Unexpectedly managed to find $model with " . json_encode($attributes));
-	    }
-	}
+    /**
+     * Checks that record does not exist in database.
+     *
+     * ``` php
+     * $I->dontSeeRecord('app\models\User', ['name' => 'Dilbert']);
+     * ```
+     *
+     * @param       $model
+     * @param array $attributes
+     *
+     * @part orm
+     * @throws Exception
+     */
+    public function dontSeeRecord($model, $attributes = [])
+    {
+        $record = $this->findRecord($model, $attributes);
+        $this->debugSection($model, json_encode($record));
+        if ($record) {
+            $this->fail("Unexpectedly managed to find $model with " . json_encode($attributes));
+        }
+    }
 
-	/**
-	 * Retrieves record from database
-	 *
-	 * ``` php
-	 * $category = $I->grabRecord('app\models\User', ['name' => 'Dilbert']);
-	 * ```
-	 *
-	 * @param       $model
-	 * @param array $attributes
-	 *
-	 * @return mixed
-	 * @part orm
-	 * @throws Exception
-	 */
-	public function grabRecord($model, $attributes = []) {
-	    return $this->findRecord($model, $attributes);
-	}
+    /**
+     * Retrieves record from database
+     *
+     * ``` php
+     * $category = $I->grabRecord('app\models\User', ['name' => 'Dilbert']);
+     * ```
+     *
+     * @param       $model
+     * @param array $attributes
+     *
+     * @return mixed
+     * @part orm
+     * @throws Exception
+     */
+    public function grabRecord($model, $attributes = [])
+    {
+        return $this->findRecord($model, $attributes);
+    }
 
-	/**
-	 * @throws Exception
-	 */
-	protected function findRecord($model, $attributes = [])	{
-	    if(!is_a($model, Model::class, true)) throw new Exception("Class `$model` is not a Model");
-	    return call_user_func([$model, 'getOne'], $attributes, $this->app->connection);
-	}
+    /**
+     * @throws Exception
+     */
+    protected function findRecord($model, $attributes = [])
+    {
+        if (!is_a($model, Model::class, true)) {
+            throw new Exception("Class `$model` is not a Model");
+        }
+        return call_user_func([$model, 'getOne'], $attributes, $this->app->connection);
+    }
 
-	/**
-	 * @param string|array $page
-	 */
+    /**
+     * @param string|array $page
+     */
 	public function amOnPage($page): void {
-		parent::amOnPage($page);
-	}
+        parent::amOnPage($page);
+    }
 
     /**
      * Request a page using POST (without submitting an actual form)
@@ -315,24 +357,33 @@ class AppTestHelper extends Framework {
      * @param string|array $page
      * @param array $params -- POST parameters
      */
-    public function sendPostRequest($page, $params=[]) {
+    public function sendPostRequest($page, $params = [])
+    {
         $this->_loadPage('POST', $page, $params);
     }
 
-    public function seeInSession($key, $value=null) {
-		$this->assertArrayHasKey($key, $this->client->session);
-		if($value!==null) $this->assertEquals($value, $this->client->session[$key]);
-	}
+    public function seeInSession($key, $value = null)
+    {
+        $this->assertArrayHasKey($key, $this->client->session);
+        if ($value !== null) {
+            $this->assertEquals($value, $this->client->session[$key]);
+        }
+    }
 
-    public function seeHttpHeader($key, $value=null) {
+    public function seeHttpHeader($key, $value = null)
+    {
         $key = strtolower($key);
-        foreach($this->client->headers as $header) {
-            Debug::debug('Header: '.$header);
+        foreach ($this->client->headers as $header) {
+            Debug::debug('Header: ' . $header);
             [$k, $v] = explode(' ', $header);
             $k = strtolower($k);
-            if($k==$key || $k==$key.':') {
-                if(!$value) return;
-                if($v!=$value) $this->fail("Response header '$key' contains value '$v' instead of expected '$value'");
+            if ($k == $key || $k == $key . ':') {
+                if (!$value) {
+                    return;
+                }
+                if ($v != $value) {
+                    $this->fail("Response header '$key' contains value '$v' instead of expected '$value'");
+                }
                 return;
             }
         }
@@ -358,8 +409,10 @@ class AppTestHelper extends Framework {
      * @param string $jsonString the json encoded string
      * @param string $errorFormat optional string for custom sprintf format
      */
-    protected function decodeAndValidateJson(string $jsonString, string $errorFormat="Invalid json: %s. System message: %s.")
-    {
+    protected function decodeAndValidateJson(
+        string $jsonString,
+        string $errorFormat = "Invalid json: %s. System message: %s."
+    ) {
         $json = json_decode($jsonString);
         $errorCode = json_last_error();
         $errorMessage = json_last_error_msg();
@@ -407,7 +460,9 @@ class AppTestHelper extends Framework {
             new JsonContains($json)
         );
     }
-    public function getApp() {
+
+    public function getApp()
+    {
         return $this->app;
     }
 

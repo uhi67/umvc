@@ -1,4 +1,5 @@
 <?php
+/** @noinspection PhpIllegalPsrClassPathInspection */
 /** @noinspection PhpUnused */
 
 namespace uhi67\umvc;
@@ -6,6 +7,7 @@ namespace uhi67\umvc;
 use Closure;
 use DateTime;
 use Exception;
+use Throwable;
 use IntlDateFormatter;
 
 /**
@@ -19,14 +21,11 @@ class AppHelper
     /**
      * Function to generate random string.
      */
-    public static function randomString($n)
+    public static function randomString(int $n): string
     {
         $generated_string = "";
-
         $domain = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
-
         $len = strlen($domain);
-
         // Loop to create random string
         for ($i = 0; $i < $n; $i++) {
             // Generate a random index to pick characters
@@ -36,14 +35,13 @@ class AppHelper
             // in resultant string
             $generated_string = $generated_string . $domain[$index];
         }
-
         return $generated_string;
     }
 
     /**
      *
      */
-    public static function getSecureRandomToken()
+    public static function getSecureRandomToken(): string
     {
         return bin2hex(openssl_random_pseudo_bytes(16));
     }
@@ -51,7 +49,7 @@ class AppHelper
     /**
      *
      */
-    public static function clean_input($data)
+    public static function clean_input(string $data): string
     {
         $data = trim($data);
         $data = stripslashes($data);
@@ -61,7 +59,7 @@ class AppHelper
     /**
      * to prevent xss
      */
-    public static function xss_clean($string)
+    public static function xss_clean(string $string): string
     {
         return htmlspecialchars($string ?? '', ENT_QUOTES);
     }
@@ -78,11 +76,14 @@ class AppHelper
      *                       truncating can occur.
      * @param string $break The breakpoint string for truncating.
      * @param string $pad The padding string.
+     * @param string|null $string The string to truncate. Returns '' on null.
      * @return string
      * @see strlen()
      *
+     * @see strlen()
+     *
      */
-    public static function truncate($string, $threshold, $break = '.', $pad = '...')
+    public static function truncate(?string $string, int $threshold, string $break = '.', string $pad = '...'): string
     {
         if ($string === null) {
             return '';
@@ -102,11 +103,11 @@ class AppHelper
     /**
      * Returns a date formatted.
      *
-     * @param string $str The date to format.
+     * @param string|null $str The date to format. -- Returns '' on null or failure
      * @param string $fmt The format expected for the date.
      * @return string
      */
-    public static function format_date($str, $fmt)
+    public static function format_date(?string $str, string $fmt): string
     {
         $date = ($str === null) ? false : date_create(
             $str
@@ -117,10 +118,10 @@ class AppHelper
     /**
      * Displays an Exception on CLI or HTML output.
      *
-     * @param Exception $e
+     * @param Exception|Throwable $e
      * @param int|null $responseStatus -- HTTP response status, default is 500=HTTP_INTERNAL_SERVER_ERROR
      */
-    static function showException($e, $responseStatus = null)
+    static function showException(Exception|Throwable $e, int $responseStatus = null): void
     {
         defined('ENV_DEV') || define('ENV_DEV', 'production');
         $responseStatus = $responseStatus ?: HTTP::HTTP_INTERNAL_SERVER_ERROR;
@@ -159,7 +160,7 @@ class AppHelper
         }
         $errorMessage = (ENV_DEV || $e instanceof UserException) ? $e->getMessage() : 'Something went wrong';
         if (!headers_sent()) {
-            http_response_code((int)$responseStatus ?? 500);
+            http_response_code((int)$responseStatus ?? HTTP::HTTP_INTERNAL_SERVER_ERROR);
         }
         echo '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">';
         echo '<html lang="en">';
@@ -211,7 +212,7 @@ class AppHelper
         echo '</body>';
     }
 
-    public static function debug()
+    public static function debug(): string
     {
         $content = '';
         if (ENV_DEV) {
@@ -243,7 +244,7 @@ class AppHelper
      *
      * @return string|null The camelized string
      */
-    public static function camelize($id): ?string
+    public static function camelize(?string $id): ?string
     {
         if (is_null($id)) {
             return null;
@@ -258,7 +259,7 @@ class AppHelper
      *
      * @return string|null The camelized string
      */
-    public static function humanize($id): ?string
+    public static function humanize(?string $id): ?string
     {
         if (is_null($id)) {
             return null;
@@ -302,9 +303,8 @@ class AppHelper
      * @param string $string
      * @return string
      */
-    public static function mb_ucwords($string)
+    public static function mb_ucwords(string $string): string
     {
-        $string = (string)$string;
         if (empty($string)) {
             return $string;
         }
@@ -322,7 +322,7 @@ class AppHelper
      * @param string $string the string to be proceeded
      * @return string
      */
-    public static function mb_ucfirst($string)
+    public static function mb_ucfirst(string $string): string
     {
         return mb_strtoupper(mb_substr($string, 0, 1)) . mb_substr($string, 1, null);
     }
@@ -335,7 +335,7 @@ class AppHelper
      * @param bool $full -- returns full string if pattern not found
      * @return string -- substring to delimiter or empty string if not found
      */
-    static function substring_before($s, $d, $full = false)
+    static function substring_before(string $s, string $d, bool $full = false): string
     {
         $p = strpos($s, $d);
         if ($full && $p === false) {
@@ -354,7 +354,7 @@ class AppHelper
      * @return string -- substring to delimiter or empty string if not found
      * @throws Exception -- if delimiter is empty
      */
-    static function substring_after($s, $d, $full = false)
+    static function substring_after(string $s, string $d, bool $full = false): string
     {
         if (empty($s)) {
             throw new Exception('Empty needle');
@@ -382,12 +382,11 @@ class AppHelper
      *
      * @return string -- the correct output, or empty if input was empty or null
      */
-    public static function toNameID($str, $def = '_', $ena = '.-', $maxlen = 64)
+    public static function toNameID(string $str, string $def = '_', string $ena = '.-', int $maxlen = 64): string
     {
         if ($str == '') {
             return $str;
         }
-        #if(strtolower(substr($str,0,3))=='xml') $str = '_'.$str; // xml prefix is valid!
         if ($maxlen > 0 && strlen($str) > $maxlen) {
             $str = substr($str, 0, $maxlen);
         }
@@ -430,10 +429,10 @@ class AppHelper
      * Useful when dealing with JSON data stored in database as string.
      *
      * @param string $data
-     * @return array
+     * @return array -- returns empty array if $data was not an array.
      * @author arlogy
      */
-    public static function arrayFromJsonString($data)
+    public static function arrayFromJsonString(string $data): array
     {
         $data = json_decode($data, true);
         return is_array($data) ? $data : [];
@@ -447,7 +446,7 @@ class AppHelper
      * @return string
      * @author arlogy
      */
-    public static function jsonStringFrom($data)
+    public static function jsonStringFrom(mixed $data): string
     {
         $data = json_encode($data);
         return is_string($data) ? $data : '';
@@ -464,11 +463,11 @@ class AppHelper
      *    - values of DateTime will be substituted as SHORT date of the application's language.
      *
      * @param string $text
-     * @param array $data
+     * @param scalar[] $data
      *
      * @return string
      */
-    public static function substitute($text, $data)
+    public static function substitute(string $text, array $data): string
     {
         return preg_replace_callback(
         /* @lang */ '#{(DMY|MDY)?(\\$[a-zA-Z_]+[\\\\/a-zA-Z0-9_-]*)}#',
@@ -515,8 +514,12 @@ class AppHelper
      * @param string $locale -- locale in ll-cc format (ISO 639-1 && ISO 3166-1), null to use default
      * @return string
      */
-    public static function formatDateTime($datetime, $datetype, $timetype, $locale = null)
-    {
+    public static function formatDateTime(
+        DateTime $datetime,
+        int $datetype = IntlDateFormatter::SHORT,
+        int $timetype = IntlDateFormatter::SHORT,
+        string $locale = null
+    ) {
         if (!$locale) {
             $locale = App::$app->locale;
         }
@@ -546,7 +549,7 @@ class AppHelper
      * @param int $interval -- seconds between retry attempts, the minimum allowed value is 1
      * @return bool -- true if test succeeded within timeout, false otherwise
      */
-    public static function waitFor($test, $timeout = 60, $interval = 1)
+    public static function waitFor(Closure $test, int $timeout = 60, int $interval = 1): bool
     {
         $startTime = time();
         $interval = max(1, $interval);
@@ -585,7 +588,9 @@ class AppHelper
     public static function baseUrl(): string
     {
         $baseurl = getenv('APP_BASEURL');
-        if($baseurl) return trim($baseurl, '/');
+        if ($baseurl) {
+            return trim($baseurl, '/');
+        }
         $https = getenv('HTTPS') ?? 'off';
         $protocol = ($https == 'on' || ($_SERVER['SERVER_PORT'] ?? 80) == 443) ? "https" : "http";
         if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) || $https == 'on') {

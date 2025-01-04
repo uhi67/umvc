@@ -1,10 +1,10 @@
 <?php
 /** @noinspection PhpIllegalPsrClassPathInspection */
-
 /** @noinspection PhpUnused */
 
 namespace uhi67\umvc;
 
+use app\models\User;
 use ErrorException;
 use Exception;
 use Throwable;
@@ -53,6 +53,7 @@ use Throwable;
  * @property-read AuthManager $auth -- the actual auth manager
  * @property-read Connection $connection -- the default database connection defined in 'db' component
  * @property-read L10n $l10n
+ * @property-read User $user
  * @package UMVC Simple Application Framework
  */
 class App extends Component
@@ -456,7 +457,7 @@ class App extends Component
      * Note: returns an error message rendered as a string on internal rendering errors or Exception
      *
      * @param string $viewName -- basename of a PHP view-file in the `views` directory, without extension and without localization code
-     * @param array $params -- parameters to assign to variables used in the view
+     * @param array|null $params -- parameters to assign to variables used in the view
      * @param string|null $layout -- the layout applied to the result after the view rendered. If false, no layout will be applied.
      * @param array|null $layoutParams -- optional parameters for the layout view
      * @param bool|string|null $locale -- use localized layout selection (ISO 639-1 language / ISO 3166-1-a2 locale), see above
@@ -465,9 +466,9 @@ class App extends Component
      */
     public function render(
         string $viewName,
-        array $params = [],
+        ?array $params = [],
         string $layout = null,
-        array|null $layoutParams = [],
+        ?array $layoutParams = [],
         bool|string|null $locale = true
     ): string {
         try {
@@ -492,7 +493,7 @@ class App extends Component
                 App::$app->log('error', $message);
                 return $message;
             }
-            return $this->renderFile($viewFile, $params, $layout, $layoutParams);
+            return $this->renderFile($viewFile, $params ?? [], $layout, $layoutParams);
         } catch (Throwable $e) {
             App::$app->log(
                 'error',
@@ -639,9 +640,10 @@ class App extends Component
      * @param string $_file_
      * @param array $_params_
      *
-     * @return false|string
+     * @return string
+     * @throws Exception
      */
-    private function renderPhpFile(string $_file_, array $_params_ = []): false|string
+    private function renderPhpFile(string $_file_, array $_params_ = []): string
     {
         $_level_ = ob_get_level();
         ob_start();
@@ -649,14 +651,16 @@ class App extends Component
         extract($_params_, EXTR_SKIP);
         try {
             require $_file_;
-            return ob_get_clean();
+            return ob_get_clean() ?: '';
         } catch (Throwable $e) {
+            App::$app->log('error', "Error rendering file '$_file_'");
             echo "<h2>Server error</h2>";
             echo "<div>Error rendering file '$_file_'</div>\n";
             if (ENV_DEV) {
+                App::$app->log('debug', $e->getTraceAsString());
                 AppHelper::showException($e);
             }
-            return ob_get_clean();
+            return ob_get_clean() ?: '';
         } finally {
             while (ob_get_level() > $_level_) {
                 ob_end_clean();
@@ -750,7 +754,7 @@ class App extends Component
      *
      * @param bool $force -- if true and not logged in, redirects to the login page, will return only if the user logged in. If false, throws an exception if the user is not logged in.
      *
-     * @return bool|int -- true if redirect issued, false otherwise
+     * @return bool|int -- non-false if redirect issued, false otherwise
      * @throws Exception -- throws an exception if user not logged in.
      */
     public function requireLogin(bool $force = true): bool|int
@@ -875,10 +879,10 @@ class App extends Component
     /**
      * Sends out a header. Use this function instead of native header()
      *
-     * @param $header
+     * @param string $header
      * @return void
      */
-    public function sendHeader($header): void
+    public function sendHeader(string $header): void
     {
         header($header);
         $this->headers[] = $header;
@@ -981,7 +985,7 @@ class App extends Component
      * @return mixed the component object or a property value
      * @throws Exception
      */
-    public function __get($name)
+    public function __get(string $name)
     {
         if (array_key_exists($name, $this->_components)) {
             return $this->_components[$name];
@@ -1046,7 +1050,7 @@ class App extends Component
     /**
      * Returns the uid of the logged-in user or empty string if no user is logged in.
      *
-     * @return mixed|string
+     * @return mixed
      */
     public static function getUserId(): mixed
     {

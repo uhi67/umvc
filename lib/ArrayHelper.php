@@ -1,11 +1,12 @@
 <?php
 /** @noinspection PhpUnused */
 
+/** @noinspection PhpIllegalPsrClassPathInspection */
+
 namespace uhi67\umvc;
 
 use Closure;
 use Exception;
-use Traversable;
 
 /**
  * Array-related helper functions
@@ -52,7 +53,7 @@ class ArrayHelper
      * @param bool $recursive -- whether to recursively convert properties which are objects into arrays.
      * @return array -- the array representation of the object
      */
-    public static function toArray($object, $properties = array(), $recursive = true)
+    public static function toArray(object|array|string $object, array $properties = [], bool $recursive = true)
     {
         if (is_array($object)) {
             if ($recursive) {
@@ -86,6 +87,7 @@ class ArrayHelper
             } else {
                 // Reading default public properties
                 $result = array();
+                /** @noinspection PhpLoopCanBeConvertedToArrayMapInspection -- doesn't work with objects */
                 foreach ($object as $key => $value) {
                     $result[$key] = $value;
                 }
@@ -118,16 +120,16 @@ class ArrayHelper
      * $value = ArrayUtils::getValue($order, ['article', 'name']); // returns $order->article->name or $order['article']['name'] (or null if any of the indices is missing)
      * ```
      *
-     * @param array|object $array -- array or object to extract value from
-     * @param string|Closure|array $key -- key name of the array element, an array of keys or property name of the object,
+     * @param object|array|null $array -- array or object to extract value from
+     * @param array|string|Closure $key -- key name of the array element, an array of keys or property name of the object,
      * or an anonymous function returning the value. The anonymous function signature should be:
      * `function($array, $defaultValue)`.
-     * @param mixed $default -- the default value to be returned if the specified array key does not exist. Not used when
+     * @param mixed|null $default -- the default value to be returned if the specified array key does not exist. Not used when
      * getting value from an object.
      *
      * @return mixed -- the value of the element if found, default value otherwise
      */
-    public static function getValue($array, $key, $default = null)
+    public static function getValue(object|array|null $array, array|string|Closure $key, mixed $default = null): mixed
     {
         if (is_null($array)) {
             return $default;
@@ -189,12 +191,12 @@ class ArrayHelper
      *
      * @param array $array -- array to extract value from
      * @param string $key -- key name
-     * @param mixed $default -- default return value when the specified array key does not exist
+     * @param mixed|null $default -- default return value when the specified array key does not exist
      *
      * @return mixed the value of the element if found, default value otherwise
      * @throws Exception
      */
-    public static function fetchValue(&$array, $key, $default = null)
+    public static function fetchValue(array &$array, string $key, mixed $default = null): mixed
     {
         Assertions::assertArray($array);
 
@@ -221,11 +223,8 @@ class ArrayHelper
      * @param bool $strict the array keys must be all strings and not empty to be treated as associative.
      * @return bool the array is associative
      */
-    public static function isAssociative($array, $strict = true)
+    public static function isAssociative(array $array, bool $strict = true): bool
     {
-        if (!is_array($array)) {
-            return false;
-        }
         foreach ($array as $key => $value) {
             if (!is_string($key) && $strict) {
                 return false;
@@ -241,12 +240,12 @@ class ArrayHelper
     /**
      * Finds first array element with key which satisfies $fn
      *
-     * @param Traversable|array $aa
+     * @param iterable $aa
      * @param callable $fn ($item, $key)
      *
      * @return false|int|string -- index of first match or false if not found
      */
-    public static function array_find_key($aa, $fn)
+    public static function array_find_key(iterable $aa, callable $fn): false|int|string
     {
         foreach ($aa as $k => $v) {
             if ($fn($v, $k)) {
@@ -263,14 +262,17 @@ class ArrayHelper
      * Multiple indices with the same value yields the value of last occurrence
      *
      * @param array $objects
-     * @param string|callable|null $indexProp -- property name or callable($obj) for index, null will keep original key
-     * @param string|callable|null $valueProp -- property name or callable($obj) for value; in case of null the original object will return
+     * @param callable|string|null $indexProp -- property name or callable($obj) for index, null will keep original key
+     * @param callable|string|null $valueProp -- property name or callable($obj) for value; in case of null the original object will return
      *
      * @return array -- mapped associative array
      * @throws Exception
      */
-    public static function map($objects, $indexProp, $valueProp = null)
-    {
+    public static function map(
+        array $objects,
+        callable|string|null $indexProp,
+        callable|string $valueProp = null
+    ): array {
         $result = array();
         if (!is_iterable($objects)) {
             throw new Exception('`Objects` must be iterable', gettype($objects));
@@ -308,7 +310,7 @@ class ArrayHelper
      * @param array $b -- array to merge from; additional arrays are allowed as per a variadic argument
      * @return array the merged array (the original arrays are not changed.)
      */
-    public static function merge($a, $b)
+    public static function merge(array $a, array $b): array
     {
         $args = func_get_args();
         $res = array_shift($args);
@@ -331,7 +333,7 @@ class ArrayHelper
         return $res;
     }
 
-    public static function genUniqueIndex(array $array, string $prefix)
+    public static function genUniqueIndex(array $array, string $prefix): string
     {
         $i = 1;
         do {
@@ -353,11 +355,8 @@ class ArrayHelper
      * @return array
      * @author arlogy
      */
-    public static function copyArrayMappingKeys($array, $keymap)
+    public static function copyArrayMappingKeys(array $array, array $keymap): array
     {
-        if (!is_array($array) || !is_array($keymap)) {
-            return [];
-        }
         $result = [];
         foreach ($keymap as $k1 => $k2) {
             $result[$k2] = $array[$k1] ?? null;
