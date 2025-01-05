@@ -1,8 +1,9 @@
-<?php
+<?php /** @noinspection PhpIllegalPsrClassPathInspection */
 
 namespace Helper;
 
 use Codeception\Lib\Framework;
+use Codeception\Lib\InnerBrowser;
 use Symfony\Component\BrowserKit\Response;
 use Symfony\Component\DomCrawler\Crawler;
 use uhi67\umvc\App;
@@ -82,7 +83,8 @@ class AppTestHelper extends Framework {
 	 * @throws Exception
 	 */
 	public function _before(TestInterface $test) {
-		$this->client = new AppConnector([]);
+        /** @noinspection PhpDynamicFieldDeclarationInspection */
+        $this->client = new AppConnector([]);
 		$this->client->appConfig = $this->appConfig;
 		$this->client->sapi = $this->config['sapi'];
 		$this->app = $this->client->getApplication();
@@ -304,7 +306,7 @@ class AppTestHelper extends Framework {
 	/**
 	 * @param string|array $page
 	 */
-	public function amOnPage(string $page): void {
+	public function amOnPage($page): void {
 		parent::amOnPage($page);
 	}
 
