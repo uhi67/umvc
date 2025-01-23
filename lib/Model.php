@@ -159,6 +159,8 @@ class Model extends BaseModel {
      * - associative array: [fieldName=>value, ...]
      * - expression array: [operator, expression, ...] example: ['AND', ['OR', ['name'=>''], ['name'=>null]], ['=', 'name', 'login']]
      *
+     * Warning: calling with null value will result the first record of all models (without specific order), because null is considered as an empty condition expression.
+     *
      * @param scalar|array|null $condition -- returns null if record with condition not found
      * @return static
      * @see Query::buildExpression()
