@@ -1,4 +1,5 @@
 <?php
+
 namespace uhi67\umvc;
 
 use Exception;
@@ -20,7 +21,8 @@ use Exception;
  * ```
  * @property-read array $attributes
  */
-abstract class AuthManager extends Component {
+abstract class AuthManager extends Component
+{
     // If uid holds this value, the login partially failed
     const INVALID_USER = -1;
 
@@ -28,18 +30,22 @@ abstract class AuthManager extends Component {
     public $uid;
     /** @var string|UserInterface $userModel -- the model identifies a user */
     public $userModel;
-	/** @var bool $autoUrl -- true to detect and perform ?login and ?logout in the REQUEST URL automatically */
-	public $autoUrl = true;
+    /** @var bool $autoUrl -- true to detect and perform ?login and ?logout in the REQUEST URL automatically */
+    public $autoUrl = true;
 
-	/**
+    /**
      * Initializes the auth module.
      *
      * @return void
      * @throws Exception
      */
-    public function init() {
-        if(!$this->userModel || !is_a($this->userModel, UserInterface::class, true))
-			throw new Exception("userModel must be a class implementing Model and UserInterface. Given '$this->userModel'");
+    public function init()
+    {
+        if (!$this->userModel || !is_a($this->userModel, UserInterface::class, true)) {
+            throw new Exception(
+                "userModel must be a class implementing Model and UserInterface. Given '$this->userModel'"
+            );
+        }
     }
 
     /**
@@ -51,65 +57,69 @@ abstract class AuthManager extends Component {
      */
     public function prepare()
     {
-		if($this->autoUrl) {
-			// Manage logout request
-			if(array_key_exists('logout', $_REQUEST)) {
-				$this->logout();
-			}
+        if ($this->autoUrl) {
+            // Manage logout request
+            if (array_key_exists('logout', $_REQUEST)) {
+                $this->logout();
+            }
 
-			// Manage login request
-			if(array_key_exists('login', $_REQUEST)) {
-				$this->actionLogin();
-			}
-		}
+            // Manage login request
+            if (array_key_exists('login', $_REQUEST)) {
+                $this->actionLogin();
+            }
+        }
 
-		$this->prepareUser();
+        $this->prepareUser();
     }
 
-	/**
-	 * Manage already logged-in user
-	 *
-	 * @return UserInterface|null
-	 * @throws Exception
-	 */
-	public function prepareUser() {
-		$this->uid = $_SESSION['uid'] ?? null;
-		if($this->uid && $this->uid!=static::INVALID_USER) {
-			$user = $this->userModel::findUser($this->uid);
-			if($user) return $this->login($user);
-		}
-		return null;
-	}
+    /**
+     * Manage already logged-in user
+     *
+     * @return UserInterface|null
+     * @throws Exception
+     */
+    public function prepareUser()
+    {
+        $this->uid = $_SESSION['uid'] ?? null;
+        if ($this->uid && $this->uid != static::INVALID_USER) {
+            $user = $this->userModel::findUser($this->uid);
+            if ($user) {
+                return $this->login($user);
+            }
+        }
+        return null;
+    }
 
-	/**
-	 * Login action with user-defined return URL
-	 *
-	 * Usage example (in a Controller):
-	 *
-	 * ```
-	 * public function actionLogin() {
-	 *     $this->app->auth->actionLogin('/');
-	 * }
-	 * ```
-	 *
-	 * @param string|null $returnTo -- return URL after login or null if none
-	 * @return UserInterface|null
-	 * @throws Exception
-	 */
-	public function actionLogin($returnTo = null) {
-		if($returnTo===null) {
-			if(isset($_REQUEST['ReturnTo'])) {
-				$returnTo = $_REQUEST['ReturnTo'];
-			} else {
-				$request = $_GET;
-				unset($request['login']);
-				$returnTo = $this->parent->createUrl($request);
-			}
-		}
-		$this->parent->user = $this->requireLogin($returnTo);
+    /**
+     * Login action with user-defined return URL
+     *
+     * Usage example (in a Controller):
+     *
+     * ```
+     * public function actionLogin() {
+     *     $this->app->auth->actionLogin('/');
+     * }
+     * ```
+     *
+     * @param string|null $returnTo -- return URL after login or null if none
+     * @return UserInterface|null
+     * @throws Exception
+     */
+    public function actionLogin($returnTo = null)
+    {
+        if ($returnTo === null) {
+            if (isset($_REQUEST['ReturnTo'])) {
+                $returnTo = $_REQUEST['ReturnTo'];
+            } else {
+                $request = $_GET;
+                unset($request['login']);
+                $returnTo = $this->parent->createUrl($request);
+            }
+        }
+        $this->parent->user = $this->requireLogin($returnTo);
 
-		return $this->prepareUser();
-	}
+        return $this->prepareUser();
+    }
 
     /**
      * Makes the user logged in within the application.
@@ -119,18 +129,29 @@ abstract class AuthManager extends Component {
      * @return UserInterface|null -- the user object logged in on success or null on failure
      * @throws Exception
      */
-    public function login($user) {
-        if(is_string($user)) {
-            if(!$this->userModel || !is_a($this->userModel, UserInterface::class, true)) throw new Exception('UserModel must be a class implementing UserInterface');
+    public function login($user)
+    {
+        if (is_string($user)) {
+            if (!$this->userModel || !is_a($this->userModel, UserInterface::class, true)) {
+                throw new Exception('UserModel must be a class implementing UserInterface');
+            }
             $userModel = $this->userModel::findUser($user);
-            if(!$userModel) return null;
+            if (!$userModel) {
+                return null;
+            }
         } else {
-            if(!is_a($user, UserInterface::class)) throw new Exception('User object must implement UserInterface');
-	        $userModel = $user;
+            if (!is_a($user, UserInterface::class)) {
+                throw new Exception('User object must implement UserInterface');
+            }
+            $userModel = $user;
         }
-        if(!$this->parent instanceof App) throw new Exception('AuthManager must be a component of the App');
+        if (!$this->parent instanceof App) {
+            throw new Exception('AuthManager must be a component of the App');
+        }
         $this->parent->user = $userModel;
-        if(!$userModel) return null;
+        if (!$userModel) {
+            return null;
+        }
         $_SESSION['uid'] = $userModel->getUserId();
         return $userModel;
     }
@@ -143,7 +164,8 @@ abstract class AuthManager extends Component {
      *
      * @return bool
      */
-    public function logout() {
+    public function logout()
+    {
         $this->parent->user = null;
         $_SESSION['uid'] = null;
         $_SESSION = [];
@@ -163,6 +185,7 @@ abstract class AuthManager extends Component {
      * @param string|null $returnTo
      * @return UserInterface|null
      */
-    abstract public function requireLogin($returnTo=null);
-	abstract public function getAttributes();
+    abstract public function requireLogin($returnTo = null);
+
+    abstract public function getAttributes();
 }

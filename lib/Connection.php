@@ -1,4 +1,5 @@
-<?php /** @noinspection PhpUnused */
+<?php
+/** @noinspection PhpUnused */
 
 namespace uhi67\umvc;
 
@@ -37,17 +38,18 @@ use Throwable;
  *
  * @package UMVC Simple Application Framework
  */
-abstract class Connection extends Component {
+abstract class Connection extends Component
+{
     /** @var string $dsn -- the DSN was used to create this connection */
     public $dsn;
     /** @var string $name -- database name (redundant, but mandatory) */
     public $name;
-    /** @var string|null $migrationPath -- directory of migration files if not the default (`/migrations`)*/
+    /** @var string|null $migrationPath -- directory of migration files if not the default (`/migrations`) */
     public $migrationPath = null;
     /** @var string|null $migrationTable -- name of the migration table if not the default (`migration`) */
     public $migrationTable;
 
-    /** @var PDO|null $_pdo -- the original PDO connection. Empty if not yet connected.  */
+    /** @var PDO|null $_pdo -- the original PDO connection. Empty if not yet connected. */
     protected $_pdo = null; // Note: must be protected, because descendant classes must use it in the reset() method.
 
     protected $_user, $_password;
@@ -61,14 +63,15 @@ abstract class Connection extends Component {
      */
     abstract protected function reset();
 
-	/**
-	 * Check if a table exists in the current database.
-	 *
-	 * @param $tableName
-	 * @return bool -- TRUE if table exists, FALSE if no table found.
-	 * @throws Exception
-	 */
-    public function tableExists($tableName) {
+    /**
+     * Check if a table exists in the current database.
+     *
+     * @param $tableName
+     * @return bool -- TRUE if table exists, FALSE if no table found.
+     * @throws Exception
+     */
+    public function tableExists($tableName)
+    {
         $tableName = $this->quoteIdentifier($tableName);
         // Try a select statement against the table
         // Run it in try-catch in case PDO is in ERRMODE_EXCEPTION.
@@ -76,28 +79,33 @@ abstract class Connection extends Component {
             $result = $this->pdo->query("SELECT 1 FROM $tableName LIMIT 1");
         } catch (Exception $e) {
             // We got an exception (table not found)
-            return FALSE;
+            return false;
         }
 
         // Result is either boolean FALSE (no table found) or PDOStatement Object (table found)
-        return $result !== FALSE;
+        return $result !== false;
     }
 
-	/**
-	 * Make table or fieldName safe from SQL injections (SQL-92 standard)
-	 * Works on a single identifier. To handle schema.table.field constructs, see {@see Query::quoteFieldName()}
-	 * Returns fieldName enclosed into double quotes, while inner double quotes are replaced by _
-	 * May be overridden in vendor-specific way.
-	 *
-	 * @param string $fieldName
-	 * @return string
-	 *
-	 * @throws Exception
-	 */
-    public function quoteIdentifier(string $fieldName) {
-        if(!$fieldName) throw new Exception('Empty field-name');
-        if($fieldName[0]=='"' && substr($fieldName, -1) == '"') $fieldName = substr($fieldName,1,-1);
-        return '"'.str_replace('"', '_', $fieldName).'"';
+    /**
+     * Make table or fieldName safe from SQL injections (SQL-92 standard)
+     * Works on a single identifier. To handle schema.table.field constructs, see {@see Query::quoteFieldName()}
+     * Returns fieldName enclosed into double quotes, while inner double quotes are replaced by _
+     * May be overridden in vendor-specific way.
+     *
+     * @param string $fieldName
+     * @return string
+     *
+     * @throws Exception
+     */
+    public function quoteIdentifier(string $fieldName)
+    {
+        if (!$fieldName) {
+            throw new Exception('Empty field-name');
+        }
+        if ($fieldName[0] == '"' && substr($fieldName, -1) == '"') {
+            $fieldName = substr($fieldName, 1, -1);
+        }
+        return '"' . str_replace('"', '_', $fieldName) . '"';
     }
 
     /**
@@ -106,9 +114,14 @@ abstract class Connection extends Component {
      * @param int|string $value
      * @return string -- the value with necessary single quotes (except integers and NULL)
      */
-    public function quoteValue($value) {
-        if(is_integer($value) || is_numeric($value)) return $value;
-        if(is_null($value)) return 'NULL';
+    public function quoteValue($value)
+    {
+        if (is_integer($value) || is_numeric($value)) {
+            return $value;
+        }
+        if (is_null($value)) {
+            return 'NULL';
+        }
         return $this->pdo->quote($value);
     }
 
@@ -116,14 +129,16 @@ abstract class Connection extends Component {
      * Replaces common operator names to vendor-specific version
      * The default implementation does not change the name
      */
-    public function operatorName($op) {
+    public function operatorName($op)
+    {
         return $op;
     }
 
     /**
      * @return string -- "ANSI-code; driver-code; driver-message" or "00000; 0; " if no error.
      */
-    public function getLastError() {
+    public function getLastError()
+    {
         return implode('; ', $this->pdo->errorInfo());
     }
 
@@ -139,9 +154,10 @@ abstract class Connection extends Component {
      * @return array|false -- metadata array indexed by table names
      * @throws Exception
      */
-    public function getSchemaMetadata() {
+    public function getSchemaMetadata()
+    {
         $tables = $this->getTables();
-        return array_combine($tables, array_map(function($tableName) {
+        return array_combine($tables, array_map(function ($tableName) {
             return static::tableMetadata($tableName);
         }, $tables));
     }
@@ -154,37 +170,49 @@ abstract class Connection extends Component {
      * @return string[]
      * @throws Exception
      */
-    public function getTables($schema=null) {
-        if(!$schema) $schema = $this->getSchemaName();
+    public function getTables($schema = null)
+    {
+        if (!$schema) {
+            $schema = $this->getSchemaName();
+        }
         /** @noinspection SqlResolve */
-        $stmt = $this->pdo->query($sql = 'SELECT table_name FROM information_schema.tables WHERE table_schema='.$this->pdo->quote($schema));
-        if(!$stmt) throw new Exception(implode(';', $this->pdo->errorInfo()) . $sql);
+        $stmt = $this->pdo->query(
+            $sql = 'SELECT table_name FROM information_schema.tables WHERE table_schema=' . $this->pdo->quote($schema)
+        );
+        if (!$stmt) {
+            throw new Exception(implode(';', $this->pdo->errorInfo()) . $sql);
+        }
         $rows = $stmt->fetchAll(PDO::FETCH_NUM);
         return array_column($rows, 0);
     }
 
-	/**
-	 * Returns metadata of the table
-	 *
-	 * (Associative to field names)
-	 * Vendor-specific, this implementation is for MySQL only.
-	 *
-	 * @param string $table
-	 * @return array|boolean -- returns false if table does not exist
-	 * @throws Exception
-	 */
-    public function tableMetadata($table) {
+    /**
+     * Returns metadata of the table
+     *
+     * (Associative to field names)
+     * Vendor-specific, this implementation is for MySQL only.
+     *
+     * @param string $table
+     * @return array|boolean -- returns false if table does not exist
+     * @throws Exception
+     */
+    public function tableMetadata($table)
+    {
         $table = $this->quoteIdentifier($table);
-        $stmt = $this->pdo->query('show fields from '.$table);
-        if(!$stmt) return false;
+        $stmt = $this->pdo->query('show fields from ' . $table);
+        if (!$stmt) {
+            return false;
+        }
         $rows = $stmt->fetchAll();
-        if($rows===false) return false;
+        if ($rows === false) {
+            return false;
+        }
         $i = 1;
         $result = array();
-        foreach($rows as $row) {
+        foreach ($rows as $row) {
             $type = $row['Type'];
             $len = -1;
-            if(preg_match('/(\w+)\((\d+)\)/', $type, $mm)) {
+            if (preg_match('/(\w+)\((\d+)\)/', $type, $mm)) {
                 $type = $mm[1];
                 $len = (int)$mm[2];
             }
@@ -192,8 +220,8 @@ abstract class Connection extends Component {
                 'num' => $i++,
                 'type' => $type,
                 'len' => $len,
-                'not null' => $row['Null']=='NO',
-                'has default' => $row['Default']!==null,
+                'not null' => $row['Null'] == 'NO',
+                'has default' => $row['Default'] !== null,
             ];
         }
         return $result;
@@ -205,177 +233,194 @@ abstract class Connection extends Component {
      * @return string
      * @throws Exception
      */
-    public function getSchemaName() {
+    public function getSchemaName()
+    {
         /** @noinspection PhpUnhandledExceptionInspection */
         return AppHelper::substring_before(AppHelper::substring_after($this->dsn, 'dbname='), ';', true);
     }
 
-    public function setUser($user) { $this->_user = $user; }
-    public function setPassword($password) { $this->_password = $password; }
+    public function setUser($user)
+    {
+        $this->_user = $user;
+    }
 
-	/**
-	 * Creates a new connection using vendor driver specified in the DSN
-	 *
-	 * Note: this method is not suitable for configuration array, only to create new ad-hoc connections.
-	 *
-	 * @throws Exception -- if driver is missing for DSN vendor or vendor is not set in the DSN
-	 * @return Connection -- the new Connection created
-	 */
-	public static function connect($dsn, $user, $password) {
-		if(!$dsn) throw new Exception('DSN is not set');
-		$vendor = AppHelper::substring_before($dsn, ':');
-		if(!$vendor) throw new Exception('Invalid DSN: vendor is not set');
-		$driver = 'app\lib\\'.ucfirst(strtolower($vendor)).'Connection';
-		if(!class_exists($driver)) throw new Exception('No database driver for '.$vendor);
+    public function setPassword($password)
+    {
+        $this->_password = $password;
+    }
 
-		return new $driver([
-			'dsn' => $dsn,
-			'user' => $user,
-			'password' => $password
-		]);
-	}
+    /**
+     * Creates a new connection using vendor driver specified in the DSN
+     *
+     * Note: this method is not suitable for configuration array, only to create new ad-hoc connections.
+     *
+     * @return Connection -- the new Connection created
+     * @throws Exception -- if driver is missing for DSN vendor or vendor is not set in the DSN
+     */
+    public static function connect($dsn, $user, $password)
+    {
+        if (!$dsn) {
+            throw new Exception('DSN is not set');
+        }
+        $vendor = AppHelper::substring_before($dsn, ':');
+        if (!$vendor) {
+            throw new Exception('Invalid DSN: vendor is not set');
+        }
+        $driver = 'app\lib\\' . ucfirst(strtolower($vendor)) . 'Connection';
+        if (!class_exists($driver)) {
+            throw new Exception('No database driver for ' . $vendor);
+        }
 
-	/**
-	 * Returns foreign keys information of the table as
-	 *
-	 * 	[
-	 * 		'constraint_name' => [
-	 * 			'column_name' => 'columnName',
-	 * 			'foreign_schema' => 'schemaName',
-	 * 			'foreign_table' => 'tableName'
-	 * 			'foreign_column' => 'columnName'
-	 * 		],
-	 * 		...
-	 *  ]
-	 *
-	 * @param string $tableName -- may contain schema prefix
-	 * @param string|null $schema -- optional (table prefix overrides; default is current schema)
-	 *
-	 * @return array|bool
-	 */
-	abstract public function getForeignKeys($tableName, $schema=null);
+        return new $driver([
+            'dsn' => $dsn,
+            'user' => $user,
+            'password' => $password
+        ]);
+    }
 
-	/**
-	 * Returns remote foreign keys referred to this table (reverse foreign key)
-	 *
-	 * 	[
-	 * 		'constraint_name' => [
-	 * 			'remote_schema' => 'schemaName',
-	 * 			'remote_table' => 'tableName'
-	 * 			'remote_column' => 'columnName'
-	 * 			'table_schema' => 'columnName',
-	 * 			'table_name' => 'columnName',
-	 * 			'column_name' => 'columnName',
-	 *          'constraint_name' => 'constraint_name',
-	 * 		],
-	 * 		...
-	 *  ]
-	 *
-	 * @param string $tableName -- may contain schema prefix
-	 * @param string|null $schema -- optional (table prefix overrides; default is current schema)
-	 *
-	 * @return array|bool
-	 */
-	abstract public function getReferrerKeys($tableName=null, $schema=null);
+    /**
+     * Returns foreign keys information of the table as
+     *
+     *    [
+     *        'constraint_name' => [
+     *            'column_name' => 'columnName',
+     *            'foreign_schema' => 'schemaName',
+     *            'foreign_table' => 'tableName'
+     *            'foreign_column' => 'columnName'
+     *        ],
+     *        ...
+     *  ]
+     *
+     * @param string $tableName -- may contain schema prefix
+     * @param string|null $schema -- optional (table prefix overrides; default is current schema)
+     *
+     * @return array|bool
+     */
+    abstract public function getForeignKeys($tableName, $schema = null);
 
-	/**
-	 * @param string $tableName
-	 * @param string|null $schema
-	 *
-	 * @return false|resource
-	 */
-	abstract public function dropTable($tableName, $schema=null);
+    /**
+     * Returns remote foreign keys referred to this table (reverse foreign key)
+     *
+     *    [
+     *        'constraint_name' => [
+     *            'remote_schema' => 'schemaName',
+     *            'remote_table' => 'tableName'
+     *            'remote_column' => 'columnName'
+     *            'table_schema' => 'columnName',
+     *            'table_name' => 'columnName',
+     *            'column_name' => 'columnName',
+     *          'constraint_name' => 'constraint_name',
+     *        ],
+     *        ...
+     *  ]
+     *
+     * @param string $tableName -- may contain schema prefix
+     * @param string|null $schema -- optional (table prefix overrides; default is current schema)
+     *
+     * @return array|bool
+     */
+    abstract public function getReferrerKeys($tableName = null, $schema = null);
 
-	/**
-	 * @param string $viewName
-	 * @param string|null $schema
-	 *
-	 * @return false|resource
-	 */
-	abstract public function dropView($viewName, $schema=null);
+    /**
+     * @param string $tableName
+     * @param string|null $schema
+     *
+     * @return false|resource
+     */
+    abstract public function dropTable($tableName, $schema = null);
 
-	/**
-	 * Returns sequence names
-	 *
-	 * @param string|null $schema
-	 *
-	 * @return false|resource
-	 */
-	abstract public function getSequences($schema=null);
+    /**
+     * @param string $viewName
+     * @param string|null $schema
+     *
+     * @return false|resource
+     */
+    abstract public function dropView($viewName, $schema = null);
 
-	/**
-	 * @param string $sequenceName
-	 * @param string|null $schema
-	 *
-	 * @return false|resource
-	 */
-	abstract public function dropSequence($sequenceName, $schema=null);
+    /**
+     * Returns sequence names
+     *
+     * @param string|null $schema
+     *
+     * @return false|resource
+     */
+    abstract public function getSequences($schema = null);
 
-	/**
-	 * Returns array with function names followed by parameter list and preceded with routine type from the give schema.
-	 *
-	 * @param string $schema -- default is "public"
-	 * @return string[]
-	 */
-	abstract public function getRoutines($schema=null);
+    /**
+     * @param string $sequenceName
+     * @param string|null $schema
+     *
+     * @return false|resource
+     */
+    abstract public function dropSequence($sequenceName, $schema = null);
 
-	/**
-	 * @param string $routineName
-	 * @param string $routineType
-	 * @param string|null $schema
-	 *
-	 * @return resource|false -- success
-	 */
-	abstract public function dropRoutine($routineName, $routineType='FUNCTION', $schema=null);
+    /**
+     * Returns array with function names followed by parameter list and preceded with routine type from the give schema.
+     *
+     * @param string $schema -- default is "public"
+     * @return string[]
+     */
+    abstract public function getRoutines($schema = null);
 
-	/**
-	 * Returns array with trigger names
-	 *
-	 * @param $schema
-	 * @return string[] -- trigger names as schema.name
-	 */
-	abstract public function getTriggers($schema=null);
+    /**
+     * @param string $routineName
+     * @param string $routineType
+     * @param string|null $schema
+     *
+     * @return resource|false -- success
+     */
+    abstract public function dropRoutine($routineName, $routineType = 'FUNCTION', $schema = null);
 
-	/**
-	 * Determines whether the error message is related to deleting a view or not
-	 * @param string $errorMessage
-	 * @return bool
-	 */
-	public function isViewRelated($errorMessage) {
-		$dropViewErrors = [
-			'DROP VIEW to delete view', // SQLite
-			'SQLSTATE[42S02]', // MySQL
-		];
+    /**
+     * Returns array with trigger names
+     *
+     * @param $schema
+     * @return string[] -- trigger names as schema.name
+     */
+    abstract public function getTriggers($schema = null);
 
-		foreach ($dropViewErrors as $dropViewError) {
-			if (strpos($errorMessage, $dropViewError) !== false) {
-				return true;
-			}
-		}
-		return false;
-	}
+    /**
+     * Determines whether the error message is related to deleting a view or not
+     * @param string $errorMessage
+     * @return bool
+     */
+    public function isViewRelated($errorMessage)
+    {
+        $dropViewErrors = [
+            'DROP VIEW to delete view', // SQLite
+            'SQLSTATE[42S02]', // MySQL
+        ];
 
-	/**
-	 * Returns the current PDO connection. Will be created now if it is not yet connected.
-	 *
-	 * @return PDO -- A PDO object if connected
-	 * @throws Exception -- If connection failed
-	 */
-	public function getPdo() {
-		if(!$this->_pdo) {
-			try {
-				$this->_pdo = new PDO($this->dsn, $this->_user, $this->_password);
-				$this->_pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-				$this->reset();
-			}
-			catch(Throwable $e) {
-				throw new Exception("Connection failed to '$this->dsn' with user '$this->_user'", 0, $e);
-			}
-		}
-		return $this->_pdo;
-	}
+        foreach ($dropViewErrors as $dropViewError) {
+            if (strpos($errorMessage, $dropViewError) !== false) {
+                return true;
+            }
+        }
+        return false;
+    }
 
-	public function getIsConnected() {
-		return !!$this->_pdo;
-	}
+    /**
+     * Returns the current PDO connection. Will be created now if it is not yet connected.
+     *
+     * @return PDO -- A PDO object if connected
+     * @throws Exception -- If connection failed
+     */
+    public function getPdo()
+    {
+        if (!$this->_pdo) {
+            try {
+                $this->_pdo = new PDO($this->dsn, $this->_user, $this->_password);
+                $this->_pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+                $this->reset();
+            } catch (Throwable $e) {
+                throw new Exception("Connection failed to '$this->dsn' with user '$this->_user'", 0, $e);
+            }
+        }
+        return $this->_pdo;
+    }
+
+    public function getIsConnected()
+    {
+        return !!$this->_pdo;
+    }
 }

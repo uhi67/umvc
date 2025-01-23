@@ -1,10 +1,11 @@
 <?php
-    /**
-     * The default implementation of the main (default) layout file.
-     * Can be overridden by a same-named file in application's view directory.
-     *
-     * @var $content -- the rendered content of a view
-     */
+/**
+ * The default implementation of the main (default) layout file.
+ * Can be overridden by a same-named file in application's view directory.
+ *
+ * @var $content -- the rendered content of a view
+ */
+
 ?>
 <!doctype html>
 <html lang="en">
@@ -17,7 +18,7 @@
 </head>
 
 <body>
-    <?= $content ?>
-    <?= $this->controller->linkAssets(['js']) ?>
+<?= $content ?>
+<?= $this->controller->linkAssets(['js']) ?>
 </body>
 </html>

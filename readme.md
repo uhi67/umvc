@@ -1,7 +1,7 @@
 UMVC framework
 ==============
 
-Version 2.0.2 -- 2024-12-13
+Version 2.1 -- 2025-01-23
 
 A simple web-application framework implementing model-view-controller (MVC) architectural pattern.
 
@@ -184,6 +184,14 @@ A built-in dockerized testing environment can be used to test with different php
 
 Change log
 ----------
+
+### version 2.1 -- "2025-01-23"
+
+- Model::getOne() now returns null if null value is specified as primary key.
+- fix Query::column
+- fix AppTestHelper
+- jsonResponse parameter name changed
+- PSR12
 
 ### version 2.0.2 -- "2024-12-13"
 

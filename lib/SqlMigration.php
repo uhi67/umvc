@@ -1,4 +1,5 @@
-<?php /** @noinspection PhpUnused */
+<?php
+/** @noinspection PhpUnused */
 
 namespace uhi67\umvc;
 
@@ -16,15 +17,18 @@ use Exception;
  * @property-read Connection $connection
  * @package UMVC Simple Application Framework
  */
-class SqlMigration extends Migration {
+class SqlMigration extends Migration
+{
     public $filename;
-	/**
-	 * This method must do the migration up job in the migration class.
+
+    /**
+     * This method must do the migration up job in the migration class.
      *
-	 * @return bool -- must return true on success, false on failure
+     * @return bool -- must return true on success, false on failure
      * @throws Exception -- may throw an Exception on failure
-	 */
-	public function up() {
+     */
+    public function up()
+    {
         return $this->executeSqlFile($this->filename);
     }
 }

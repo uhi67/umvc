@@ -1,4 +1,5 @@
-<?php /** @noinspection PhpIllegalPsrClassPathInspection */
+<?php
+/** @noinspection PhpIllegalPsrClassPathInspection */
 
 namespace uhi67\umvc;
 
@@ -30,7 +31,8 @@ use ReflectionMethod;
  *
  * @package UMVC Simple Application Framework
  */
-class Controller extends Component {
+class Controller extends Component
+{
     /** @var App $app -- the parent application object */
     public $app;
     /** @var string[] $path -- unused path elements after controller (or action) name */
@@ -43,7 +45,8 @@ class Controller extends Component {
     /** @var Asset[] $assets -- registered assets indexed by name */
     public $assets = [];
 
-    public function init() {
+    public function init()
+    {
         $this->registerAssets();
     }
 
@@ -52,7 +55,8 @@ class Controller extends Component {
      * The default implementation is empty.
      * @return void
      */
-    public function registerAssets() {
+    public function registerAssets()
+    {
         // This function is intentionally empty. Descendants need not call it.
     }
 
@@ -62,7 +66,8 @@ class Controller extends Component {
      * @return int -- HTTP response status
      * @throws Exception if no matching action
      */
-    public function go() {
+    public function go()
+    {
         // Search for action method to call
         $methodName = null;
         $this->action = null;
@@ -70,24 +75,33 @@ class Controller extends Component {
         if (isset($this->path[0]) && is_callable([$this, $func])) {
             $this->action = array_shift($this->path);
             $methodName = $func;
-        } else if (is_callable([$this, $func = 'actionDefault'])) {
-            $this->action = 'default';
-            $methodName = $func;
+        } else {
+            if (is_callable([$this, $func = 'actionDefault'])) {
+                $this->action = 'default';
+                $methodName = $func;
+            }
         }
 
         // Call the action method with the required parameters from the request
         if ($methodName) {
-            if (!$this->beforeAction()) return 0;
+            if (!$this->beforeAction()) {
+                return 0;
+            }
             $args = [];
             $ref = new ReflectionMethod($this, $methodName);
             foreach ($ref->getParameters() as $param) {
                 $urlizedParameterName = AppHelper::underscore(AppHelper::camelize($param->name));
                 $defaultValue = $param->isOptional() ? $param->getDefaultValue() : null;
                 // If the next item of the path is an integer, it can be used as value of $id parameter (get parameter overrides it)
-                if ($param->name == 'id' && isset($this->path[0]) && ctype_digit($this->path[0])) $defaultValue = (int)array_shift($this->path);
+                if ($param->name == 'id' && isset($this->path[0]) && ctype_digit($this->path[0])) {
+                    $defaultValue = (int)array_shift($this->path);
+                }
                 $args[$param->name] = $this->query[$urlizedParameterName] ?? $defaultValue;
                 if (!$param->isOptional() && !isset($this->query[$urlizedParameterName]) && $defaultValue === null) {
-                    throw new Exception("The action `$this->action` requires parameter `$urlizedParameterName`", HTTP::HTTP_BAD_REQUEST);
+                    throw new Exception(
+                        "The action `$this->action` requires parameter `$urlizedParameterName`",
+                        HTTP::HTTP_BAD_REQUEST
+                    );
                 }
             }
             $status = call_user_func_array([$this, $methodName], $args);
@@ -104,7 +118,8 @@ class Controller extends Component {
      * The default behavior is true (enable the action).
      * Called only if the action method exists.
      */
-    public function beforeAction() {
+    public function beforeAction()
+    {
         return true;
     }
 
@@ -114,7 +129,8 @@ class Controller extends Component {
      * Override in your controller, if a default action is needed.
      * @throws Exception
      */
-    public function actionDefault() {
+    public function actionDefault()
+    {
         throw new Exception('No default action is defined in ' . call_user_func([get_called_class(), 'shortName']));
     }
 
@@ -126,11 +142,16 @@ class Controller extends Component {
      * @return int
      * @throws Exception -- if the response is not a valid data to convert to JSON.
      */
-    public function jsonResponse($data, $headers = []) {
-        foreach ($headers as $header) $this->app->sendHeader($header);
+    public function jsonResponse($data, $headers = [])
+    {
+        foreach ($headers as $header) {
+            $this->app->sendHeader($header);
+        }
         $this->app->sendHeader('Content-Type: application/json');
         $result = json_encode($data);
-        if (!$result) throw new Exception('Invalid data');
+        if (!$result) {
+            throw new Exception('Invalid data');
+        }
         echo $result;
         return 0;
     }
@@ -145,8 +166,11 @@ class Controller extends Component {
      * @return int
      * @throws Exception -- if the response is not a valid data to convert to JSON.
      */
-    public function csvResponse($models, $headers = []) {
-        foreach ($headers as $header) $this->app->sendHeader($header);
+    public function csvResponse($models, $headers = [])
+    {
+        foreach ($headers as $header) {
+            $this->app->sendHeader($header);
+        }
         $this->app->sendHeader('Content-Type: application/csv; charset=UTF-8');
         $this->app->sendHeader("Cache-Control: no-cache, must-revalidate");  // HTTP/1.1
 
@@ -170,7 +194,8 @@ class Controller extends Component {
      * @return int
      * @throws Exception
      */
-    public function jsonErrorResponse($error) {
+    public function jsonErrorResponse($error)
+    {
         return $this->jsonResponse([
             'success' => false,
             'error' => $error,
@@ -185,8 +210,11 @@ class Controller extends Component {
      * @return int
      * @throws Exception -- in case of HTML (Exception will be caught and displayed as HTML)
      */
-    public function errorResponse($error, $format = 'HTML') {
-        if ($format == 'JSON') return $this->jsonErrorResponse($error);
+    public function errorResponse($error, $format = 'HTML')
+    {
+        if ($format == 'JSON') {
+            return $this->jsonErrorResponse($error);
+        }
         throw new Exception($error);
     }
 
@@ -217,15 +245,20 @@ class Controller extends Component {
      * @return false|string
      * @throws Exception
      */
-    public function render($viewName, $params = [], $layout = null, $layoutParams = [], $locale = null) {
-        if ($locale === null || $locale === true) $locale = $this->app->locale;
+    public function render($viewName, $params = [], $layout = null, $layoutParams = [], $locale = null)
+    {
+        if ($locale === null || $locale === true) {
+            $locale = $this->app->locale;
+        }
         if ($locale) {
             // Priority order: 1. Localized view (with long or short locale) / 2. untranslated / 3. default-locale view (long/short)
             $lv = $this->localizedView($viewName, $locale);
             if (!$lv && !($this->app->viewFile($viewName) && file_exists($this->app->viewFile($viewName)))) {
                 $lv = $this->localizedView($viewName, App::$app->source_locale);
             }
-            if ($lv) $viewName = $lv;
+            if ($lv) {
+                $viewName = $lv;
+            }
         }
         return $this->app->render($viewName, $params, $layout, $layoutParams);
     }
@@ -239,19 +272,27 @@ class Controller extends Component {
      * @return string|null
      * @throws Exception
      */
-    private function localizedView($viewName, $locale) {
+    private function localizedView($viewName, $locale)
+    {
         // Look up view file using full locale
         $lv = $this->localizedViewName($viewName, $locale);
-        if ($this->app->viewFile($lv) && file_exists($this->app->viewFile($lv))) return $lv;
+        if ($this->app->viewFile($lv) && file_exists($this->app->viewFile($lv))) {
+            return $lv;
+        }
         // Look up view file using short language code
         $lv = $this->localizedViewName($viewName, substr($locale, 0, 2));
-        if ($this->app->viewFile($lv) && file_exists($this->app->viewFile($lv))) return $lv;
+        if ($this->app->viewFile($lv) && file_exists($this->app->viewFile($lv))) {
+            return $lv;
+        }
         return null;
     }
 
-    private function localizedViewName($viewName, $locale) {
+    private function localizedViewName($viewName, $locale)
+    {
         $p = strrpos($viewName, '/');
-        if ($p === false) $p = -1;
+        if ($p === false) {
+            $p = -1;
+        }
         return substr($viewName, 0, $p + 1) . $locale . '/' . substr($viewName, $p + 1);
     }
 
@@ -259,7 +300,8 @@ class Controller extends Component {
      * @param Asset $asset
      * @return void
      */
-    public function registerAsset(Asset $asset) {
+    public function registerAsset(Asset $asset)
+    {
         $this->assets[$asset->name] = $asset;
     }
 
@@ -270,7 +312,8 @@ class Controller extends Component {
      * @return string -- the generated html code
      * @throws Exception
      */
-    public function linkAssets($extensions = null) {
+    public function linkAssets($extensions = null)
+    {
         $html = '';
         foreach ($this->assets as $asset) {
             foreach ((array)$asset->files as $file) {
@@ -297,8 +340,6 @@ class Controller extends Component {
                     }
                 });
             }
-
-
         }
 
         return $html;

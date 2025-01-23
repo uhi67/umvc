@@ -14,7 +14,8 @@ namespace uhi67\umvc;
  * ```
  *
  */
-interface UserInterface {
+interface UserInterface
+{
     /**
      * Must update the User object using the attributes provided by login process
      *
