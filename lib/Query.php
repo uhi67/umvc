@@ -738,9 +738,13 @@ class Query extends Component
         $result = [];
         $index = $this->_indexField ?: false;
         while ($row = $this->stmt->fetch()) {
-            if($index && !isset($row[$index])) throw new Exception("Invalid index column $index");
-            if(!$row[$index]) { var_dump("Empty index: ", $row); exit; }
-            if($index) $result[$row[$index]] = $row[$column];
+            if($index) {
+                if(!isset($row[$index])) throw new Exception("Invalid index column $index");
+                if(!$row[$index]) {
+                    throw new Exception("Empty index: ".json_encode(['column'=>$column, 'row'=>$row, 'index'=>$index]));
+                }
+                $result[$row[$index]] = $row[$column];
+            }
             else $result[] = $row[$column];
         }
 
