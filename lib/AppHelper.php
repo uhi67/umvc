@@ -584,6 +584,8 @@ class AppHelper
      */
     public static function baseUrl(): string
     {
+        $baseurl = getenv('APP_BASEURL');
+        if($baseurl) return trim($baseurl, '/');
         $https = getenv('HTTPS') ?? 'off';
         $protocol = ($https == 'on' || ($_SERVER['SERVER_PORT'] ?? 80) == 443) ? "https" : "http";
         if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) || $https == 'on') {
@@ -594,7 +596,6 @@ class AppHelper
                 $_SERVER['HTTPS'] = 'on'; // SimpleSAMLphp will apply wrong RelayState URL after login/logout if it's missing
             }
         }
-        $baseurlpath = $protocol . '://' . $_SERVER["HTTP_HOST"];
-        return $baseurlpath;
+        return $protocol . '://' . $_SERVER["HTTP_HOST"];
     }
 }
