@@ -662,7 +662,7 @@ class Query extends Component
 
         $this->_params = $values;
         foreach ($this->_params as $name => $value) {
-            $this->_innerParams[$name] = $values;
+            $this->_innerParams[$name] = $value;
         }
         return $this;
     }
