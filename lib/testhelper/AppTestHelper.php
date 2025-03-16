@@ -41,8 +41,8 @@ use ReflectionException;
  * @package UMVC Simple Application Framework
  */
 class AppTestHelper extends Framework {
-	protected array $requiredFields = ['configFile'];
-	protected array $config = ['loader'=>'core', 'sapi'=>'apache']; // optional parameters and defaults of module
+	protected $requiredFields = ['configFile'];
+	protected $config = ['loader'=>'core', 'sapi'=>'apache']; // optional parameters and defaults of module
 
     /** @var App $app -- the application instance started by client */
 	public $app;
@@ -83,7 +83,6 @@ class AppTestHelper extends Framework {
 	 * @throws Exception
 	 */
 	public function _before(TestInterface $test) {
-        /** @noinspection PhpDynamicFieldDeclarationInspection */
         $this->client = new AppConnector([]);
 		$this->client->appConfig = $this->appConfig;
 		$this->client->sapi = $this->config['sapi'];
