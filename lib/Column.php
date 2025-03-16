@@ -26,7 +26,9 @@ use Exception;
  * - bool **$searchCancel** -- display a search-cancel icon in the search lane
  * - string **$class** -- custom class for value cell
  * - string **$headerClass** -- custom header class
- * - string|Model **$model** the model name used in the table
+ * - string|Model **$model** -- the model name used in the table
+ * - string|bool **$hint** -- title (hint displayed at mouse hover) default is original label if label is overridden, set to 'false' to disable
+ * - string **filterHint** -- title attribute for filter cell
  *
  * @package UMVC Simple Application Framework
  */
@@ -61,6 +63,8 @@ class Column extends Component
     public $model;
     /** @var string|null|bool -- display null value as. default is Grid's. Set false to disable (=empty string) */
     public $emptyValue;
+    /** @var string|null $filterHint -- title attribute for filter cell */
+    public ?string $filterHint = null;
 
     /**
      * @param Grid|null $grid
@@ -178,7 +182,9 @@ class Column extends Component
                 }
             }
         }
-        return '<td>' . $result . '</td>';
+        $filterCellAttributes = [];
+        if($this->filterHint) $filterCellAttributes['title'] = $this->filterHint;
+        return Html::tag('td', $result, $filterCellAttributes);
     }
 
     /**

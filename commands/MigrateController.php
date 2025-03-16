@@ -69,13 +69,16 @@ class MigrateController extends Command {
     public function actionUp() {
         if (!$this->createMigrationTable()) exit(1);
         if (!$this->createMigrationPath()) exit(2);
+
+        $migrationPath = ArrayHelper::fetchValue($this->query, 'path', $this->migrationPath);
+
         // Collect new migration files
-	    if($this->verbose>2) echo "Migrating from path '$this->migrationPath'", PHP_EOL;
-        $dh = opendir($this->migrationPath);
-        if(!$dh) throw new Exception("Invalid dir ".$this->migrationPath);
+	    if($this->verbose>2) echo "Migrating from path '$migrationPath'", PHP_EOL;
+        $dh = opendir($migrationPath);
+        if(!$dh) throw new Exception("Invalid dir " . $migrationPath);
         $new = [];
         while (($file = readdir($dh)) !== false) {
-            if(filetype($this->migrationPath.'/'.$file)=='file' && preg_match('/^m\d{6}_\d{6}_[\w_]+\.(php|sql)$/', $file)) {
+            if(filetype($migrationPath.'/'.$file)=='file' && preg_match('/^m\d{6}_\d{6}_[\w_]+\.(php|sql)$/', $file)) {
                 // Check in database
                 $name = pathinfo($file, PATHINFO_FILENAME);
                 $applied = \uhi67\umvc\models\Migration::getOne(['name'=>$name]);
@@ -94,7 +97,7 @@ class MigrateController extends Command {
             echo sprintf("There are %d new updates:", count($new)), PHP_EOL;
             foreach($new as $file) {
                 $name = pathinfo($file, PATHINFO_FILENAME);
-                $filename = $this->migrationPath . '/' . $file;
+                $filename = $migrationPath . '/' . $file;
                 echo "  - $filename", PHP_EOL;
             }
             if($this->confirm!='yes' && !CliHelper::confirm('Apply all the new migrations?')) exit;
@@ -106,7 +109,7 @@ class MigrateController extends Command {
             $this->connection->pdo->beginTransaction();
             $name = pathinfo($file, PATHINFO_FILENAME);
             $ext = pathinfo($file, PATHINFO_EXTENSION);
-            $filename = $this->migrationPath.'/'.$file;
+            $filename = $migrationPath.'/'.$file;
             try {
                 if($this->verbose>1) echo "Applying $name from $filename", PHP_EOL;
                 if($ext=='php') {
@@ -117,7 +120,6 @@ class MigrateController extends Command {
                         /** @var Migration $className */
                         $className = '\app\migrations\\'.$name;
                         require $filename;
-                        /** @var Migration $migration */
                         $migration = new $className(['app'=>$this->app, 'connection'=>$this->connection, 'verbose'=>$this->verbose]);
                         $success = $migration->up();
                     }
@@ -195,6 +197,7 @@ class MigrateController extends Command {
         echo "Usage:", PHP_EOL, PHP_EOL;
         echo "   `php app migrate` -- migrate up. Interactive confirmations will be asked for.", PHP_EOL;
         echo "   `php app migrate/up verbose=2` -- migrate up with detailed output; `verbose=0` for silent operation.", PHP_EOL;
+        echo "   `php app migrate/up path=<path>` -- migrate using a custom directory.", PHP_EOL;
         echo "   `php app migrate/create <name>` -- create new php migration in the migration directory", PHP_EOL;
 	    echo "   `php app migrate/reset` -- delete database and migrate up from the beginning", PHP_EOL, PHP_EOL;
 		echo "Options:", PHP_EOL, PHP_EOL;

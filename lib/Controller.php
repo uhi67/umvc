@@ -190,15 +190,19 @@ class Controller extends Component
     /**
      * Returns an error response
      *
-     * @param string|mixed $error -- The error message (can be another structure)
+     * @param string|mixed $message -- The error message (can be another structure)
+     * @param int $status
      * @return int
      * @throws Exception
      */
-    public function jsonErrorResponse($error)
+    public function jsonErrorResponse($message, $status = 500): int
     {
+        $protocol = ($_SERVER['SERVER_PROTOCOL'] ?? 'HTTP/1.0');
+        $title = HTTP::$statusTexts[$status] ?? '';
+        $this->app->sendHeader($protocol . ' ' . $status . ' ' . $title);
         return $this->jsonResponse([
-            'success' => false,
-            'error' => $error,
+            'status' => $status,
+            'error' => $message,
         ]);
     }
 
@@ -207,13 +211,14 @@ class Controller extends Component
      *
      * @param string $error -- The error message
      * @param string $format -- HTML: displays a HTML error page; JSON: returns a JSON error response
+     * @param int $status
      * @return int
      * @throws Exception -- in case of HTML (Exception will be caught and displayed as HTML)
      */
-    public function errorResponse($error, $format = 'HTML')
+    public function errorResponse($error, $format = 'HTML', $status  = 500): int
     {
         if ($format == 'JSON') {
-            return $this->jsonErrorResponse($error);
+            return $this->jsonErrorResponse($error, $status);
         }
         throw new Exception($error);
     }

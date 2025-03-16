@@ -1,7 +1,7 @@
 UMVC framework
 ==============
 
-Version 2.1 -- 2025-01-23
+Version 2.2 -- 2025-03-16
 
 A simple web-application framework implementing model-view-controller (MVC) architectural pattern.
 
@@ -184,6 +184,14 @@ A built-in dockerized testing environment can be used to test with different php
 
 Change log
 ----------
+
+### version 2.2 -- "2025-03-16"
+
+- jsonErrorResponse schema
+- fix Query bind
+- add path argument to migrate/up
+- add filterHint property to Column (used in Grid widget)
+- fix baseUrl (primary source is APP_BASEURL env. var.)
 
 ### version 2.1 -- "2025-01-23"
 
