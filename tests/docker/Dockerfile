@@ -1,4 +1,4 @@
-FROM php:7.4-apache-buster
+FROM php:8.2-apache
 
 RUN apt-get update -y && \
     apt-get install -y libicu-dev git libbz2-1.0 libbz2-dev libssl-dev libzip-dev
