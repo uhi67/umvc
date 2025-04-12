@@ -130,15 +130,24 @@ class SamlAuth extends AuthManager
 
     /**
      * Logs out the user. Normally it will never return.
-     * Returns false on error (if SimpleSaml is not initialized)
+     * Returns false on error (if SimpleSaml is not initialized).
+     * Does not return on successful logout but redirects to the return URL or the current page
      *
+     * Valid parameters:
+     *
+     *  - 'ReturnTo': The URL the user should be returned to after logout.
+     *  - 'ReturnCallback': The function that should be called after logout.
+     *  - 'ReturnStateParam': The parameter we should return the state in when redirecting.
+     *  - 'ReturnStateStage': The stage the state array should be saved with.
+     *
+     * @param array|string|null $params -- return URL or parameter array
      * @return bool
      */
-    public function logout()
+    public function logout($params = null): bool
     {
         parent::logout();
         if ($this->auth != null && $this->auth->isAuthenticated()) {
-            $this->auth->logout();
+            $this->auth->logout($params);
         }
         return false;
     }
@@ -172,21 +181,29 @@ class SamlAuth extends AuthManager
      * Returns a valid user on successful login or null on failure.
      * Side-effect: sets `$_SESSION['uid']` and `$this->uid`
      *
-     * @param string|null|false $returnTo -- null to auto-detect, false to disable
+     * Valid parameters:
+     * 'ErrorURL': A URL that should receive errors from the authentication.
+     * 'KeepPost': If the current request is a POST request, keep the POST data until after the authentication.
+     * 'ReturnTo': The URL the user should be returned to after authentication.
+     * 'ReturnCallback': The function we should call after the user has finished authentication.
+     *
+     * @param string|null|false $params -- null to auto-detect, false to disable
      * @return UserInterface|null
      * @throws Exception
      */
-    public function requireLogin($returnTo = null)
+    public function requireLogin($params = null)
     {
-        $params = [];
-        if ($returnTo) {
-            $params['ReturnTo'] = $returnTo;
-        } elseif ($returnTo === null) {
+        if (is_string($params)) {
+            $params = ['ReturnTo' => $params];
+        } else {
+            $params = [];
+        }
+        if (!isset($params['ReturnTo'])) {
             $request = $_GET;
             unset($request['login']);
-            $returnTo = App::$app->createUrl($request);
-            if ($returnTo) {
-                $params['ReturnTo'] = $returnTo;
+            $url = App::$app->createUrl($request);
+            if ($url) {
+                $params['ReturnTo'] = $url;
             }
         }
         $this->auth->requireAuth($params);
@@ -261,14 +278,12 @@ class SamlAuth extends AuthManager
             if (method_exists('\SimpleSAML\Locale\Language', 'setLanguage')) {
                 $t->getTranslator()->getLanguage()->setLanguage(substr($la, 0, 2), false);
             } else {
-                /** @noinspection PhpDeprecationInspection */
                 $t->setLanguage(substr($la, 0, 2), false);
             }
         }
         if (method_exists('\SimpleSAML\Locale\Translate', 'getAttributeTranslation')) {
             $translated = $t->getTranslator()->getAttributeTranslation($attributeName);
         } else {
-            /** @noinspection PhpDeprecationInspection */
             $translated = $t->getAttributeTranslation($attributeName);
         }
         return $translated;

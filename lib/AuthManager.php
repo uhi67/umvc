@@ -101,22 +101,31 @@ abstract class AuthManager extends Component
      * }
      * ```
      *
-     * @param string|null $returnTo -- return URL after login or null if none
+     * Valid parameters:
+     * 'ErrorURL': A URL that should receive errors from the authentication.
+     * 'KeepPost': If the current request is a POST request, keep the POST data until after the authentication.
+     * 'ReturnTo': The URL the user should be returned to after authentication.
+     * 'ReturnCallback': The function we should call after the user has finished authentication.
+     *
+     * @param array|string|null $params -- params or return URL after login or null if none
      * @return UserInterface|null
      * @throws Exception
      */
-    public function actionLogin($returnTo = null)
+    public function actionLogin($params = null)
     {
-        if ($returnTo === null) {
+        if ($params === null) {
+            $params = [];
+        }
+        if(!array_key_exists('ReturnTo', $params)) {
             if (isset($_REQUEST['ReturnTo'])) {
-                $returnTo = $_REQUEST['ReturnTo'];
+                $params['ReturnTo'] = $_REQUEST['ReturnTo'];
             } else {
                 $request = $_GET;
                 unset($request['login']);
-                $returnTo = $this->parent->createUrl($request);
+                $params['ReturnTo'] = $this->parent->createUrl($request);
             }
         }
-        $this->parent->user = $this->requireLogin($returnTo);
+        $this->parent->user = $this->requireLogin($params);
 
         return $this->prepareUser();
     }
@@ -162,9 +171,10 @@ abstract class AuthManager extends Component
      *
      * Return false on error
      *
+     * @param array|string|null $params -- used only in descendants
      * @return bool
      */
-    public function logout()
+    public function logout($params = null): bool
     {
         $this->parent->user = null;
         $_SESSION['uid'] = null;
@@ -182,10 +192,16 @@ abstract class AuthManager extends Component
     /**
      * Must manage the login process
      *
-     * @param string|null $returnTo
+     * Valid parameters:
+     * 'ErrorURL': A URL that should receive errors from the authentication.
+     * 'KeepPost': If the current request is a POST request, keep the POST data until after the authentication.
+     * 'ReturnTo': The URL the user should be returned to after authentication.
+     * 'ReturnCallback': The function we should call after the user has finished authentication.
+     *
+     * @param array|string|null $params -- return URL or parameter array
      * @return UserInterface|null
      */
-    abstract public function requireLogin($returnTo = null);
+    abstract public function requireLogin($params = null);
 
     abstract public function getAttributes();
 }
