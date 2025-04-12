@@ -195,8 +195,6 @@ class SamlAuth extends AuthManager
     {
         if (is_string($params)) {
             $params = ['ReturnTo' => $params];
-        } else {
-            $params = [];
         }
         if (!isset($params['ReturnTo'])) {
             $request = $_GET;

@@ -116,7 +116,7 @@ abstract class AuthManager extends Component
         if ($params === null) {
             $params = [];
         }
-        if(!array_key_exists('ReturnTo', $params)) {
+        if (!array_key_exists('ReturnTo', $params)) {
             if (isset($_REQUEST['ReturnTo'])) {
                 $params['ReturnTo'] = $_REQUEST['ReturnTo'];
             } else {
@@ -126,7 +126,6 @@ abstract class AuthManager extends Component
             }
         }
         $this->parent->user = $this->requireLogin($params);
-
         return $this->prepareUser();
     }
 
