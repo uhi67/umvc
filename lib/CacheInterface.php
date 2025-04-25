@@ -1,4 +1,4 @@
-<?php
+<?php /** @noinspection PhpIllegalPsrClassPathInspection */
 
 namespace uhi67\umvc;
 
@@ -25,12 +25,12 @@ interface CacheInterface
      * Returns data from cache or null if not found or expired.
      *
      * @param string $key
-     * @param mixed $default
-     * @param int|bool|null $ttl -- if given, overrides and restarts expiration (only for this query, and if the element is not purged yet). true=restart default ttl
+     * @param mixed|null $default
+     * @param bool|int|null $ttl -- if given, overrides and restarts expiration (only for this query, and if the element is not purged yet). true=restart default ttl
      *
      * @return mixed
      */
-    public function get($key, $default = null, $ttl = null);
+    public function get(string $key, mixed $default = null, bool|int $ttl = null): mixed;
 
     /**
      * Returns data from cache or null if not found or expired.
@@ -40,17 +40,17 @@ interface CacheInterface
      *
      * @return bool
      */
-    public function has($key);
+    public function has(string $key): bool;
 
     /**
      * Saves data into cache
      *
      * @param string $key
      * @param mixed $value -- Specify null to remove item from the cache
-     * @param int $ttl -- time to live in secs, default is given at cache config, false to no expiration
-     * @return int -- number of bytes written or false on failure
+     * @param int|null $ttl -- time to live in secs, default is given at cache config, false to no expiration
+     * @return mixed -- the value itself
      */
-    public function set($key, $value, $ttl = null);
+    public function set(string $key, mixed $value, int $ttl = null): mixed;
 
     /**
      * Removes given items from the cache by name or pattern
@@ -59,31 +59,31 @@ interface CacheInterface
      *
      * @return int -- number of deleted items, false on error
      */
-    public function delete($key);
+    public function delete(string $key): int;
 
     /**
      * Deletes all data from the cache
      * @return int -- the number of items deleted
      */
-    public function clear();
+    public function clear(): int;
 
     /**
      * called before destructor (e.g. to save data to physical store if needed)
      * @return void
      */
-    public function finish();
+    public function finish(): void;
 
     /**
      * Returns a cached value or computes it if not exists
      *
      * @param string $key -- the name of the cached value
      * @param callable $compute -- the function retrieves the original value
-     * @param int $ttl -- time to live in seconds (used in set only)
+     * @param int|null $ttl -- time to live in seconds (used in set only)
      * @param bool $refresh -- set to true to force replace the cached value
      *
      * @return mixed -- the cached value
      */
-    public function cache($key, callable $compute, $ttl = null, $refresh = false);
+    public function cache(string $key, callable $compute, int $ttl = null, bool $refresh = false): mixed;
 
     /**
      * Must clean up the expired items
@@ -93,5 +93,5 @@ interface CacheInterface
      *
      * @return int -- number of items deleted
      */
-    public function cleanup($ttl = null);
+    public function cleanup(int $ttl = null): int;
 }
