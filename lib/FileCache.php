@@ -36,7 +36,7 @@ class FileCache extends Component implements CacheInterface
             $this->path = App::$app->runtimePath . '/cache';
         }
         if (!file_exists($this->path)) {
-            if (!is_writable($this->path) || !mkdir($this->path)) {
+            if (!is_writable(dirname($this->path)) || !mkdir($this->path)) {
                 throw new Exception("Cannot create cache directory " . $this->path);
             }
         }

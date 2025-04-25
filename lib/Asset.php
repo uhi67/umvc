@@ -70,6 +70,7 @@ class Asset extends Component
         }
 
         if (!is_dir($this->cacheDir)) {
+            $_SESSION['asset-cache-dir-error'] = $this->cacheDir;
             mkdir($this->cacheDir, 0774, true);
         }
         if (!$this->patterns) {
