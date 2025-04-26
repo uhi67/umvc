@@ -1,8 +1,9 @@
-<?php /** @noinspection PhpUnused */
+<?php
+/** @noinspection PhpIllegalPsrClassPathInspection */
+/** @noinspection PhpUnused */
 
 namespace uhi67\umvc\commands;
 
-use Codeception\Util\Debug;
 use Exception;
 use Throwable;
 use uhi67\umvc\AppHelper;
@@ -19,11 +20,15 @@ use uhi67\umvc\SqlMigration;
  * Usage
  * =====
  *
- * - run `php app migrate` to migrate up
- * - New migration can be created by `php app migrate/create <name>`
- * - `php app migrate/reset` -- delete database and migrate up from the beginning
- * - use `confirm=yes` switch to avoid interactive confirmations
+ * Run `php app migrate` to migrate up.
+ * New migration can be created by `php app migrate/create <name>`.
+ * Reset the migration database with `php app migrate/reset` and migrate up from the beginning.
  *
+ * ### Options
+ * - `confirm=yes` switch to avoid interactive confirmations
+ * - `verbose=0` for silent operation, 1 for normal, 2 for detailed output
+ * - path=<path> -- specify the migration directory
+ * - namespace=<namespace> -- specify the migration namespace
  */
 class MigrateController extends Command {
 
@@ -71,6 +76,7 @@ class MigrateController extends Command {
         if (!$this->createMigrationPath()) exit(2);
 
         $migrationPath = ArrayHelper::fetchValue($this->query, 'path', $this->migrationPath);
+        $namespace = ArrayHelper::fetchValue($this->query, 'namespace', '\app\migrations');
 
         // Collect new migration files
 	    if($this->verbose>2) echo "Migrating from path '$migrationPath'", PHP_EOL;
@@ -118,7 +124,7 @@ class MigrateController extends Command {
                     // Run php file
                     try {
                         /** @var Migration $className */
-                        $className = '\app\migrations\\'.$name;
+                        $className = $namespace . '\\' . $name;
                         require $filename;
                         $migration = new $className(['app'=>$this->app, 'connection'=>$this->connection, 'verbose'=>$this->verbose]);
                         $success = $migration->up();
@@ -197,7 +203,7 @@ class MigrateController extends Command {
         echo "Usage:", PHP_EOL, PHP_EOL;
         echo "   `php app migrate` -- migrate up. Interactive confirmations will be asked for.", PHP_EOL;
         echo "   `php app migrate/up verbose=2` -- migrate up with detailed output; `verbose=0` for silent operation.", PHP_EOL;
-        echo "   `php app migrate/up path=<path>` -- migrate using a custom directory.", PHP_EOL;
+        echo "   `php app migrate/up path=<path> namespace=<namespace>` -- migrate using a custom directory.", PHP_EOL;
         echo "   `php app migrate/create <name>` -- create new php migration in the migration directory", PHP_EOL;
 	    echo "   `php app migrate/reset` -- delete database and migrate up from the beginning", PHP_EOL, PHP_EOL;
 		echo "Options:", PHP_EOL, PHP_EOL;
@@ -242,7 +248,7 @@ class MigrateController extends Command {
     }
 
     /**
-     * Checks and creates migration directory if not exists
+     * Checks and creates the migration directory if not exists
      *
      * @return bool -- success
      */
@@ -326,7 +332,7 @@ EOT;
 	}
 
 	/**
-	 * Drop all object from the database
+	 * Drop all objects from the database
 	 *
 	 * @param int $verbose
 	 * @return bool -- success
@@ -399,7 +405,7 @@ EOT;
 	}
 
 	/**
-	 * Waits for database (container) to be ready for connection
+	 * Waits for the database (container) to be ready for connection
 	 *
 	 * See also: tests/docker/readme.md
 	 *
