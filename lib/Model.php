@@ -439,7 +439,7 @@ class Model extends BaseModel
      *  - other expression formats
      * @param array $params the parameter values for $1 parameters or name=>value pairs for $name parameters
      * @param Connection|null $connection -- database connection. Default is from App.
-     * @param null $query -- (output only) return the query created. Affected rows are accessible as $query->affected
+     * @param Query|null $query -- (output only) return the query created. Affected rows are accessible as $query->affected
      * @return bool success
      * @throws Exception
      */
@@ -669,17 +669,38 @@ class Model extends BaseModel
 
 
     /**
-     * ## Validates model to uniqueness of the given field
+     * ## Validates model to uniqueness of the given field or fields.
      *
-     * Returns true if the given fields has a value of null.
+     * Returns true if any of the the given fields has a value of null.
      *
      * @param string $fieldName -- for single field (null if called as multiple)
+     * @param array $fieldNames -- field names for multiple-field validation
      *
      * @return bool -- model is valid
      * @throws Exception  -- when a DB request failed
      */
-    public function validateUnique($fieldName)
-    {
+    public function validateUnique($fieldName, $fieldNames=[]) {
+        if($fieldName===null) {
+            // Multiple-field uniqueness
+            $fieldNames = $fieldNames ?: [$fieldName];
+            $values = $this->getAttributes($fieldNames);
+            foreach($values as $value) if(is_null($value)) return true;
+            if($this->isNew) {
+                $existingInstance = static::getOne($values);
+            } else {
+                // If already saved, itself must be ignored
+                $existingInstance = static::first(array_merge(
+                    ['and'],
+                    $this->db->asExpression($this->getAttributes($fieldNames)),
+                    [['not', [$this->db->asExpression($this->getOldPrimaryKey(true))]]]
+                ), null, null, $this->db);
+            }
+            if($existingInstance) {
+                $this->addError($fieldName, App::l('umvc','$1 must be unique'));
+                return false;
+            }
+            return true;
+        }
         $value = $this->$fieldName;
         if (is_null($value)) {
             return true;
