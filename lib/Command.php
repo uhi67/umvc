@@ -24,11 +24,13 @@ class Command extends Component
     public $query;
     /** @var string|null -- name of the currently executed action (without 'action' prefix) */
     public $action;
+    /** @var string $classPath -- the controller id path for controller Id property (Compatibility with Controller) */
+    public $classPath = null;
 
     /**
      * Execute the request by this controller
      *
-     * @return int -- HTTP response status
+     * @return string|int -- output or exit status
      * @throws Exception if no matching action
      */
     public function go()
@@ -49,7 +51,7 @@ class Command extends Component
         // Call the action method with the required parameters from the request
         if ($methodName) {
             if (!$this->beforeAction()) {
-                return 0;
+                return self::EXIT_STATUS_OK;
             }
             $args = [];
             $ref = new ReflectionMethod($this, $methodName);

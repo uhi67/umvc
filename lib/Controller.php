@@ -30,6 +30,7 @@ use ReflectionMethod;
  * - render(): same as ->app->render();
  *
  * @package UMVC Simple Application Framework
+ * @property-read string $actionPath -- controller/action, e.g. 'course/update'
  */
 class Controller extends Component
 {
@@ -44,10 +45,31 @@ class Controller extends Component
 
     /** @var Asset[] $assets -- registered assets indexed by name */
     public $assets = [];
+    /** @var string $classPath -- the controller id path for controller Id property */
+    public $classPath = null;
 
     public function init()
     {
+        if (!$this->classPath) {
+            $this->classPath = static::getClasspath();
+        }
         $this->registerAssets();
+    }
+
+    public static function getClassPath()
+    {
+        return AppHelper::underscore(preg_replace('/Controller$/', '', static::shortName()), '-');
+    }
+
+    /**
+     * The full qualified identifier of the action (`"path"/"controller"/"action"`, eg. 'admin/teacher/create')
+     * to use as a permission name in access control
+     *
+     * @return string
+     */
+    public function getActionPath(): string
+    {
+        return $this->classPath . '/' . $this->action;
     }
 
     /**
@@ -63,7 +85,7 @@ class Controller extends Component
     /**
      * Determines and performs the requested action using $this controller
      *
-     * @return int -- HTTP response status
+     * @return string|int -- output string or exit status
      * @throws Exception if no matching action
      */
     public function go()
@@ -85,8 +107,8 @@ class Controller extends Component
         // Call the action method with the required parameters from the request
         if ($methodName) {
             if (!$this->beforeAction()) {
-                return 0;
-            }
+                return HTTP::HTTP_FORBIDDEN;
+            } // Silently failed
             $args = [];
             $ref = new ReflectionMethod($this, $methodName);
             foreach ($ref->getParameters() as $param) {
@@ -105,7 +127,7 @@ class Controller extends Component
                 }
             }
             $status = call_user_func_array([$this, $methodName], $args);
-            return $status ?: ($this->app->responseStatus ?: 200);
+            return $status ?: $this->app->responseStatus;
         }
 
         // We are here if no action method was found for the request
@@ -139,7 +161,7 @@ class Controller extends Component
      *
      * @param array|object $data -- array or object containing the output data. Null is not permitted, use empty array for empty data
      * @param array $headers -- more custom headers to send
-     * @return int
+     * @return string
      * @throws Exception -- if the response is not a valid data to convert to JSON.
      */
     public function jsonResponse($data, $headers = [])
@@ -152,8 +174,7 @@ class Controller extends Component
         if (!$result) {
             throw new Exception('Invalid data');
         }
-        echo $result;
-        return 0;
+        return $result;
     }
 
     /**
@@ -163,7 +184,7 @@ class Controller extends Component
      *
      * @param array[] $models -- array containing the output data. Null is not permitted, use empty array for empty data
      * @param array $headers -- more custom headers to send
-     * @return int
+     * @return int -- exit status
      * @throws Exception -- if the response is not a valid data to convert to JSON.
      */
     public function csvResponse($models, $headers = [])
@@ -184,7 +205,7 @@ class Controller extends Component
             }
             fclose($s);
         }
-        return 0;
+        return App::EXIT_STATUS_OK;
     }
 
     /**
@@ -215,7 +236,7 @@ class Controller extends Component
      * @return int
      * @throws Exception -- in case of HTML (Exception will be caught and displayed as HTML)
      */
-    public function errorResponse($error, $format = 'HTML', $status  = 500): int
+    public function errorResponse($error, $format = 'HTML', $status = 500): int
     {
         if ($format == 'JSON') {
             return $this->jsonErrorResponse($error, $status);
@@ -346,8 +367,6 @@ class Controller extends Component
                 });
             }
         }
-
         return $html;
     }
-
 }

@@ -55,6 +55,10 @@ use Throwable;
  */
 class App extends Component
 {
+    const
+        EXIT_STATUS_OK = 0,
+        EXIT_STATUS_ERROR = 1;          // General error
+
     /** @var array $config -- configuration settings */
     public $config;
     /** @var string $title of the application (used in CLI echo) */
@@ -106,7 +110,8 @@ class App extends Component
     public $source_locale = 'en-GB';
     /** @var string $locale -- the current locale for localization, e.g. "hu-HU". */
     public $locale = 'en-GB';
-
+    /** @var string[] $classPath -- The path of the actually executed Controller including controller name, see also {@see Controller::$classPath} */
+    public $classPath;
 
     /** @var Component[] $_components -- the configured components */
     private $_components;
@@ -267,10 +272,12 @@ class App extends Component
 
     /**
      * Create App from given config file and run.
+     * If an integer is returned from the controller, it used as exit status.
+     * * If a string or stringable returned, outputs to the standard output, and returns with OK.
      * Called from index.php
      *
      * @param $configFile
-     * @return int
+     * @return int -- exit status
      */
     public static function createRun($configFile)
     {
@@ -291,7 +298,7 @@ class App extends Component
             set_error_handler(function ($severity, $errstr, $errfile, $errline) {
                 $err = new ErrorException($errstr, 0, $severity, $errfile, $errline);
                 AppHelper::showException($err);
-                exit(500);
+                exit(self::EXIT_STATUS_ERROR);
             }, error_reporting());
             register_shutdown_function(function () {
                 $error = error_get_last();
@@ -304,10 +311,19 @@ class App extends Component
             // Default application class (uhi67\umvc\App) may be overriden in config
             $class = $config['class'] ?? ($config[0] ?? App::class);
             $app = App::create(['class' => $class, 'config' => $config]);
-            return $app->run();
+            $response = $app->run();
+            if (is_int($response)) {
+                return $response;
+            }
+            if (!is_string($response)) {
+                echo json_encode($response);
+            } else {
+                echo $response;
+            }
+            return self::EXIT_STATUS_OK;
         } catch (Throwable $e) {
             AppHelper::showException($e);
-            return -1;
+            return self::EXIT_STATUS_ERROR;
         }
     }
 
@@ -318,7 +334,7 @@ class App extends Component
      * Path elements are mapped to FQ class-name + optional action-name.
      * Called from createRun and codeception connector
      *
-     * @return int -- HTTP status code
+     * @return string|int -- output or exit status code
      */
     public function run()
     {
@@ -331,13 +347,16 @@ class App extends Component
             }
             if ($this->path == [''] && $this->mainControllerClass) {
                 // The default action of main page can be called in the short way
+                $this->classPath = [$this->mainControllerClass::getClassPath()];
                 return $this->runController($this->mainControllerClass, [], $this->query);
             } else {
                 // Find the actual controller class for this path, and let it go
                 for ($i = 1; $i <= count($this->path); $i++) {
-                    $classPath = array_slice($this->path, 0, $i);
-                    $classPath[$i - 1] = AppHelper::camelize($classPath[$i - 1]);
-                    $controllerClass = 'app\controllers\\' . implode('\\', $classPath) . 'Controller';
+                    $this->classPath = array_slice($this->path, 0, $i);
+                    $camelizedClassPath = array_map(function ($p) {
+                        return AppHelper::camelize($p);
+                    }, $this->classPath);
+                    $controllerClass = 'app\controllers\\' . implode('\\', $camelizedClassPath) . 'Controller';
                     if (class_exists($controllerClass)) {
                         return $this->runController($controllerClass, array_slice($this->path, $i), $this->query);
                     }
@@ -348,6 +367,7 @@ class App extends Component
             $action = $this->path[0] ?? 'default';
             $actionMethod = 'action' . AppHelper::camelize($action);
             if ($this->mainControllerClass && method_exists($this->mainControllerClass, $actionMethod)) {
+                $this->classPath = [$this->mainControllerClass::getClassPath()];
                 return $this->runController($this->mainControllerClass, $this->path, $this->query);
             }
 
@@ -364,12 +384,23 @@ class App extends Component
      * @param string $controllerClass -- ClassName ot the controller to be called
      * @param string[] $path -- the remainder of the request path after the controller name
      * @param array $query -- the actual GET query
-     * @return int -- HTTP response status
+     * @return string|int -- output or exit status
      * @throws Exception -- if invalid action was requested
      */
     public function runController($controllerClass, $path, $query)
     {
-        $this->controller = new $controllerClass(['app' => $this, 'path' => $path, 'query' => $query]);
+        if (App::isCLI()) {
+            $this->classPath = [$controllerClass::shortName()];
+        }
+        if (!is_array($this->classPath)) {
+            throw new Exception('Invalid classPath: ' . print_r($this->classPath, true));
+        }
+        $this->controller = new $controllerClass([
+            'app' => $this,
+            'path' => $path,
+            'classPath' => implode('/', $this->classPath),
+            'query' => $query
+        ]);
         return $this->controller->go();
     }
 
@@ -435,7 +466,7 @@ class App extends Component
      * @param array $layoutParams -- optional parameters for the layout view
      * @param string|bool|null $locale -- use localized layout selection (ISO 639-1 language / ISO 3166-1-a2 locale), see above
      *
-     * @return null|string -- null if view file (or layout file if applied) does not exist
+     * @return string -- output
      * @throws Exception -- if view path does not exist
      */
     public function render($viewName, $params = [], $layout = null, $layoutParams = [], $locale = true)
@@ -457,7 +488,7 @@ class App extends Component
             $viewFile = $this->viewFile($viewName);
         }
         if (!$viewFile) {
-            return null;
+            throw new Exception("View file is not found for '$viewName", HTTP::HTTP_NOT_FOUND);
         }
         return $this->renderFile($viewFile, $params, $layout, $layoutParams);
     }
@@ -517,7 +548,7 @@ class App extends Component
      * @param string|bool $layout -- the layout applied to this render after the view rendered. If false, no layout will be applied.
      * @param array $layoutParams -- optional parameters for the layout view
      *
-     * @return null|string
+     * @return string
      * @throws Exception -- if file does not exist
      */
     public function renderFile($viewFile, $params = [], $layout = null, $layoutParams = [])
@@ -720,7 +751,7 @@ class App extends Component
 
     /**
      * @param $url
-     * @return bool -- true means the page is already rendered
+     * @return int
      * @throws Exception
      */
     public function redirect($url): bool
@@ -730,7 +761,7 @@ class App extends Component
         }
         $this->sendHeader('Location: ' . $url);
         $this->responseStatus = 302;
-        return true;
+        return App::EXIT_STATUS_ERROR;
     }
 
     /**
@@ -856,12 +887,21 @@ class App extends Component
             for ($i = 1; $i <= count($this->path); $i++) {
                 $classPath = array_slice($this->path, 0, $i);
                 $classPath[$i - 1] = AppHelper::camelize($classPath[$i - 1]);
+                // Case 1: Command class is in the current application
                 $controllerClass = 'app\commands\\' . ($pathinfo = implode('\\', $classPath)) . 'Controller';
                 if (class_exists($controllerClass)) {
                     return $this->runController($controllerClass, array_slice($this->path, $i), $this->query);
                 }
+                // Case 2: Command class is in the framework
                 $controllerClass = 'uhi67\umvc\commands\\' . implode('\\', $classPath) . 'Controller';
                 if (class_exists($controllerClass)) {
+                    return $this->runController($controllerClass, array_slice($this->path, $i), $this->query);
+                }
+                // Case 3: Command class is in another component
+                $controllerClass = implode('\\', $classPath) . 'Controller';
+                if (class_exists($controllerClass)) {
+                    $this->classPath = $classPath;
+                    $this->classPath[count($this->classPath) - 1] .= 'Controller';
                     return $this->runController($controllerClass, array_slice($this->path, $i), $this->query);
                 }
             }
@@ -932,6 +972,9 @@ class App extends Component
 
     public function hasComponent($name, $type = Component::class)
     {
+        if ($this->_components === null) {
+            throw new Exception('Configuration error: components definition is missing');
+        }
         if (array_key_exists($name, $this->_components) && $this->_components[$name] instanceof $type) {
             return $this->_components[$name];
         }
