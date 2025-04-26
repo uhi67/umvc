@@ -264,20 +264,26 @@ class BaseModel extends Component implements JsonSerializable
 
     /**
      * Inserts field-name and its error message into $errors array.
+     * If multiple fieldnames are specified, all fields get the same error.
      *
-     * @param string $fieldName -- the name of field
-     * @param string $message ($1 is a placeholder for field name)
+     * @param string|array $fieldNames -- the name of field or array of multiple file names
+     * @param string $message ($1 is a placeholder for the field name)
      *
      * @return false -- always
      * @throws Exception
      */
     public function addError($fieldName, $message)
     {
-        $message = str_replace('$1', $fieldName, $message);
-        if (!isset($this->_errors[$fieldName])) {
-            $this->_errors[$fieldName] = [];
+        if (!is_array($fieldNames)) {
+            $fieldNames = [$fieldNames];
         }
-        $this->_errors[$fieldName][] = $message;
+        foreach ($fieldNames as $fieldName) {
+            $message = str_replace('$1', $this->attributeLabel($fieldName), $message);
+            if (!isset($this->_errors[$fieldName])) {
+                $this->_errors[$fieldName] = [];
+            }
+            $this->_errors[$fieldName][] = $message;
+        }
         return false;
     }
 
@@ -328,9 +334,10 @@ class BaseModel extends Component implements JsonSerializable
         $rules = static::rules();
         foreach ($rules as $field => $def) {
             if ($def === null) {
+                // Overridden rule can be null
                 continue;
-            } // Overridden rule may be null
-            // Global rules (skips if individual fields are specified)
+            }
+            // Global rules (skipped if individual fields are specified in $attributeNames)
             if (is_numeric($field)) {
                 if ($attributeNames) {
                     continue;
