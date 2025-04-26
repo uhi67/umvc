@@ -29,6 +29,7 @@ use Exception;
  * - string|Model **$model** -- the model name used in the table
  * - string|bool **$hint** -- title (hint displayed at mouse hover) default is original label if label is overridden, set to 'false' to disable
  * - string **filterHint** -- title attribute for filter cell
+ * - string **$format** -- set to 'raw' to display HTML content, otherwise htmlspecialchars filter is applied
  *
  * @package UMVC Simple Application Framework
  */
@@ -65,6 +66,8 @@ class Column extends Component
     public $emptyValue;
     /** @var string|null $filterHint -- title attribute for filter cell */
     public ?string $filterHint = null;
+    /** @var string $format -- currently only 'raw' is supported to supress htmlspecialchar filtering */
+    public $format;
 
     /**
      * @param Grid|null $grid
@@ -183,7 +186,9 @@ class Column extends Component
             }
         }
         $filterCellAttributes = [];
-        if($this->filterHint) $filterCellAttributes['title'] = $this->filterHint;
+        if ($this->filterHint) {
+            $filterCellAttributes['title'] = $this->filterHint;
+        }
         return Html::tag('td', $result, $filterCellAttributes);
     }
 
@@ -202,7 +207,7 @@ class Column extends Component
                 $content = $model->{$this->field};
             }
             if ($content !== null) {
-                $content = htmlspecialchars($content);
+                $content = $this->format == 'raw' ? $content : htmlspecialchars($content);
             }
         }
         // Distinguish null value from empty string
