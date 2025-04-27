@@ -1109,4 +1109,11 @@ class App extends Component
         }
         return static::$app->l10n->getText($category, $message, $params, $locale);
     }
+
+    public function login(UserInterface $userModel): UserInterface
+    {
+        $this->user = $userModel;
+        $_SESSION['uid'] = $userModel->getUserId();
+        return $userModel;
+    }
 }

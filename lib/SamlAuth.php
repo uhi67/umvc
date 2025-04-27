@@ -1,4 +1,5 @@
 <?php
+/** @noinspection PhpIllegalPsrClassPathInspection */
 
 namespace uhi67\umvc;
 
@@ -11,7 +12,7 @@ use SimpleXMLElement;
 use Throwable;
 
 /**
- * Using this class needs `composer require "simplesamlphp/simplesamlphp:^1.19.2"` in your application
+ * Using this class needs `composer require "simplesamlphp/simplesamlphp:^2.0"` in your application
  * The dependency is not included in this library, since it's not mandatory for other parts.
  */
 class SamlAuth extends AuthManager
@@ -44,7 +45,7 @@ class SamlAuth extends AuthManager
      *
      * @return string|array|null -- null: attribute is not found
      */
-    public function get($attributeName, $index = null)
+    public function get(string $attributeName, int $index = null): array|string|null
     {
         if (!$this->isAuthenticated()) {
             return null;
@@ -61,7 +62,7 @@ class SamlAuth extends AuthManager
      *
      * @throws
      */
-    public function init()
+    public function init(): void
     {
         parent::init();
         if (!class_exists('\SimpleSAML\Auth\Simple') && !class_exists('\SimpleSAML_Auth_Simple')) {
@@ -76,11 +77,12 @@ class SamlAuth extends AuthManager
     }
 
     /**
-     * Returns value of configured id attribute of the user
-     * @return string
+     * Returns value of the configured id attribute of the user
+     *
+     * @return string|null
      * @throws Exception
      */
-    public function getId()
+    public function getId(): ?string
     {
         if (!isset($this->attributes[$this->idAttribute])) {
             return null;
@@ -101,7 +103,7 @@ class SamlAuth extends AuthManager
      *
      * @return bool
      */
-    public function isAuthenticated()
+    public function isAuthenticated(): bool
     {
         if ($this->auth != null) {
             return $this->auth->isAuthenticated();
@@ -119,7 +121,7 @@ class SamlAuth extends AuthManager
      * @param array $params
      * @return bool
      */
-    public function requireAuth($params = [])
+    public function requireAuth(array $params = []): bool
     {
         if ($this->auth != null) {
             $this->auth->requireAuth($params);
@@ -131,7 +133,7 @@ class SamlAuth extends AuthManager
     /**
      * Logs out the user. Normally it will never return.
      * Returns false on error (if SimpleSaml is not initialized).
-     * Does not return on successful logout but redirects to the return URL or the current page
+     * Does not return on the successful logout but redirects to the return URL or the current page
      *
      * Valid parameters:
      *
@@ -157,7 +159,7 @@ class SamlAuth extends AuthManager
      *
      * @return NULL|string
      */
-    function getIdp()
+    function getIdp(): ?string
     {
         $idp = null;
         if (method_exists($this->auth, 'getAuthData')) {
@@ -179,7 +181,7 @@ class SamlAuth extends AuthManager
      * Manages the login process specific to this authenticator.
      *
      * Returns a valid user on successful login or null on failure.
-     * Side-effect: sets `$_SESSION['uid']` and `$this->uid`
+     * Side effect: sets `$_SESSION['uid']` and `$this->uid`
      *
      * Valid parameters:
      * 'ErrorURL': A URL that should receive errors from the authentication.
@@ -191,7 +193,7 @@ class SamlAuth extends AuthManager
      * @return UserInterface|null
      * @throws Exception
      */
-    public function requireLogin($params = null)
+    public function requireLogin($params = null): ?UserInterface
     {
         if (is_string($params)) {
             $params = ['ReturnTo' => $params];
@@ -219,31 +221,7 @@ class SamlAuth extends AuthManager
                 if (isset($_SESSION['uid']) && $_SESSION['uid'] == static::INVALID_USER) {
                     return null;
                 }
-                $user = $this->userModel::findUser($uid);
-                if ($user) {
-                    if (!isset($_SESSION['uid']) || $_SESSION['uid'] != $user->getUserId()) {
-                        if (!$user->updateUser($this->attributes)) {
-                            throw new Exception("User record cannot be saved ($uid)");
-                        }
-                    }
-                    $this->login($user);
-                    return $user;
-                } else {
-                    try {
-                        $user = $this->userModel::createUser($uid, $this->attributes);
-                        if (!$user) {
-                            throw new Exception("User not created");
-                        }
-                        $_SESSION['uid'] = $this->uid = $user->getUserId();
-                        return $user;
-                    } catch (Throwable $e) {
-                        // -1 indicates that SAML login is successful, but the application login failed. Prevents endless loop.
-                        $_SESSION['uid'] = $this->uid = static::INVALID_USER;
-                        throw new Exception(
-                            "User record cannot be created ($uid)", HTTP::HTTP_INTERNAL_SERVER_ERROR, $e
-                        );
-                    }
-                }
+                return $this->login($uid, $this->attributes);
             }
         }
         $_SESSION['uid'] = $this->uid = null;
@@ -259,7 +237,7 @@ class SamlAuth extends AuthManager
      * @return string -- translated name or original if translation is not found
      * @throws Exception
      */
-    public static function translateAttributeName($attributeName, $la)
+    public static function translateAttributeName(string $attributeName, string $la): string
     {
         if (
             (!class_exists('\SimpleSAML\Configuration') && !class_exists('\SimpleSAML_Configuration')) ||
@@ -276,6 +254,7 @@ class SamlAuth extends AuthManager
             if (method_exists('\SimpleSAML\Locale\Language', 'setLanguage')) {
                 $t->getTranslator()->getLanguage()->setLanguage(substr($la, 0, 2), false);
             } else {
+                /** @noinspection PhpUndefinedMethodInspection */
                 $t->setLanguage(substr($la, 0, 2), false);
             }
         }
@@ -291,12 +270,12 @@ class SamlAuth extends AuthManager
      * Html-formats values of attribute, depending on attribute name
      *
      * @param string $attributeName
-     * @param string|array $values -- multiple values can be passed in array
+     * @param array|string $values -- multiple values can be passed in an array
      *
      * @return string
      * @noinspection PhpDocMissingThrowsInspection
      */
-    public static function formatAttribute($attributeName, $values)
+    public static function formatAttribute(string $attributeName, array|string $values): string
     {
         if (!is_array($values)) {
             $values = [$values];
@@ -315,7 +294,7 @@ class SamlAuth extends AuthManager
     }
 
     /**
-     * Html-formats a single value of attribute, depending on attribute name
+     * Html-formats a single value of the attribute, depending on the attribute name
      *
      * @param string $attributeName
      * @param string $value
@@ -323,7 +302,7 @@ class SamlAuth extends AuthManager
      * @return string
      * @noinspection PhpDocMissingThrowsInspection
      */
-    public static function formatValue($attributeName, $value)
+    public static function formatValue(string $attributeName, string $value): string
     {
         if ($attributeName == 'jpegPhoto') {
             /** @noinspection PhpUnhandledExceptionInspection */
@@ -337,7 +316,7 @@ class SamlAuth extends AuthManager
         return $value;
     }
 
-    public function getAttributes()
+    public function getAttributes(): ?array
     {
         if (!$this->_attributes && $this->auth && $this->auth->isAuthenticated()) {
             $this->_attributes = $this->auth->getAttributes();

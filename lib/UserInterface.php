@@ -1,4 +1,4 @@
-<?php
+<?php /** @noinspection PhpIllegalPsrClassPathInspection */
 
 namespace uhi67\umvc;
 
@@ -34,7 +34,7 @@ interface UserInterface
     public static function findUser($uid);
 
     /**
-     * Must create (and save) a new user object associated to the given uid and using the attributes provided
+     * Must create (and save) a new user object associated with the given uid and using the attributes provided
      *
      * @param mixed $uid
      * @param array $attributes

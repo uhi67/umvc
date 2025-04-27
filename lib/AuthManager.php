@@ -1,8 +1,9 @@
-<?php
+<?php /** @noinspection PhpIllegalPsrClassPathInspection */
 
 namespace uhi67\umvc;
 
 use Exception;
+use Throwable;
 
 /**
  * Component to handle user login and logout.
@@ -27,11 +28,11 @@ abstract class AuthManager extends Component
     const INVALID_USER = -1;
 
     /** @var string|null $uid -- The uid of the logged-in user or null (EPPN) */
-    public $uid;
+    public ?string $uid;
     /** @var string|UserInterface $userModel -- the model identifies a user */
-    public $userModel;
+    public string|UserInterface $userModel;
     /** @var bool $autoUrl -- true to detect and perform ?login and ?logout in the REQUEST URL automatically */
-    public $autoUrl = true;
+    public bool $autoUrl = true;
 
     /**
      * Initializes the auth module.
@@ -39,7 +40,7 @@ abstract class AuthManager extends Component
      * @return void
      * @throws Exception
      */
-    public function init()
+    public function init(): void
     {
         if (!$this->userModel || !is_a($this->userModel, UserInterface::class, true)) {
             throw new Exception(
@@ -55,7 +56,7 @@ abstract class AuthManager extends Component
      * @return void
      * @throws Exception
      */
-    public function prepare()
+    public function prepare(): void
     {
         if ($this->autoUrl) {
             // Manage logout request
@@ -84,7 +85,7 @@ abstract class AuthManager extends Component
         if ($this->uid && $this->uid != static::INVALID_USER) {
             $user = $this->userModel::findUser($this->uid);
             if ($user) {
-                return $this->login($user);
+                return $this->_login($user);
             }
         }
         return null;
@@ -111,7 +112,7 @@ abstract class AuthManager extends Component
      * @return UserInterface|null
      * @throws Exception
      */
-    public function actionLogin($params = null)
+    public function actionLogin(array|string $params = null): ?UserInterface
     {
         if ($params === null) {
             $params = [];
@@ -130,14 +131,51 @@ abstract class AuthManager extends Component
     }
 
     /**
+     * @param UserInterface|string $uid -- A user object or a login id
+     * @param array $attributes -- login attributes
+     * @param bool $canCreate
+     * @return UserInterface
+     * @throws Exception
+     */
+    public function login(UserInterface|string $uid, array $attributes = [], bool $canCreate = true): UserInterface
+    {
+        if($uid instanceof UserInterface) {
+            return $this->_login($uid);
+        }
+        $user = $this->userModel::findUser($uid);
+        if ($user) {
+            if (!isset($_SESSION['uid']) || $_SESSION['uid'] != $user->getUserId()) {
+                if (!$user->updateUser($attributes)) {
+                    throw new Exception("User record cannot be saved ($uid)");
+                }
+            }
+            return $this->_login($user);
+        } else {
+            try {
+                $user = $this->userModel::createUser($uid, $attributes);
+                if (!$user) {
+                    throw new Exception("User not created");
+                }
+                return $this->_login($user);
+            } catch (Throwable $e) {
+                // -1 indicates that SAML login is successful, but the application login failed. Prevents endless loops.
+                $_SESSION['uid'] = $this->uid = static::INVALID_USER;
+                throw new Exception(
+                    "User record cannot be created ($uid)", HTTP::HTTP_INTERNAL_SERVER_ERROR, $e
+                );
+            }
+        }
+    }
+
+    /**
      * Makes the user logged in within the application.
      * Called automatically
      *
-     * @param UserInterface|string $user -- user ID or User model
+     * @param string|UserInterface $user -- user ID or User model
      * @return UserInterface|null -- the user object logged in on success or null on failure
      * @throws Exception
      */
-    public function login($user)
+    protected function _login(UserInterface|string $user): ?UserInterface
     {
         if (is_string($user)) {
             if (!$this->userModel || !is_a($this->userModel, UserInterface::class, true)) {
@@ -156,12 +194,8 @@ abstract class AuthManager extends Component
         if (!$this->parent instanceof App) {
             throw new Exception('AuthManager must be a component of the App');
         }
-        $this->parent->user = $userModel;
-        if (!$userModel) {
-            return null;
-        }
-        $_SESSION['uid'] = $userModel->getUserId();
-        return $userModel;
+        $this->uid = $userModel->getUserId();
+        return $this->parent->login($userModel);
     }
 
     /**
