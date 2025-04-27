@@ -1,4 +1,4 @@
-<?php
+<?php /** @noinspection PhpIllegalPsrClassPathInspection */
 
 namespace uhi67\umvc;
 
@@ -12,33 +12,33 @@ use Exception;
  */
 class Asset extends Component
 {
-    /** @var string $name -- package name (default is path) */
-    public $name;
-    /** @var string $path -- package path relative to vendor dir or app dir ('/...') or www dir ('') */
-    public $path;
-    /** @var string $dir -- absolute source directory of the current asset -- computed from path if not specified */
-    public $dir;
-    /** @var string $id -- unique package id used as a directory name in the cache */
-    public $id;
+    /** @var string|null $name -- package name (default is the path) */
+    public ?string $name = null;
+    /** @var string|null $path -- package path relative to vendor dir or app dir ('/...') or www dir ('') */
+    public ?string $path = null;
+    /** @var string|null $dir -- absolute source directory of the current asset -- computed from the path if not specified */
+    public ?string $dir = null;
+    /** @var ?string $id -- unique package id used as a directory name in the cache */
+    public string|null $id = null;
     /** @var array|null $patterns -- file patterns to select files to copy from the package path */
-    public $patterns;
+    public ?array $patterns = null;
     /** @var string[] $files -- file names or patterns to link from the package to the view. Use '*' for all files */
-    public $files = [];
-    /** @var string[][] -- copy these extensions into cache together with the original files */
-    public $extensions = [
+    public array $files = [];
+    /** @var string[][] -- copy these extensions into the cache together with the original files */
+    public array $extensions = [
         'css' => ['css.map', 'min.css', 'min.css.map'],
         'js' => ['js.map', 'min.js', 'min.js.map'],
     ];
-    /** @var string $cacheDir -- web-accessible directory of the asset. E.g '/www/assets/112233445566778F' */
-    public $cacheDir;
-    /** @var string $cacheUrl -- url-path of the asset directory. E.g '/assets/112233445566778F' */
-    public $cacheUrl;
+    /** @var string|null $cacheDir -- web-accessible directory of the asset. E.g. '/www/assets/112233445566778F' */
+    public ?string $cacheDir = null;
+    /** @var string|null $cacheUrl -- url-path of the asset directory. E.g. '/assets/112233445566778F' */
+    public ?string $cacheUrl = null;
 
     /**
      * Package files are copied into the cache
      * @throws Exception -- if nor path nor package name is specified
      */
-    public function init()
+    public function init(): void
     {
         if (!$this->name && !$this->path) {
             throw new Exception('Package name or path must be specified');
@@ -62,6 +62,7 @@ class Asset extends Component
         if (!$this->id) {
             $this->id = substr(md5($this->dir), 0, 16);
         }
+
         if (!$this->cacheDir) {
             $this->cacheDir = App::$app->basePath . '/www/assets/cache/' . $this->id;
         }
@@ -85,13 +86,13 @@ class Asset extends Component
         }
     }
 
-    public function getName()
+    public function getName(): ?string
     {
         return $this->path ?? $this->dir;
     }
 
     /**
-     * Iterates through files of given pattern in the `$basedir/$dir` directory and calls the callback function for every file.
+     * Iterates through files of the given pattern in the `$basedir/$dir` directory and calls the callback function for every file.
      *
      * Special pattern matches:
      *
@@ -103,20 +104,20 @@ class Asset extends Component
      * @param string $baseDir -- absolute package root (search and return filenames in relation to this; no trailing '/')
      * @param string $dir -- iterated subdirectory, empty or 'dir/' (must have trailing / if non-empty)
      * @param string $pattern -- literal filename, directory pattern or RegEx pattern or dir/pattern
-     * @param callable $callback -- function(string $file) -- operation on found file, using path relative to $basedir
-     * @param null $missing -- function(string $file) -- operation on missing file or directory
+     * @param callable $callback -- function(string $file) -- operation on a found file, using a path relative to $basedir
+     * @param callable|null $missing -- function(string $file) -- operation on a missing file or directory
      *
      * @throws Exception
      */
-    public static function matchPattern($baseDir, $dir, $pattern, $callback, $missing = null)
+    public static function matchPattern(string $baseDir, string $dir, string $pattern, callable $callback, callable $missing = null): void
     {
         $d = $baseDir . '/' . $dir;
 
         // RegEx pattern (surrounded by ~)
-        if (substr($pattern, 0, 1) == '~' && substr($pattern, -1) == '~') {
-            // Single level RegEx pattern
+        if (str_starts_with($pattern, '~') && str_ends_with($pattern, '~')) {
+            // Single-level RegEx pattern
             $dh = dir($d);
-            while (($file = $dh->read($dh)) !== false) {
+            while (($file = $dh->read()) !== false) {
                 if ($file == '.' || $file == '..') {
                     continue;
                 }
@@ -154,7 +155,7 @@ class Asset extends Component
                     }
                     $dh->close();
                 } elseif (preg_match('~[*?]~', $dirPattern)) {
-                    // Single level subdirectory pattern
+                    // Single-level subdirectory pattern
                     $dh = dir($d);
                     while (($file = $dh->read()) !== false) {
                         if ($file == '.' || $file == '..') {
@@ -182,7 +183,7 @@ class Asset extends Component
             } // legacy wildcards pattern (contains * or ?)
             else {
                 if (preg_match('~[*?]~', $pattern)) {
-                    // match directory pattern in the current directory (use fnmatch)
+                    // match the directory pattern in the current directory (use fnmatch)
                     if (!is_dir($d)) {
                         throw new Exception("Directory '$d' not found");
                     } // note: opendir error is not catchable
@@ -222,10 +223,10 @@ class Asset extends Component
      *
      * @return string -- cache path (relative to cacheDir)
      */
-    private function copyFile($fileName)
+    private function copyFile(string $fileName): string
     {
-        $filePath = $this->dir . '/' . $fileName;   // Absolute path of original file to copy
-        $cacheFileName = $this->cacheDir . '/' . $fileName; // Absolute path of cache file to copy into
+        $filePath = $this->dir . '/' . $fileName;   // Absolute path of the original file to copy
+        $cacheFileName = $this->cacheDir . '/' . $fileName; // Absolute path of the cache file to copy into
 
         if (!file_exists($cacheFileName) || (filemtime($cacheFileName) < filemtime($filePath))) {
             if (!file_exists(dirname($cacheFileName))) {
@@ -256,7 +257,7 @@ class Asset extends Component
      * @param string $fileName
      * @return string
      */
-    public static function ext($fileName)
+    public static function ext(string $fileName): string
     {
         if ($p = strpos($fileName, '?')) {
             $fileName = substr($fileName, 0, $p);
@@ -271,7 +272,7 @@ class Asset extends Component
      *
      * @return string|false
      */
-    public function url($fileName)
+    public function url(string $fileName): false|string
     {
         $url = App::$app->baseUrl . '/assets/' . $this->path;
         if (!$fileName) {

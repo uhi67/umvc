@@ -1,4 +1,6 @@
 <?php
+/** @noinspection PhpIllegalPsrClassPathInspection */
+
 /** @noinspection PhpUnused */
 
 namespace uhi67\umvc;
@@ -11,7 +13,7 @@ use Throwable;
  * The Application class is the main dispatcher and renderer of the application.
  * A single app instance is created for each HTTP request or CLI invoke.
  * The app component manages the logged-in user and other global components, like cache or logging.
- * The app object the chooses the proper Controller to run.
+ * The app object selects the appropriate Controller to run.
  * The app object is available in the Controller and the views.
  *
  * ### The most important properties:
@@ -43,7 +45,7 @@ use Throwable;
  * - render: renders a view and applies the layout
  * - renderPartial: renders a partial view without applying layout
  * - sendHeader(): sends put an HTTP header. Use this instead of native function
- * - requireLogin(): redirects to SAML-login or throws an exception if current user is not logged-in
+ * - requireLogin(): redirects to SAML login or throws an exception if the current user is not logged in
  *
  * @property-read Component[] $components
  * @property-read Connection $db -- the default DB connection
@@ -60,22 +62,22 @@ class App extends Component
         EXIT_STATUS_ERROR = 1;          // General error
 
     /** @var array $config -- configuration settings */
-    public $config;
-    /** @var string $title of the application (used in CLI echo) */
-    public $title;
+    public array $config;
+    /** @var string|null $title of the application (used in CLI echo) */
+    public ?string $title = null;
     /** @var string|Controller|null -- the default controller of the application */
-    public $mainControllerClass = null;
+    public string|null|Controller $mainControllerClass = null;
 
     /** @var string|null -- base path of the application */
     public ?string $basePath = null;
-    /** @var string -- path of the runtime directory, default is $basePath.'/runtime' */
-    public $runtimePath;
+    /** @var string|null -- path of the runtime directory, default is $basePath.'/runtime' */
+    public ?string $runtimePath = null;
 
     /** @var UserInterface|Model|null $user -- The logged-in user or null */
-    public $user;
+    public Model|null|UserInterface $user = null;
 
-    /** @var App $app -- The single instance of the App. Read only, please don't overwrite it runtime */
-    public static $app;
+    /** @var App|null $app -- The single instance of the App. Read-only. */
+    public static ?App $app = null;
 
     /** @var string|null -- base url of the application */
     public ?string $baseUrl = null;
@@ -85,48 +87,44 @@ class App extends Component
     public string $urlPath = '';
     /** @var array|null */
     public ?array $query = null;
-    /** @var string[] -- elements in URL path */
-    public $path;
+    /** @var string[] -- elements in the URL path */
+    public array $path;
     /** @var Controller|Command|null -- the currently executed controller */
-    public $controller;
-    /** @var string */
-    public $sapi;
+    public Command|Controller|null $controller = null;
+    /** @var string|null */
+    public ?string $sapi = null;
     /** @var int $responseStatus -- the http response status sent after completing the request */
-    public $responseStatus;
+    public int $responseStatus = 0;
     /** @var array $headers -- the http headers will be sent after completing the request */
-    public $headers;
-    /** @var Request $request */
-    public $request;
-    /** @var Session $session */
-    public $session;
-
+    public array $headers;
+    /** @var Request|null $request */
+    public ?Request $request = null;
+    /** @var Session|null $session */
+    public ?Session $session = null;
     /** @var string $layout -- the default layout */
-    public $layout = 'layout';
-
+    public string $layout = 'layout';
     /**
      * @var string $source_locale -- the locale of the source messages for localization.
-     * locale can be an ISO 639-1 language code ('en') optionally extended with a ISO 3166-1-a2 region ('en-GB')
+     * locale can be an ISO 639-1 language code ('en') optionally extended with an ISO 3166-1-a2 region ('en-GB')
      */
-    public $source_locale = 'en-GB';
+    public string $source_locale = 'en-GB';
     /** @var string $locale -- the current locale for localization, e.g. "hu-HU". */
-    public $locale = 'en-GB';
+    public string $locale = 'en-GB';
     /** @var string[] $classPath -- The path of the actually executed Controller including controller name, see also {@see Controller::$classPath} */
-    public $classPath;
+    public array $classPath;
 
-    /** @var Component[] $_components -- the configured components */
-    private $_components;
-    /** @var Asset[] -- Registered Assets */
-    private $_assets;
-    /** @var Connection $_connection -- the default database connection */
-    private $_connection;
-    /** @var bool|string -- Actually requested locale of current render for partial views */
-    private $userLocale = true;
+    /** @var Component[]|null $_components -- the configured components */
+    private ?array $_components = null;
+    /** @var Connection|null $_connection -- the default database connection */
+    private ?Connection $_connection = null;
+    /** @var bool|string -- Actually requested locale of the current render for partial views */
+    private string|bool $userLocale = true;
 
     /**
      * We are being executed from the CLI
      * @return bool
      */
-    public static function isCLI()
+    public static function isCLI(): bool
     {
         return php_sapi_name() == "cli";
     }
@@ -136,13 +134,13 @@ class App extends Component
      *
      * 'components' as name=>config pairs define the common components for web API.
      * These are also the default components for CLI API as well.
-     * 'cli_components' if exist, define the components for CLI API.
+     * if 'cli_components' exist, define the components for CLI API.
      * 'cli_components' may contain references to 'components' elements, using single strings (numeric-indexed).
      * (In contrast, 'components' may not refer to 'cli_components' elements)
      *
      * @throws Exception
      */
-    public function init()
+    public function init(): void
     {
         if (!static::$app) {
             static::$app = $this;
@@ -242,7 +240,7 @@ class App extends Component
      *
      * @return string -- protocol://host
      */
-    public function hostInfo()
+    public function hostInfo(): string
     {
         $https = $this->config['https'] ?? getenv('HTTPS');
         /** Reverse proxy protocol patch */
@@ -258,10 +256,8 @@ class App extends Component
 
     /**
      * Displays an error message and never returns
-     *
-     * @throws Exception
      */
-    public function error(int $status, string $message)
+    public function error(int $status, string $message): int
     {
         $protocol = ($_SERVER['SERVER_PROTOCOL'] ?? 'HTTP/1.0');
         $title = HTTP::$statusTexts[$status] ?? '';
@@ -271,15 +267,15 @@ class App extends Component
     }
 
     /**
-     * Create App from given config file and run.
-     * If an integer is returned from the controller, it used as exit status.
-     * * If a string or stringable returned, outputs to the standard output, and returns with OK.
+     * Create App from the given config file and run.
+     * If an integer is returned from the controller, it is used as exit status.
+     * * If a string or stringable returned, outputs to the standard output and returns with OK.
      * Called from index.php
      *
-     * @param $configFile
+     * @param string $configFile
      * @return int -- exit status
      */
-    public static function createRun($configFile)
+    public static function createRun(string $configFile): int
     {
         try {
             $config = include $configFile;
@@ -328,7 +324,7 @@ class App extends Component
     }
 
     /**
-     * Runs the application as web function.
+     * Runs the application as a web function.
      * Finds a controller by request path and calls it with request parameters.
      *
      * Path elements are mapped to FQ class-name + optional action-name.
@@ -336,7 +332,7 @@ class App extends Component
      *
      * @return string|int -- output or exit status code
      */
-    public function run()
+    public function run(): int|string
     {
         try {
             // TODO: not works with nginx
@@ -346,11 +342,11 @@ class App extends Component
                 array_shift($this->path);
             }
             if ($this->path == [''] && $this->mainControllerClass) {
-                // The default action of main page can be called in the short way
+                // The default action of the main page can be called in the short way
                 $this->classPath = [$this->mainControllerClass::getClassPath()];
                 return $this->runController($this->mainControllerClass, [], $this->query);
             } else {
-                // Find the actual controller class for this path, and let it go
+                // Find the actual controller class for this path and let it go
                 for ($i = 1; $i <= count($this->path); $i++) {
                     $this->classPath = array_slice($this->path, 0, $i);
                     $camelizedClassPath = array_map(function ($p) {
@@ -381,19 +377,16 @@ class App extends Component
     }
 
     /**
-     * @param string $controllerClass -- ClassName ot the controller to be called
+     * @param string|Controller $controllerClass -- ClassName of the controller to be called
      * @param string[] $path -- the remainder of the request path after the controller name
      * @param array $query -- the actual GET query
      * @return string|int -- output or exit status
      * @throws Exception -- if invalid action was requested
      */
-    public function runController($controllerClass, $path, $query)
+    public function runController(Controller|string $controllerClass, array $path, array $query): int|string
     {
         if (App::isCLI()) {
             $this->classPath = [$controllerClass::shortName()];
-        }
-        if (!is_array($this->classPath)) {
-            throw new Exception('Invalid classPath: ' . print_r($this->classPath, true));
         }
         $this->controller = new $controllerClass([
             'app' => $this,
@@ -406,8 +399,9 @@ class App extends Component
 
     /**
      * Deletes the session data of the current user
+     * @throws Exception
      */
-    public function logout()
+    public function logout(): null
     {
         if ($this->hasComponent('auth') && $this->auth->isAuthenticated()) {
             $this->auth->logout();
@@ -422,10 +416,11 @@ class App extends Component
     /**
      * Returns the default (first) DB connection
      *
-     * @return Connection
+     * @param bool $required
+     * @return Connection|string|null
      * @throws Exception
      */
-    public function getConnection($required = false)
+    public function getConnection(bool $required = false): Connection|string|null
     {
         if (!$this->_connection) {
             $this->_connection = $this->hasComponent('db', Connection::class);
@@ -442,73 +437,90 @@ class App extends Component
      * ### Definitions of localized views:**
      *
      * - source locale: the locale used in the source code and the base language of the translations.
-     * - default view: the original view path without localization, e.g 'main/index' written in the language and rules of the source locale
+     * - default view: the original view path without localization, e.g. 'main/index' written in the language and rules of the source locale
      * - localized view: the view path with locale code, e.g. 'main/en/index' or 'main/en-GB/index' whichever fits better.
      * - source-locale view: the default view or the localized view of the source-locale
-     * - locale can be an ISO 639-1 language code ('en') optionally extended with a ISO 3166-1-a2 region ('en-GB')
+     * - locale can be an ISO 639-1 language code ('en') optionally extended with an ISO 3166-1-a2 region ('en-GB')
      *
      * ### Rules for locale and language codes**
      *
-     * - If current locale is 'en-GB', the path with 'en-GB' is preferred, otherwise 'en' is used. No other 'en-*' is used
-     * - If current locale is 'en', the path with 'en' is used, no 'en-*' is recognized.
+     * - If the current locale is 'en-GB', the path with 'en-GB' is preferred; otherwise 'en' is used. No other 'en-*' is used
+     * - If the current locale is 'en', the path with 'en' is used, no 'en-*' is recognized.
      *
      * ### Locale selection
      *
-     * - true: use current locale if the localized view exists, otherwise use the default view or source-locale view.
-     * - false: do not use localized view, even if exists. If the unlocalized (default) view does not exist, an exception occurs.
-     * - explicit locale: use the specified locale, as defined at 'true' case.
+     * - true: use the current locale if the localized view exists, otherwise use the default view or source-locale view.
+     * - false: do not use a localized view, even if it exists. If the unlocalized (default) view does not exist, an exception occurs.
+     * - explicit locale: use the specified locale, as defined in the 'true' case.
      *
      * Note: returns an error message rendered as a string on internal rendering errors or Exception
      *
-     * @param string $viewName -- basename of a php view-file in the `views` directory, without extension and without localization code
+     * @param string $viewName -- basename of a PHP view-file in the `views` directory, without extension and without localization code
      * @param array $params -- parameters to assign to variables used in the view
-     * @param string $layout -- the layout applied to the result after the view rendered. If false, no layout will be applied.
-     * @param array $layoutParams -- optional parameters for the layout view
-     * @param string|bool|null $locale -- use localized layout selection (ISO 639-1 language / ISO 3166-1-a2 locale), see above
+     * @param string|null $layout -- the layout applied to the result after the view rendered. If false, no layout will be applied.
+     * @param array|null $layoutParams -- optional parameters for the layout view
+     * @param bool|string|null $locale -- use localized layout selection (ISO 639-1 language / ISO 3166-1-a2 locale), see above
      *
      * @return string -- output
-     * @throws Exception -- if view path does not exist
      */
-    public function render($viewName, $params = [], $layout = null, $layoutParams = [], $locale = true)
-    {
-        if ($locale === null || $locale === true) {
-            $locale = $this->locale;
-        }
-        if ($locale) {
-            $this->userLocale = $locale;
-            // Priority order: 1. Localized view (with long or short locale) / 2. untranslated / 3. default-locale view (long/short)
-            $viewFile = $this->localizedViewFile($viewName, $locale);
-            if (!$viewFile) {
+    public function render(
+        string $viewName,
+        array $params = [],
+        string $layout = null,
+        array|null $layoutParams = [],
+        bool|string|null $locale = true
+    ): string {
+        try {
+            if ($locale === null || $locale === true) {
+                $locale = $this->locale;
+            }
+            if ($locale) {
+                $this->userLocale = $locale;
+                // Priority order: 1. Localized view (with long or short locale) / 2. untranslated / 3. default-locale view (long/short)
+                $viewFile = $this->localizedViewFile($viewName, $locale);
+                if (!$viewFile) {
+                    $viewFile = $this->viewFile($viewName);
+                }
+                if (!$viewFile) {
+                    $viewFile = $this->localizedViewFile($viewName, $this->source_locale);
+                }
+            } else {
                 $viewFile = $this->viewFile($viewName);
             }
             if (!$viewFile) {
-                $viewFile = $this->localizedViewFile($viewName, $this->source_locale);
+                $message = "View file is not found for '$viewName'";
+                App::$app->log('error', $message);
+                return $message;
             }
-        } else {
-            $viewFile = $this->viewFile($viewName);
+            return $this->renderFile($viewFile, $params, $layout, $layoutParams);
+        } catch (Throwable $e) {
+            App::$app->log(
+                'error',
+                sprintf("Render error: %s in file %s at line %d", $e->getMessage(), $e->getFile(), $e->getLine())
+            );
+            if (ENV_DEV) {
+                App::$app->log('error', $e->getTraceAsString());
+            }
+            return "<div class='alert alert-danger'>Render error: {$e->getMessage()}</div>";
         }
-        if (!$viewFile) {
-            throw new Exception("View file is not found for '$viewName", HTTP::HTTP_NOT_FOUND);
-        }
-        return $this->renderFile($viewFile, $params, $layout, $layoutParams);
     }
 
     /**
-     * Returns best localized view filename using long or short locale. Checks if the view file exists.
+     * Returns the best localized view filename using long or short locale. Checks if the view file exists.
      * Returns null if none of them exists.
      *
      * @param string $viewName
      * @param string|null $locale -- optional
      * @return string|null
-     * @throws Exception -- if view path does not exist
+     * @throws Exception -- if the view path does not exist
      */
-    public function localizedViewFile($viewName, $locale)
+    public function localizedViewFile(string $viewName, ?string $locale): ?string
     {
-        // 1. Look up view file using full locale
+        // 1. Look up the view file using the full locale
         $lv = $locale ? $this->localizedViewName($viewName, $locale) : $viewName;
         $viewFile = $this->viewFile($lv);
         if (!$viewFile && $locale) {
-            // 2. Look up view file using short language code
+            // 2. Look up the view file using short language code
             $lv = $this->localizedViewName($viewName, substr($locale, 0, 2));
             $viewFile = $this->viewFile($lv);
         }
@@ -516,7 +528,7 @@ class App extends Component
     }
 
     /**
-     * Returns view name completed with location path.
+     * Returns the view name completed with the location path.
      *
      * Examples:
      *
@@ -529,7 +541,7 @@ class App extends Component
      * @param string $locale
      * @return string
      */
-    private function localizedViewName($viewName, $locale)
+    private function localizedViewName(string $viewName, string $locale): string
     {
         $p = strrpos($viewName, '/');
         if ($p === false) {
@@ -541,18 +553,21 @@ class App extends Component
     /**
      * Returns rendered contents of the view using a $viewFile
      *
-     * If layout is null (or omitted), the default layout is applied.
+     * If the layout is null (or omitted), the default layout is applied.
      *
-     * @param string $viewFile -- a php view-file with absolute path or relative to the `views` directory
+     * @param string $viewFile -- a PHP view-file with an absolute path or relative to the `views` directory
      * @param array $params -- parameters to assign to variables used in the view
-     * @param string|bool $layout -- the layout applied to this render after the view rendered. If false, no layout will be applied.
-     * @param array $layoutParams -- optional parameters for the layout view
+     * @param bool|string|null $layout -- the layout applied to this render after the view rendered. If false, no layout will be applied.
+     * @param array|null $layoutParams -- optional parameters for the layout view
      *
      * @return string
-     * @throws Exception -- if file does not exist
      */
-    public function renderFile($viewFile, $params = [], $layout = null, $layoutParams = [])
-    {
+    public function renderFile(
+        string $viewFile,
+        array $params = [],
+        bool|string $layout = null,
+        array|null $layoutParams = []
+    ): string {
         try {
             if ($layout === null) {
                 $layout = $this->layout;
@@ -568,6 +583,15 @@ class App extends Component
                 $content = $this->render($layout, array_merge(['content' => $content], $layoutParams ?? []), false);
             }
         } catch (Throwable $e) {
+            App::$app->log(
+                'error',
+                'Render error in view ' . $viewFile . ', ' . sprintf(
+                    '%s in file %s at line %d',
+                    $e->getMessage(),
+                    $e->getFile(),
+                    $e->getLine()
+                )
+            );
             $content = "<div>Render error in view '$viewFile': " . $e->getMessage() . '</div>';
         }
         return $content;
@@ -575,14 +599,14 @@ class App extends Component
 
     /**
      * Returns the file name of the view file.
-     * Returns null if view file does not exist.
+     * Returns null if the view file does not exist.
      * View can be in the application or in the framework.
      *
      * @param string $viewName
      * @return string|null
-     * @throws Exception -- if view path does not exist
+     * @throws Exception -- if the view path does not exist
      */
-    public function viewFile($viewName)
+    public function viewFile(string $viewName): ?string
     {
         $viewPath = $this->basePath . '/views';
         if (!is_dir($viewPath)) {
@@ -601,17 +625,11 @@ class App extends Component
     }
 
     /**
-     * Renders a partial view without layout
-     *
-     * @throws Exception
+     * Renders a partial view without a layout
      */
-    public function renderPartial($viewName, $params = [])
+    public function renderPartial($viewName, $params = []): string
     {
-        $result = $this->render($viewName, $params, false, null, $this->userLocale);
-        if (ENV_DEV && $result === null) {
-            return "[ **Render error: view '$viewName' not found** ]";
-        }
-        return $result;
+        return $this->render($viewName, $params, false, null, $this->userLocale);
     }
 
 
@@ -623,7 +641,7 @@ class App extends Component
      *
      * @return false|string
      */
-    private function renderPhpFile($_file_, $_params_ = [])
+    private function renderPhpFile(string $_file_, array $_params_ = []): false|string
     {
         $_level_ = ob_get_level();
         ob_start();
@@ -648,17 +666,16 @@ class App extends Component
 
     /**
      * Gets and renders all flash messages from the session
-     *
-     * Replaces <?php include BASE_PATH . '/includes/flash_messages.php'; ?>
-     *
-     * @throws Exception
      */
-    public function renderFlashMessages()
+    public function renderFlashMessages(): string
     {
         $flash_messages = static::getFlashMessages();
         static::clearFlashMessages();
         $content = '';
-        Assertions::assertArray($flash_messages);
+        if (!is_array($flash_messages)) {
+            App::$app->log('error', 'Flash messages are not an array');
+            return '';
+        }
         foreach ($flash_messages as $flash_message) {
             $severity = 'info';
             if (is_array($flash_message)) {
@@ -697,7 +714,7 @@ class App extends Component
      * @param $message
      * @param string $severity -- alert class: error, failure, warning, success, info
      */
-    public static function addFlash($message, $severity = 'info')
+    public static function addFlash($message, string $severity = 'info'): void
     {
         $flash_messages = static::getFlashMessages();
         $flash_messages[] = [$severity, $message];
@@ -713,12 +730,12 @@ class App extends Component
         return $flashMessages;
     }
 
-    private static function setFlashMessages(array $messages)
+    private static function setFlashMessages(array $messages): void
     {
         $_SESSION['flash_messages'] = $messages;
     }
 
-    public static function clearFlashMessages()
+    public static function clearFlashMessages(): void
     {
         static::setFlashMessages([]);
     }
@@ -731,12 +748,12 @@ class App extends Component
     /**
      * Requires login for this page
      *
-     * @param bool $force -- if true, redirects to the login if needed, will return only if user logged in. If false, throws an exception if user is not logged in.
+     * @param bool $force -- if true and not logged in, redirects to the login page, will return only if the user logged in. If false, throws an exception if the user is not logged in.
      *
-     * @return bool -- true if redirect issued, false otherwise
+     * @return bool|int -- true if redirect issued, false otherwise
      * @throws Exception -- throws an exception if user not logged in.
      */
-    public function requireLogin($force = true)
+    public function requireLogin(bool $force = true): bool|int
     {
         $uid = $_SESSION['uid'] ?? null;
         if (!$this->loggedIn()) {
@@ -754,7 +771,7 @@ class App extends Component
      * @return int
      * @throws Exception
      */
-    public function redirect($url): bool
+    public function redirect($url): int
     {
         if (is_array($url)) {
             $url = $this->createUrl($url);
@@ -772,12 +789,12 @@ class App extends Component
      *  - at index 0 is the base url, if missing or empty the current page is used
      *  - integer-indexed parameters are additional path elements added to the url path separated by /
      *  - # key refers to the current fragment
-     *  - all other key/value pairs are query parameters. Existing parameters with same keys are overwritten.
+     *  - all other key/value pairs are query parameters. Existing parameters with the same keys are overwritten.
      * @param bool $absolute -- return absolute URL
      * @return string
      * @throws Exception
      */
-    public function createUrl(array $url, $absolute = false): string
+    public function createUrl(array $url, bool $absolute = false): string
     {
         $baseUrl = $url[0] ?? $this->url;
         unset($url[0]);
@@ -785,14 +802,14 @@ class App extends Component
         $baseUrl = parse_url($baseUrl ?? '', PHP_URL_PATH);
 
         if ($absolute) {
-            $isRelative = strncmp($baseUrl, '//', 2) && strpos($baseUrl, '://') === false;
+            $isRelative = strncmp($baseUrl, '//', 2) && !str_contains($baseUrl, '://');
             if ($isRelative) {
                 $baseUrl = $this->hostInfo() . '/' . ltrim($baseUrl, '/');
             }
         }
 
         foreach ($url as $key => $value) {
-            if (substr($baseUrl, -1) == '/') {
+            if (str_ends_with($baseUrl, '/')) {
                 $baseUrl = substr($baseUrl, 0, -1);
             }
             if (is_int($key)) {
@@ -809,14 +826,15 @@ class App extends Component
     }
 
     /**
-     * Returns a value using configured cache
+     * Returns a value using the configured cache
      *
-     * @param string $key -- The cache key. If null, cache will be skipped, value computed directly
+     * @param string|null $key -- The cache key. If null, cache will be skipped, value computed directly
      * @param callable $compute -- function():mixed -- computes the actual value
-     * @param bool|int $refresh -- if true, new value is computed and stored into the cache. If int, used as a TTL value
+     * @param bool|int $refresh -- if true, a new value is computed and stored into the cache. If int, used as a TTL value
      * @return mixed
+     * @throws Exception
      */
-    public function cached($key, $compute, $refresh = false)
+    public function cached(?string $key, callable $compute, bool|int $refresh = false): mixed
     {
         $ttl = is_int($refresh) ? $refresh : null;
         $refresh = is_int($refresh) ? false : $refresh;
@@ -832,11 +850,12 @@ class App extends Component
      * A very basic logger
      *
      * The PSR-3 standard levels are used (@param string $level -- emergency/alert/critical/error/warning/notice/info/debug
-     * @param string $message -- string only
+     * @param string|array|object $message -- string only. If not a string, used as a json-encoded string.
+     * @param string[] $params
      * @see \Psr\Log\LogLevel)
      *
      */
-    public static function log($level, $message, $params = [])
+    public static function log(string $level, string|array|object $message, array $params = []): void
     {
         $logfile = self::$app->runtimePath . '/logs/app.log';
         $sid = session_id();
@@ -859,7 +878,7 @@ class App extends Component
      * @param $header
      * @return void
      */
-    public function sendHeader($header)
+    public function sendHeader($header): void
     {
         header($header);
         $this->headers[] = $header;
@@ -883,7 +902,7 @@ class App extends Component
 
             $pathinfo = '';
             $controllerClass = '';
-            // Find the actual controller class for this path, and let it go
+            // Find the actual controller class for this path and let it go
             for ($i = 1; $i <= count($this->path); $i++) {
                 $classPath = array_slice($this->path, 0, $i);
                 $classPath[$i - 1] = AppHelper::camelize($classPath[$i - 1]);
@@ -930,7 +949,7 @@ class App extends Component
      * @return string -- the valid url accessible by the client
      * @throws Exception
      */
-    public function linkAssetFile(string $package, string $resource, ?array $patterns = null)
+    public function linkAssetFile(string $package, string $resource, ?array $patterns = null): string
     {
         if (!$this->controller) {
             throw new Exception('No controller is executed');
@@ -957,7 +976,7 @@ class App extends Component
     /**
      * Returns a configured component or other property
      *
-     * @param string $name the component or  property name
+     * @param string $name -- the component or property name
      *
      * @return mixed the component object or a property value
      * @throws Exception
@@ -970,9 +989,13 @@ class App extends Component
         return parent::__get($name);
     }
 
-    public function hasComponent($name, $type = Component::class)
+    /**
+     * @throws Exception
+     */
+    public function hasComponent($name, string|Component $type = Component::class): ?Component
     {
         if ($this->_components === null) {
+            App::$app->log('error', 'Components not initialized');
             throw new Exception('Configuration error: components definition is missing');
         }
         if (array_key_exists($name, $this->_components) && $this->_components[$name] instanceof $type) {
@@ -981,7 +1004,7 @@ class App extends Component
         return null;
     }
 
-    public function getComponents()
+    public function getComponents(): array
     {
         return $this->_components;
     }
@@ -1002,7 +1025,7 @@ class App extends Component
             set_error_handler(function ($severity, $errstr, $errfile, $errline) {
                 $err = new ErrorException($errstr, 0, $severity, $errfile, $errline);
                 AppHelper::showException($err);
-                exit(500);
+                exit(HTTP::HTTP_INTERNAL_SERVER_ERROR);
             }, error_reporting());
 
             /** @var App $app */
@@ -1015,7 +1038,7 @@ class App extends Component
         }
     }
 
-    public static function nameSpace()
+    public static function nameSpace(): string
     {
         return substr(static::class, 0, strrpos(static::class, '\\'));
     }
@@ -1025,7 +1048,7 @@ class App extends Component
      *
      * @return mixed|string
      */
-    public static function getUserId()
+    public static function getUserId(): mixed
     {
         return App::$app->user ? App::$app->user->getUserId() : '';
     }
@@ -1042,19 +1065,19 @@ class App extends Component
      * Usage in a template/view file:
      *
      *     assert($this->requireVars($var1, ..., $varN), ''); // $var<i> are variables expected by the view
-     *                                                        // the use of assert() is to not impact production environment
+     *                                                        // the use of assert() is to not impact the production environment
      *
      * @param array $variables -- Variable list of PHP variables
      * @return bool
      * @noinspection PhpUnusedParameterInspection
      */
-    public function requireVars(...$variables)
+    public function requireVars(...$variables): bool
     {
-        return true; // for assert() to succeed: see usage in documentation above
+        return true; // for assert() to succeed: see usage in the documentation above
     }
 
     /**
-     * Localizes a messaget text using configured localization (l10n) class.
+     * Localizes a message text using the configured localization (l10n) class.
      *
      * Category syntax
      * - umvc -- framework messages, located in the /vendor/uhi67/umvc/messages dir
@@ -1070,7 +1093,7 @@ class App extends Component
      * @return string
      * @throws Exception
      */
-    public static function l($category, $message, $params = [], $locale = null)
+    public static function l(string $category, string $message, array $params = [], string $locale = null): string
     {
         if (!static::$app) {
             throw new Exception('Application is not initialized');
