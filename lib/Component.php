@@ -91,7 +91,7 @@ abstract class Component
      * @throws Exception
      * @see __set()
      */
-    public function __get($name)
+    public function __get(string $name)
     {
         if (strpos($name, '-') !== false) {
             $name = AppHelper::camelize($name);

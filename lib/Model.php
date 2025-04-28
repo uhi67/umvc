@@ -634,7 +634,7 @@ class Model extends BaseModel
      * @throws Exception if the property is not defined
      * @throws ReflectionException
      */
-    public function __get($name)
+    public function __get(string $name)
     {
         // Retrieved attribute
         if (isset($this->_attributes[$name]) || array_key_exists($name, $this->_attributes)) {
