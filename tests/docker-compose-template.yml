@@ -1,4 +1,4 @@
-version: "3.3"
+version: "3.6"
 # This stack is for codecept-testing the UMVC library in different environments.
 # 1. configure the needed database version here or php version in docker/Dockerfile
 # 2. edit .env (ports, urls)
