@@ -1,7 +1,7 @@
 UMVC framework
 ==============
 
-Version 3.0-alpha.1 -- 2025-01-05
+Version 3.0-alpha.1 -- 2025-04-29
 
 A simple web-application framework implementing model-view-controller (MVC) architectural pattern.
 
@@ -185,9 +185,19 @@ A built-in dockerized testing environment can be used to test with different php
 Change log
 ----------
 
-### version 3.0 -- "2025-01-05"
+### version 3.0 -- "2025-04-29"
 
-- ...
+- add BaseController
+- add App::login()
+- AuthManager::login() with attributes and creation
+- AuthManager::actionLogin() and logout() parameters
+- migrate/update command with path and namespace
+- Controller action exit status
+- add Controller::$classPath, $actionPath
+- Model::validateUnique() for multiple fields
+- BaseModel::addError() with multiple fields
+- add Column::$format property (raw or not)
+- add FileCache::$permission property
 - using php 8.2 types
 
 ### version 2.2 -- "2025-03-16"
