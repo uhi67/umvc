@@ -85,12 +85,12 @@ class App extends Component
     public ?string $baseUrl = null;
     /** @var string|null -- The actual request URL including the query parameters */
     public ?string $url = null;
-    /** @var string -- URL path of the current request without query parameters */
-    public string $urlPath = '';
+    /** @var string|null -- URL path of the current request without query parameters */
+    public ?string $urlPath = '';
     /** @var array|null */
     public ?array $query = null;
-    /** @var string[] -- elements in the URL path */
-    public array $path;
+    /** @var string[]|null -- elements in the URL path */
+    public ?array $path = null;
     /** @var Controller|Command|null -- the currently executed controller */
     public Command|Controller|null $controller = null;
     /** @var string|null */

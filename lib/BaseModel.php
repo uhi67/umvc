@@ -102,12 +102,12 @@ class BaseModel extends Component implements JsonSerializable
      * - only first part of any .-composition is used
      * - or the humanized field-name will be used (converted to uppercase words).
      *
-     * @param string $attribute the attribute name
+     * @param string|null $attribute the attribute name
      * @return string the attribute label
      * @throws Exception
      * @see attributeLabels()
      */
-    public static function attributeLabel(string $attribute): string
+    public static function attributeLabel(?string $attribute): string
     {
         $labels = static::attributeLabels();
         if (isset($labels[$attribute])) {
@@ -119,7 +119,7 @@ class BaseModel extends Component implements JsonSerializable
         if ($p = strpos($attribute, '.')) {
             return static::attributeLabel(substr($attribute, 0, $p));
         }
-        return AppHelper::humanize($attribute);
+        return AppHelper::humanize($attribute) ?? '';
     }
 
     /**

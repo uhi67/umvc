@@ -347,7 +347,8 @@ class AppTestHelper extends Framework
     /**
      * @param string|array $page
      */
-	public function amOnPage($page): void {
+    public function amOnPage($page): void
+    {
         parent::amOnPage($page);
     }
 

@@ -377,17 +377,17 @@ class AppHelper
      * - Element names can contain letters, digits, underscores, and the specified enabled characters
      * - Element names cannot contain spaces
      *
-     * @param string $str
+     * @param string|null $str
      * @param string $def -- replace invalid characters to, default is '_'. A single character only
      * @param string $ena -- more enabled characters, e.g. '-' (specify - last, escape ] chars.)
      * @param int $maxlen -- maximum length or 0 if no limit. Default is 64.
      *
      * @return string -- the correct output, or empty if input was empty or null
      */
-    public static function toNameID(string $str, string $def = '_', string $ena = '.-', int $maxlen = 64): string
+    public static function toNameID(?string $str, string $def = '_', string $ena = '.-', int $maxlen = 64): string
     {
-        if ($str == '') {
-            return $str;
+        if ($str == '' || $str == null) {
+            return '';
         }
         if ($maxlen > 0 && strlen($str) > $maxlen) {
             $str = substr($str, 0, $maxlen);

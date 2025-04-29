@@ -1,9 +1,10 @@
-<?php
+<?php /** @noinspection PhpIllegalPsrClassPathInspection */
 
 /**
  * The Helper namespace contains classes needed to connect the application framework to the codecept functional test.
  * Functional tests cannot be used without a framework module.
  */
+
 namespace Helper;
 
 use uhi67\umvc\App;
@@ -21,7 +22,8 @@ use Symfony\Component\BrowserKit\Response;
  *
  * @package UMVC Simple Application Framework
  */
-class AppConnector extends AbstractBrowser {
+class AppConnector extends AbstractBrowser
+{
     use PhpSuperGlobalsConverter;
 
     /** @var array the config array of App application */
@@ -39,17 +41,18 @@ class AppConnector extends AbstractBrowser {
     /** @var App */
     public $app;
 
-    /** @var PDO  */
+    /** @var PDO */
     public static $db;
 
     /** @var array $session -- the content of the $_SESSION */
     public $session;
 
-	/**
-	 * @return App
-	 * @throws Exception
-	 */
-    public function getApplication() {
+    /**
+     * @return App
+     * @throws Exception
+     */
+    public function getApplication()
+    {
         if (!isset($this->app)) {
             $this->startApp($this->sapi);
         }
@@ -59,7 +62,8 @@ class AppConnector extends AbstractBrowser {
     /**
      * Called only in functional tests, before and after a request
      */
-    public function resetApplication() {
+    public function resetApplication()
+    {
         Debug::debug('_resetting App');
         $this->app->headers = [];
         $this->app->responseStatus = 200;
@@ -69,51 +73,62 @@ class AppConnector extends AbstractBrowser {
         $this->app->urlPath = null;
     }
 
-	/**
-	 * @param string $sapi
-	 *
-	 * @throws Exception
-	 */
-	public function startApp($sapi = 'apache') {
-		if(!getenv('SIMPLESAMLPHP_CONFIG_DIR')) {
-			$dirs = [dirname(__DIR__, 5).'/config/saml/config', dirname(__DIR__, 2).'/tests/_data/testapp/config/saml/config'];
-			foreach($dirs as $dir) if(file_exists($dir.'/config.php')) {
-				putenv('SIMPLESAMLPHP_CONFIG_DIR='.$dir);
-				break;
-			}
-		}
+    /**
+     * @param string $sapi
+     *
+     * @throws Exception
+     */
+    public function startApp($sapi = 'apache')
+    {
+        if (!getenv('SIMPLESAMLPHP_CONFIG_DIR')) {
+            $dirs = [
+                dirname(__DIR__, 5) . '/config/saml/config',
+                dirname(__DIR__, 2) . '/tests/_data/testapp/config/saml/config'
+            ];
+            foreach ($dirs as $dir) {
+                if (file_exists($dir . '/config.php')) {
+                    putenv('SIMPLESAMLPHP_CONFIG_DIR=' . $dir);
+                    break;
+                }
+            }
+        }
         putenv('SERVER_PORT=80');
         $_SERVER['HTTP_HOST'] = 'mvc.test';
 
-		if(static::$db && !(is_object(static::$db) && static::$db instanceof PDO)) throw new Exception('invalid connection resource');
-		if($this->app) {
-			$this->app->init();
-			return;
-		}
+        if (static::$db && !(is_object(static::$db) && static::$db instanceof PDO)) {
+            throw new Exception('invalid connection resource');
+        }
+        if ($this->app) {
+            $this->app->init();
+            return;
+        }
         $appClass = $this->appConfig['class'] ?? ($this->appConfig[0] ?? App::class);
-        $this->app = App::create(['class'=>$appClass, 'config'=>$this->appConfig, 'sapi'=>$sapi]);
+        $this->app = App::create(['class' => $appClass, 'config' => $this->appConfig, 'sapi' => $sapi]);
     }
 
-	public function destroyApplication() {
-		$this->app = null;
-		App::$app = null;
-	}
+    public function destroyApplication()
+    {
+        $this->app = null;
+        App::$app = null;
+    }
 
-    public function resetPersistentVars() {
+    public function resetPersistentVars()
+    {
         static::$db = null;
         // TODO: reset uploaded file (later)
     }
 
-	/**
-	 *
-	 * @param Request $request
-	 *
-	 * @return Response
-	 * @throws Exception
-	 */
-    public function doRequest($request) {
+    /**
+     *
+     * @param Request $request
+     *
+     * @return Response
+     * @throws Exception
+     */
+    public function doRequest($request)
+    {
         $this->resetApplication();
-		$_COOKIE = $request->getCookies();
+        $_COOKIE = $request->getCookies();
         $_SERVER = $request->getServer();
         $this->restoreServerVars();
         $_FILES = $this->remapFiles($request->getFiles());
@@ -132,37 +147,45 @@ class AppConnector extends AbstractBrowser {
         $queryString = parse_url($uri, PHP_URL_QUERY);
         $_SERVER['REQUEST_URI'] = $queryString === null ? $pathString : $pathString . '?' . $queryString;
         $_SERVER['REQUEST_METHOD'] = strtoupper($request->getMethod());
+        $_SERVER['PHP_SELF'] = $pathString;
         parse_str($queryString, $params);
         foreach ($params as $k => $v) {
             $_GET[$k] = $v;
         }
 
-		$this->headers    = [];
-		$this->statusCode = null;
+        $this->headers = [];
+        $this->statusCode = null;
 
-		ob_start();
-		$this->app = $this->getApplication();
-        Debug::debug('# Session is '.json_encode($_SESSION));
+        ob_start();
+        $this->app = $this->getApplication();
+        Debug::debug('# Session is ' . json_encode($_SESSION));
 
         try {
             // Grab statusCode. Note: Status code is caught only if headers are sent via sendHeader() method
             $this->statusCode = $this->app->run();
-        }
-        catch(Exception $e) {
-            Debug::debug('# AppConnector caught Exception: '.$e->getMessage().' in file '.$e->getFile(). ' at line '.$e->getLine());
-            Debug::debug("# AppConnector backtrace: \n".$e->getTraceAsString());
+        } catch (Exception $e) {
+            Debug::debug(
+                '# AppConnector caught Exception: ' . $e->getMessage() . ' in file ' . $e->getFile(
+                ) . ' at line ' . $e->getLine()
+            );
+            Debug::debug("# AppConnector backtrace: \n" . $e->getTraceAsString());
         }
         $this->session = $_SESSION;
-		$content = ob_get_clean();
+        $content = ob_get_clean();
 
         // Grab issued headers as well. Note: Only headers sent via sendHeader() method are grabbed
         $this->headers = $this->app->headers;
 
-		// save headers and $content into _output dir
+        // save headers and $content into _output dir
         $fileName = AppHelper::underscore($this->app->url);
-        if(strlen($fileName)>96) $fileName = substr($fileName,0,64).'.'.md5($fileName);
-		file_put_contents($this->app->basePath.'/tests/_output/headers_'.$fileName.'.json', json_encode($this->headers));
-		file_put_contents($this->app->basePath.'/tests/_output/content_'.$fileName.'.html', $content);
+        if (strlen($fileName) > 96) {
+            $fileName = substr($fileName, 0, 64) . '.' . md5($fileName);
+        }
+        file_put_contents(
+            $this->app->basePath . '/tests/_output/headers_' . $fileName . '.json',
+            json_encode($this->headers)
+        );
+        file_put_contents($this->app->basePath . '/tests/_output/content_' . $fileName . '.html', $content);
 
         // Reset app after run
         $this->resetApplication();

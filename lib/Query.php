@@ -3,6 +3,7 @@
 
 namespace uhi67\umvc;
 
+use Codeception\Util\Debug;
 use DateTime;
 use Exception;
 use PDO;
@@ -645,10 +646,10 @@ class Query extends Component
     /**
      * Sets or updates the user-parameters of a Query.
      *
-     * @param array $values
+     * @param array|null $values
      * @return static
      */
-    public function setParams(array $values = []): static
+    public function setParams(?array $values = []): static
     {
         if ($values === null) {
             $values = [];
@@ -986,7 +987,7 @@ class Query extends Component
             return $this->stmt->execute();
         } catch (Exception $e) {
             throw new Exception(
-                'Error executing ' . $this->sql . ' with params (' . implode(', ', $this->params) . ')',
+                'Error executing ' . $this->sql . ' with params (' . implode(', ', $this->params) . '): '.$e->getMessage(),
                 0,
                 $e
             );
@@ -1020,10 +1021,10 @@ class Query extends Component
     /**
      * Returns the actual db connection object
      *
-     * @param Connection $connection
+     * @param Connection|null $connection
      * @return static
      */
-    public function setConnection(Connection $connection): static
+    public function setConnection(?Connection $connection): static
     {
         if ($this->_connection !== $connection) {
             $this->invalidateResults();
@@ -1095,7 +1096,7 @@ class Query extends Component
      */
     public static function createSelect(
         array|Model|string $modelClass = null,
-        array $fields = null,
+        array|string|null $fields = null,
         array $condition = null,
         array $params = null,
         Connection $connection = null
@@ -1111,7 +1112,7 @@ class Query extends Component
             $query = new Query([
                 'type' => 'SELECT',
                 'modelClass' => $modelClass,
-                'fields' => $fields,
+                'fields' => (array)$fields,
                 'where' => $condition,
                 'params' => $params,
                 'connection' => $connection,
@@ -1432,7 +1433,7 @@ class Query extends Component
         $alias = $this->normalizeAlias();
         $from = $this->from;
         if (!$from && $this->modelClass) {
-            $from = $this->modelClass;
+            $from = is_string($this->modelClass) ? [$this->modelClass] : $this->modelClass;
         }
         if (!$from && $this->_where) {
             throw new Exception('FROM or modelClass is mandatory when WHERE part is present');
