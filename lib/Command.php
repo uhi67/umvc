@@ -1,15 +1,17 @@
-<?php /** @noinspection PhpIllegalPsrClassPathInspection */
+<?php
+/** @noinspection PhpIllegalPsrClassPathInspection */
 
 namespace uhi67\umvc;
 
 use Exception;
+use ReflectionException;
 use ReflectionMethod;
 
 /**
  * Represents a CLI function in the application.
  * The App dispatcher will run the proper action of the selected Controller class.
  *
- * All main function's path in the application must be mapped to a Controller class named `<function>Controller`
+ * All main function's paths in the application must be mapped to a Controller class named `<function>Controller`
  * The `action<Action>` methods are mapped to the function action, e.g. CRUD action names.
  *
  * @package UMVC Simple Application Framework
@@ -19,23 +21,24 @@ class Command extends BaseController
     // TODO: compare with BaseController!
 
     /** @var App $app -- the parent application object */
-    public $app;
+    public App $app;
     /** @var string[] $path -- unused path elements after controller (or action) name */
-    public $path;
+    public array $path;
     /** @var array -- query parameters to use */
-    public $query;
+    public array $query;
     /** @var string|null -- name of the currently executed action (without 'action' prefix) */
-    public $action;
-    /** @var string $classPath -- the controller id path for controller Id property (Compatibility with Controller) */
-    public $classPath = null;
+    public ?string $action;
+    /** @var string|null $classPath -- the controller id path for controller Id property (Compatibility with Controller) */
+    public ?string $classPath = null;
 
     /**
      * Execute the request by this controller
      *
-     * @return string|int -- output or exit status
-     * @throws Exception if no matching action
+     * @return int -- output or exit status
+     * @throws ReflectionException
+     * @throws Exception
      */
-    public function go()
+    public function go(): int
     {
         // Search for action method to call
         $methodName = null;
@@ -53,7 +56,7 @@ class Command extends BaseController
         // Call the action method with the required parameters from the request
         if ($methodName) {
             if (!$this->beforeAction()) {
-                return self::EXIT_STATUS_OK;
+                return App::EXIT_STATUS_OK;
             }
             $args = [];
             $ref = new ReflectionMethod($this, $methodName);
@@ -86,7 +89,7 @@ class Command extends BaseController
      * The default behavior is true (enable the action).
      * Called only if the action method exists.
      */
-    public function beforeAction()
+    public function beforeAction(): bool
     {
         return true;
     }

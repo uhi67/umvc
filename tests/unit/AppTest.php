@@ -1,15 +1,13 @@
-<?php /** @noinspection PhpIllegalPsrClassPathInspection */
+<?php
+/** @noinspection PhpMultipleClassDeclarationsInspection */
+/** @noinspection PhpIllegalPsrClassPathInspection */
 
 use Codeception\Test\Unit;
 use uhi67\umvc\App;
 
 class AppTest extends Unit {
-    /**
-     * @var \UnitTester
-     */
-    protected $tester;
-    /** @var App $app */
-    public $app;
+    protected UnitTester $tester;
+    public App $app;
 
     protected function _before() {
         App::$app->locale = 'hu-HU';
@@ -33,7 +31,7 @@ class AppTest extends Unit {
         if ($expected) $this->assertFileExists($file);
     }
 
-    public function provLocalizedViewFile() {
+    public static function provLocalizedViewFile() {
         return [
             // $expected, $view, $locale
             [null, 'invalid'],
@@ -44,7 +42,7 @@ class AppTest extends Unit {
     /**
      * @dataProvider provRender
      * @return void
-     * @throws Exception -- only if view path does not exist
+     * @throws Exception -- only if the view path does not exist
      */
     public function testRender($expected, $view, $params = [], $layout = null, $layoutParams = null, $locale = null) {
         if (is_a($expected, Exception::class, true)) {
@@ -57,18 +55,18 @@ class AppTest extends Unit {
         }
     }
 
-    public function provRender() {
+    public static function provRender() {
         return [
             // $expected, $view, $params, $layout, $layoutParams, $locale
             // Invalid view name
-            [null, 'invalid'],
+            ["View file is not found for 'invalid'", 'invalid'],
             // Invalid layout name
-            [null, 'main/rendertest', null, 'invalid'],
-            // Render with missing param
+            ["View file is not found for 'invalid'", 'main/rendertest', null, 'invalid'],
+            // Render with missing 'param'
             [Exception::class, 'main/rendertest', null, null, null, false],
-            // Normal render with default layout and disabled locale
+            // Normal render with the default layout and disabled locale
             ['<html><body><h2>Hello, buddy!</h2></body></html>', 'main/rendertest', ['name' => 'buddy'], null, null, false],
-            // Normal render without layout with params and with default locale
+            // Normal render without layout with params and with the default locale
             ['<h2>Szia, haver!</h2>', 'main/rendertest', ['name' => 'haver'], false],
             // Normal render without layout and with explicit (undefined) locale
             ['<h2>Hello, kompis!</h2>', 'main/rendertest', ['name' => 'kompis'], false, null, 'se'],

@@ -10,7 +10,7 @@ use ReflectionMethod;
  * Represents a function in the application.
  * The App dispatcher will run the proper action of the selected Controller class.
  *
- * All main function's path in the application must be mapped to a Controller class named `<function>Controller`.
+ * All main function's paths in the application must be mapped to a Controller class named `<function>Controller`.
  * The `action<Action>` methods are mapped to the function action, e.g. CRUD action names.
  *
  * **Example:**
@@ -36,8 +36,8 @@ class Controller extends BaseController
 {
     /** @var Asset[] $assets -- registered assets indexed by name */
     public array $assets = [];
-    /** @var string $classPath -- the controller id path for controller Id property */
-    public $classPath = null;
+    /** @var string|null $classPath -- the controller id path for controller Id property */
+    public ?string $classPath = null;
 
     public function init(): void
     {
@@ -78,12 +78,12 @@ class Controller extends BaseController
     /**
      * Determines and performs the requested action using $this controller
      *
-     * @return string|int -- output string or exit status
+     * @return int -- output string or exit status
      * @throws Exception if no matching action
      */
-    public function go()
+    public function go(): int
     {
-        // Search for action method to call
+        // Search for the action method to call
         $methodName = null;
         $this->action = null;
         $func = 'action' . AppHelper::camelize($this->path[0] ?? 'default');
@@ -133,7 +133,7 @@ class Controller extends BaseController
      * The default behavior is true (enable the action).
      * Called only if the action method exists.
      */
-    public function beforeAction()
+    public function beforeAction(): bool
     {
         return true;
     }
@@ -154,7 +154,7 @@ class Controller extends BaseController
      *
      * @param array|object $data -- array or object containing the output data. Null is not permitted, use empty array for empty data
      * @param array $headers -- more custom headers to send
-     * @return string
+     * @return int
      * @throws Exception -- if the response is not a valid data to convert to JSON.
      */
     public function jsonResponse(object|array $data, array $headers = []): int
@@ -343,7 +343,7 @@ class Controller extends BaseController
     {
         $html = '';
         foreach ($this->assets as $asset) {
-            foreach ((array)$asset->files as $file) {
+            foreach ($asset->files as $file) {
                 // Iterate file pattern in the cache (use extension filter)
                 Asset::matchPattern($asset->dir, '', $file, function ($file) use ($asset, $extensions, &$html) {
                     $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));

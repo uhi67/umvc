@@ -39,7 +39,7 @@ use ReflectionException;
  *           configFile: 'tests/_data/testConfig.php'
  * ```
  *
- * @property AppConnector $client
+ * property AppConnector $client
  * @package UMVC Simple Application Framework
  */
 class AppTestHelper extends Framework
@@ -48,11 +48,11 @@ class AppTestHelper extends Framework
     protected array $config = ['loader' => 'core', 'sapi' => 'apache']; // optional parameters and defaults of module
 
     /** @var App $app -- the application instance started by client */
-    public $app;
+    public ?App $app = null;
     /** @var string $configFile -- path of your configFile */
-    protected $configFile;
+    protected string $configFile;
     /** @var array $appConfig -- config of your App application */
-    protected $appConfig;
+    protected array $appConfig;
 
     /** @noinspection PhpMethodNamingConventionInspection */
 

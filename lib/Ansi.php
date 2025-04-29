@@ -34,25 +34,25 @@ class Ansi
         'sgr0' => '\033(B\033[m',        //	reset text attributes
         // Cursor movement
         'sc' => '\0337',                //	save cursor position
-        'rc' => '\0338',                //	restore saved cursor position
-        'clear' => '\033[H\033[2J',    //	clear screen and move cursor to top left
+        'rc' => '\0338',                //	restore the saved cursor position
+        'clear' => '\033[H\033[2J',    //	clear screen and move cursor to the top left
         'cuu #1' => '\033[#1A',        //	move cursor up #1 rows
         'cud #1' => '\033[#1B',        //	move cursor down #1 rows
         'cuf #1' => '\033[#1C',        //	move cursor right #1 columns
         'cub #1' => '\033[#1D',        //	move cursor left #1 columns
-        'home' => '\033[H',            //	move cursor to top left
+        'home' => '\033[H',            //	move the cursor to the top left
         'hpa #1' => '\033[#1G',        //	move cursor to column #1
         'vpa #1' => '\033[#1d',        //	move cursor to row #1, first column
         'cup #1 #2' => '\033[#1;#2H', //	move cursor to row #1, column #2
         // Removing characters
         'dch #1' => '\033#1P',        //	remove #1 characters (like backspacing)
         'dl #1' => '\033#1M',            //	remove #1 lines
-        'ech #1' => '\033#1X',        //	clear #1 characters (without moving cursor)
+        'ech #1' => '\033#1X',        //	clear #1 characters (without moving the cursor)
         'ed' => '\033[J',            //	clear to bottom of screen
-        'el' => '\033[K',            //	clear to end of line
-        'el1' => '\033[1K',            //	clear to beginning of line
+        'el' => '\033[K',            //	clear to the end of the line
+        'el1' => '\033[1K',            //	clear to the beginning of the line
     ];
-];
+
     public static array $colors = [
         'black' => '0;30',
         'red' => '0;31',
@@ -71,7 +71,6 @@ class Ansi
         'light cyan' => '1;36',
         'white' => '1;37',
     ];
-];
 
     private static array $backgrounds = [
         'black' => '40',
@@ -88,7 +87,7 @@ class Ansi
     /**
      * Returns ANSI colored text
      *
-     * if close is true (default) the colors will be rested at the end of the string
+     * if close is true (default), the colors will be rested at the end of the string
      *
      * @param string $string -- the message to color
      * @param string|null $fg -- foreground color name
@@ -177,7 +176,7 @@ class Ansi
     /** @noinspection PhpMethodNamingConventionInspection */
 
     /**
-     * Converts RGB color to HSV model
+     * Converts RGB color to an HSV model
      *
      * @param array|integer $r -- array of RGB values: 0-255 or R value
      * @param integer $g
