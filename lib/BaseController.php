@@ -4,20 +4,17 @@
 namespace uhi67\umvc;
 
 use Exception;
+use ReflectionException;
 use ReflectionMethod;
-use uhi67\umvc\App;
-use uhi67\umvc\AppHelper;
-use uhi67\umvc\Component;
-use uhi67\umvc\HTTP;
 
 /**
  * BaseController is the common part of the **Controller** and the **Command** classes.
- * Controllers performs the application functions via named actions.
+ * Controllers perform the application functions via named actions.
  *
  * - {@see Controller} serves the HTTP requests,
  * - {@see Command} serves the CLI commands.
  *
- * Both has a parent App, an action to run, and optional query parameters.
+ * Both have a parent App, an action to run, and optional query parameters.
  */
 class BaseController extends Component
 {
@@ -54,12 +51,13 @@ class BaseController extends Component
     /**
      * Execute the request by this controller
      *
-     * @return int -- HTTP response status
-     * @throws Exception if no matching action
+     * @return int|string -- HTTP response status
+     * @throws ReflectionException
+     * @throws Exception
      */
-    public function go(): int
+    public function go(): int|string
     {
-        // Search for action method to call
+        // Search for an action method to call
         $methodName = null;
         $this->action = null;
         $func = 'action' . AppHelper::camelize($this->path[0] ?? 'default');

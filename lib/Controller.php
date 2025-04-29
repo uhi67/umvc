@@ -4,6 +4,7 @@
 namespace uhi67\umvc;
 
 use Exception;
+use ReflectionException;
 use ReflectionMethod;
 
 /**
@@ -78,10 +79,11 @@ class Controller extends BaseController
     /**
      * Determines and performs the requested action using $this controller
      *
-     * @return int -- output string or exit status
-     * @throws Exception if no matching action
+     * @return int|string -- output string or exit status
+     * @throws ReflectionException
+     * @throws Exception
      */
-    public function go(): int
+    public function go(): int|string
     {
         // Search for the action method to call
         $methodName = null;
@@ -154,10 +156,10 @@ class Controller extends BaseController
      *
      * @param array|object $data -- array or object containing the output data. Null is not permitted, use empty array for empty data
      * @param array $headers -- more custom headers to send
-     * @return int
+     * @return string
      * @throws Exception -- if the response is not a valid data to convert to JSON.
      */
-    public function jsonResponse(object|array $data, array $headers = []): int
+    public function jsonResponse(object|array $data, array $headers = []): string
     {
         foreach ($headers as $header) {
             $this->app->sendHeader($header);
@@ -347,7 +349,7 @@ class Controller extends BaseController
                 // Iterate file pattern in the cache (use extension filter)
                 Asset::matchPattern($asset->dir, '', $file, function ($file) use ($asset, $extensions, &$html) {
                     $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
-                    if(!$extensions || in_array($ext, (array)$extensions)) {
+                    if (!$extensions || in_array($ext, (array)$extensions)) {
                         $html .= match ($ext) {
                             'css' => Html::link([
                                 'rel' => 'stylesheet',

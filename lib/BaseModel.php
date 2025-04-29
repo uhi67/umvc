@@ -263,16 +263,16 @@ class BaseModel extends Component implements JsonSerializable
     }
 
     /**
-     * Inserts field-name and its error message into $errors array.
+     * Inserts the field-name and its error message into $errors array.
      * If multiple fieldnames are specified, all fields get the same error.
      *
-     * @param string|array $fieldNames -- the name of field or array of multiple file names
+     * @param string|array $fieldNames -- the name of the field or array of multiple file names
      * @param string $message ($1 is a placeholder for the field name)
      *
      * @return false -- always
      * @throws Exception
      */
-    public function addError(string|array $fieldName, string $message): false
+    public function addError(string|array $fieldNames, string $message): false
     {
         if (!is_array($fieldNames)) {
             $fieldNames = [$fieldNames];
@@ -284,6 +284,7 @@ class BaseModel extends Component implements JsonSerializable
             }
             $this->_errors[$fieldName][] = $message;
         }
+        return false;
     }
 
     public function hasError(): bool

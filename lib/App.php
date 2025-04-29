@@ -1,5 +1,6 @@
 <?php
 /** @noinspection PhpIllegalPsrClassPathInspection */
+
 /** @noinspection PhpUnused */
 
 namespace uhi67\umvc;
@@ -53,7 +54,7 @@ use Throwable;
  * @property-read AuthManager $auth -- the actual auth manager
  * @property-read Connection $connection -- the default database connection defined in 'db' component
  * @property-read L10n $l10n
- * @property-read User $user
+ * @property User $user {@see static::getUser()}
  * @package UMVC Simple Application Framework
  */
 class App extends Component
@@ -75,7 +76,7 @@ class App extends Component
     public ?string $runtimePath = null;
 
     /** @var UserInterface|Model|null $user -- The logged-in user or null */
-    public Model|null|UserInterface $user = null;
+    private Model|null|UserInterface $_user = null;
 
     /** @var App|null $app -- The single instance of the App. Read-only. */
     public static ?App $app = null;
@@ -1050,9 +1051,9 @@ class App extends Component
     /**
      * Returns the uid of the logged-in user or empty string if no user is logged in.
      *
-     * @return mixed
+     * @return string
      */
-    public static function getUserId(): mixed
+    public static function getUserId(): string
     {
         return App::$app->user ? App::$app->user->getUserId() : '';
     }
@@ -1114,10 +1115,26 @@ class App extends Component
         return static::$app->l10n->getText($category, $message, $params, $locale);
     }
 
-    public function login(UserInterface $userModel): UserInterface
+    public function getUser(): UserInterface|Model|null
     {
-        $this->user = $userModel;
-        $_SESSION['uid'] = $userModel->getUserId();
+        return $this->_user;
+    }
+
+    public function setUser(?UserInterface $userModel): UserInterface|Model|null
+    {
+        return $this->login($userModel);
+    }
+
+    /**
+     * Set the user object
+     *
+     * @param UserInterface|null $userModel
+     * @return UserInterface|null
+     */
+    public function login(?UserInterface $userModel): ?UserInterface
+    {
+        $this->_user = $userModel;
+        $_SESSION['uid'] = $userModel?->getUserId();
         return $userModel;
     }
 }

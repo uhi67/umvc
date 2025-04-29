@@ -1,4 +1,5 @@
-<?php /** @noinspection PhpIllegalPsrClassPathInspection */
+<?php
+/** @noinspection PhpIllegalPsrClassPathInspection */
 
 namespace uhi67\umvc;
 
@@ -139,7 +140,7 @@ abstract class AuthManager extends Component
      */
     public function login(UserInterface|string $uid, array $attributes = [], bool $canCreate = true): UserInterface
     {
-        if($uid instanceof UserInterface) {
+        if ($uid instanceof UserInterface) {
             return $this->_login($uid);
         }
         $user = $this->userModel::findUser($uid);

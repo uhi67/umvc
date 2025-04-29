@@ -116,7 +116,7 @@ class Query extends Component
     /** @var PDOStatement|null -- the last statement created by get*() */
     private ?PDOStatement $stmt = null;
     /** @var array|null $_fields - select part of SELECT, or field list of INSERT, if not given, * or the indices of the passed values are used. Ignored on UPDATE or DELETE. Array of literal field-names or other expressions */
-    private ?array $_fields = null;
+    private array|null $_fields = null;
     /** @var string|array|null|Model $_from - model list (optionally indexed with aliases) of FROM part of SELECT or UPDATE or a single model name */
     private string|array|Model|null $_from = null;
     /** @var array $_joins -- -- list of JOINS as [alias=>[model, join-type, conditions], ...] condition is a `mainField=>foreignField` associative pair, or any numeric-indexed other expression */
@@ -251,7 +251,7 @@ class Query extends Component
      */
     public function select(array|string $expressionList = null): static
     {
-        $this->_fields = $expressionList;
+        $this->_fields = is_string($expressionList) ? [$expressionList] : $expressionList;
         $this->type = 'SELECT';
         $this->_sql = null;
         $this->invalidateResults();
@@ -1968,7 +1968,7 @@ class Query extends Component
     public function buildJoin(
         Model|string $model,
         string|null $mainAlias,
-        array|Model $foreignModel,
+        array|Model|string $foreignModel,
         string $alias,
         string $type,
         array $conditions
@@ -2033,12 +2033,12 @@ class Query extends Component
      * or a sub-query
      *
      * @param array|Query $list -- array of expressions or a sub-query
-     * @param integer|null $alias
+     * @param string|null $alias
      *
      * @return string
      * @throws Exception
      */
-    public function buildExpressionList(Query|array $list, int $alias = null): string
+    public function buildExpressionList(Query|array $list, string $alias = null): string
     {
         if ($list instanceof Query) {
             $list->connection = $this->connection;

@@ -61,7 +61,7 @@ class AppHelper
     /**
      * to prevent xss
      */
-    public static function xss_clean(string $string): string
+    public static function xss_clean(?string $string): string
     {
         return htmlspecialchars($string ?? '', ENT_QUOTES);
     }
