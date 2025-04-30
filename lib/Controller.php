@@ -48,7 +48,7 @@ class Controller extends BaseController
         $this->registerAssets();
     }
 
-    public static function getClassPath()
+    public static function getClassPath(): ?string
     {
         return AppHelper::underscore(preg_replace('/Controller$/', '', static::shortName()), '-');
     }
@@ -266,7 +266,7 @@ class Controller extends BaseController
      * @param array $layoutParams -- optional parameters for the layout view
      * @param bool|string|null $locale -- use localized layout selection (ISO 639-1 language / ISO 3166-1-a2 locale), see above
      *
-     * @return false|string
+     * @return int|string
      * @throws Exception
      */
     public function render(
@@ -275,7 +275,7 @@ class Controller extends BaseController
         string $layout = null,
         array $layoutParams = [],
         bool|string $locale = null
-    ): false|string {
+    ): int|string {
         if ($locale === null || $locale === true) {
             $locale = $this->app->locale;
         }

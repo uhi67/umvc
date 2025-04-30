@@ -113,7 +113,7 @@ class App extends Component
     /** @var string $locale -- the current locale for localization, e.g. "hu-HU". */
     public string $locale = 'en-GB';
     /** @var string[] $classPath -- The path of the actually executed Controller including controller name, see also {@see Controller::$classPath} */
-    public array $classPath;
+    public ?array $classPath = null;
 
     /** @var Component[]|null $_components -- the configured components */
     private ?array $_components = null;
@@ -257,15 +257,14 @@ class App extends Component
     }
 
     /**
-     * Displays an error message and never returns
+     * Renders an error message
      */
-    public function error(int $status, string $message): int
+    public function error(int $status, string $message): int|string
     {
         $protocol = ($_SERVER['SERVER_PROTOCOL'] ?? 'HTTP/1.0');
         $title = HTTP::$statusTexts[$status] ?? '';
         $this->sendHeader($protocol . ' ' . $status . ' ' . $title);
-        echo $this->render('error', ['status' => $status, 'title' => $title, 'message' => $message]);
-        return $status;
+        return $this->render('error', ['status' => $status, 'title' => $title, 'message' => $message]);
     }
 
     /**
@@ -393,7 +392,7 @@ class App extends Component
         $this->controller = new $controllerClass([
             'app' => $this,
             'path' => $path,
-            'classPath' => implode('/', $this->classPath),
+            'classPath' => is_array($this->classPath) ? implode('/', $this->classPath) : $this->classPath,
             'query' => $query
         ]);
         return $this->controller->go();
@@ -463,7 +462,7 @@ class App extends Component
      * @param array|null $layoutParams -- optional parameters for the layout view
      * @param bool|string|null $locale -- use localized layout selection (ISO 639-1 language / ISO 3166-1-a2 locale), see above
      *
-     * @return string -- output
+     * @return int|string -- output
      */
     public function render(
         string $viewName,
@@ -471,7 +470,7 @@ class App extends Component
         string $layout = null,
         ?array $layoutParams = [],
         bool|string|null $locale = true
-    ): string {
+    ): int|string {
         try {
             if ($locale === null || $locale === true) {
                 $locale = $this->locale;
@@ -562,14 +561,14 @@ class App extends Component
      * @param bool|string|null $layout -- the layout applied to this render after the view rendered. If false, no layout will be applied.
      * @param array|null $layoutParams -- optional parameters for the layout view
      *
-     * @return string
+     * @return int|string
      */
     public function renderFile(
         string $viewFile,
         array $params = [],
         bool|string $layout = null,
         array|null $layoutParams = []
-    ): string {
+    ): int|string {
         try {
             if ($layout === null) {
                 $layout = $this->layout;
@@ -581,6 +580,7 @@ class App extends Component
                 throw new Exception("View file '$viewFile' does not exist", HTTP::HTTP_NOT_FOUND);
             }
             $content = $this->renderPhpFile($viewFile, $params ?? []);
+            if(is_int($content)) return $content;
             if ($layout) {
                 $content = $this->render($layout, array_merge(['content' => $content], $layoutParams ?? []), false);
             }
@@ -641,10 +641,10 @@ class App extends Component
      * @param string $_file_
      * @param array $_params_
      *
-     * @return string
+     * @return int|string
      * @throws Exception
      */
-    private function renderPhpFile(string $_file_, array $_params_ = []): string
+    private function renderPhpFile(string $_file_, array $_params_ = []): int|string
     {
         $_level_ = ob_get_level();
         ob_start();
@@ -652,16 +652,15 @@ class App extends Component
         extract($_params_, EXTR_SKIP);
         try {
             require $_file_;
-            return ob_get_clean() ?: '';
+            $result = ob_get_clean();
+            return $result!==false ? $result : 500;
         } catch (Throwable $e) {
             App::$app->log('error', "Error rendering file '$_file_'");
-            echo "<h2>Server error</h2>";
-            echo "<div>Error rendering file '$_file_'</div>\n";
             if (ENV_DEV) {
                 App::$app->log('debug', $e->getTraceAsString());
                 AppHelper::showException($e);
             }
-            return ob_get_clean() ?: '';
+            return 500;
         } finally {
             while (ob_get_level() > $_level_) {
                 ob_end_clean();
