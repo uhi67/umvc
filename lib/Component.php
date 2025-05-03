@@ -1,4 +1,4 @@
-<?php
+<?php /** @noinspection PhpIllegalPsrClassPathInspection */
 
 namespace uhi67\umvc;
 
@@ -34,8 +34,8 @@ use ReflectionException;
 abstract class Component
 {
 
-    /** @var Component|App $parent -- the parent component which created this object (The App itself for the config-defined components) */
-    public $parent;
+    /** @var Component|App|null $parent -- the parent component which created this object (The App itself for the config-defined components) */
+    public App|Component|null $parent = null;
 
     /**
      * # Component constructor
@@ -49,15 +49,21 @@ abstract class Component
      * - the last parameter of the constructor is a configuration array, like `$config` here.
      * - call the parent implementation in the constructor.
      *
-     * @param array|mixed $config name-value pairs that will be used to initialize the object properties
+     * @param array|null $config name-value pairs that will be used to initialize the object properties
      * @throws Exception -- when the config is not an array (or null)
      */
-    public function __construct($config = [])
+    public function __construct(?array $config = [])
     {
+        $config = $this->beforeConfig($config);
         if (!empty($config)) {
             static::configure($this, $config);
         }
         $this->init();
+    }
+
+    public function beforeConfig(array|null $config): ?array
+    {
+        return $config;
     }
 
     /**
