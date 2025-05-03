@@ -458,7 +458,7 @@ class App extends Component
      *
      * @param string $viewName -- basename of a PHP view-file in the `views` directory, without extension and without localization code
      * @param array|null $params -- parameters to assign to variables used in the view
-     * @param string|null $layout -- the layout applied to the result after the view rendered. If false, no layout will be applied.
+     * @param string|bool|null $layout -- the layout applied to the result after the view rendered. If false, no layout will be applied.
      * @param array|null $layoutParams -- optional parameters for the layout view
      * @param bool|string|null $locale -- use localized layout selection (ISO 639-1 language / ISO 3166-1-a2 locale), see above
      *
