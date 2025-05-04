@@ -1,4 +1,6 @@
-<?php /** @noinspection PhpUnused */
+<?php /** @noinspection PhpIllegalPsrClassPathInspection */
+
+/** @noinspection PhpUnused */
 
 namespace uhi67\umvc\commands;
 
@@ -14,39 +16,42 @@ class CacheController extends Command {
 	/**
 	 * @throws Exception
 	 */
-	public function beforeAction() {
+	public function beforeAction(): bool
+    {
         if(!$this->parent instanceof App) throw new Exception('CacheController must be a component of the App');
         if(!$this->parent->hasComponent('cache')) {
             echo 'No cache is defined. Cache can be defined in the `config/config.php` file, at `components/cache` key if needed. Example:', PHP_EOL;
             echo "\t'cache' => [\n\t\t'class' => \uhi67\umvc\FileCache::class,\n\t]", PHP_EOL;
             echo "Note: the cache class must implement the \uhi67\umvc\CacheInterface", PHP_EOL;
-            return 1;
+            return true;
         }
-        return 0;
+        return false;
     }
     
-    public function actionDefault() {
+    public function actionDefault(): int
+    {
         echo "The `cache` command operates the cache configured to the application.", PHP_EOL;
         echo "Run `php app cache help` for more details.", PHP_EOL, PHP_EOL;
         return 0;
     }
     
-    public function actionHelp() {
+    public function actionHelp(): int
+    {
         echo "Usage:", PHP_EOL, PHP_EOL;
         echo "   php app cache cleanup -- Delete the expired data from the cache.", PHP_EOL;
         echo "   php app cache clear -- Delete all data from the cache.", PHP_EOL;
         return 0;
     }
     
-    public function actionClear() {
+    public function actionClear(): string
+    {
         $c = $this->parent->cache->clear();
-        echo "$c items deleted", PHP_EOL;
-        return 0;
+        return "$c items deleted" . PHP_EOL;
     }
     
-    public function actionCleanup() {
+    public function actionCleanup(): string
+    {
         $c = $this->parent->cache->cleanup();
-        echo "$c items deleted", PHP_EOL;
-        return 0;
+        return "$c items deleted" . PHP_EOL;
     }
 }

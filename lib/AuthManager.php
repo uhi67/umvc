@@ -135,10 +135,10 @@ abstract class AuthManager extends Component
      * @param UserInterface|string $uid -- A user object or a login id
      * @param array $attributes -- login attributes
      * @param bool $canCreate
-     * @return UserInterface
+     * @return ?UserInterface
      * @throws Exception
      */
-    public function login(UserInterface|string $uid, array $attributes = [], bool $canCreate = true): UserInterface
+    public function login(UserInterface|string $uid, array $attributes = [], bool $canCreate = true): ?UserInterface
     {
         if ($uid instanceof UserInterface) {
             return $this->_login($uid);
