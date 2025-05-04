@@ -371,7 +371,7 @@ class App extends Component
             $pathInfo = implode('/', $this->path);
             throw new Exception("Page not found ($pathInfo)", HTTP::HTTP_NOT_FOUND);
         } catch (Throwable $e) {
-            $this->responseStatus = $e->getCode() ?: HTTP::HTTP_INTERNAL_SERVER_ERROR;
+            $this->responseStatus = (int)$e->getCode() ?: HTTP::HTTP_INTERNAL_SERVER_ERROR;
             AppHelper::showException($e, $this->responseStatus);
         }
         return $this->responseStatus;

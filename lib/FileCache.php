@@ -181,7 +181,8 @@ class FileCache extends Component implements CacheInterface
         $filename = $this->fileName($key);
         $ttlname = $this->ttlName($key);
         if (!file_exists(dirname($filename))) {
-            mkdir(dirname($filename), 0774);
+            mkdir(dirname($filename), $this->permissions);
+            if(\app\lib\App::isCLI()) chown(dirname($filename), 'www-data');;
         }
 
         if (file_exists($filename)) {
