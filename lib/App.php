@@ -467,7 +467,7 @@ class App extends Component
     public function render(
         string $viewName,
         ?array $params = [],
-        string $layout = null,
+        string|bool|null $layout = null,
         ?array $layoutParams = [],
         bool|string|null $locale = true
     ): int|string {
@@ -656,11 +656,16 @@ class App extends Component
             return $result!==false ? $result : 500;
         } catch (Throwable $e) {
             App::$app->log('error', "Error rendering file '$_file_'");
+            $result = 500;
             if (ENV_DEV) {
                 App::$app->log('debug', $e->getTraceAsString());
-                AppHelper::showException($e);
+                $result = AppHelper::renderException($e);
+                while($e = $e->getPrevious()) {
+                    App::$app->log('debug', "Previous:\n".$e->getTraceAsString());
+                    $result .= AppHelper::renderException($e);
+                }
             }
-            return 500;
+            return $result;
         } finally {
             while (ob_get_level() > $_level_) {
                 ob_end_clean();

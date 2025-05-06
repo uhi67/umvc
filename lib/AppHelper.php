@@ -117,6 +117,12 @@ class AppHelper
         return ($date === false) ? '' : date_format($date, $fmt);
     }
 
+    static function renderException(Exception|Throwable|Error $e, int $responseStatus = null): string {
+        ob_start();
+        self::showException($e, $responseStatus);
+        return ob_get_clean();
+    }
+
     /**
      * Displays an Exception on CLI or HTML output.
      *
