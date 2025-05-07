@@ -658,6 +658,7 @@ class App extends Component
             App::$app->log('error', "Error rendering file '$_file_'");
             $result = 500;
             if (ENV_DEV) {
+                App::$app->log('error', sprintf('%s in file %s at line %d', $e->getMessage(), $e->getFile(), $e->getLine()));
                 App::$app->log('debug', $e->getTraceAsString());
                 $result = AppHelper::renderException($e);
                 while($e = $e->getPrevious()) {

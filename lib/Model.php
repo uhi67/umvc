@@ -147,7 +147,7 @@ class Model extends BaseModel
      * ```
      *
      * Memory-cached (short-term) and app-cached (long-term, 1h)
-     * @param Connection $connection
+     * @param Connection|null $connection
      * @return array|null if not found
      * @throws Exception
      */
@@ -200,12 +200,12 @@ class Model extends BaseModel
      * Returns all records as an array of Models
      *
      * @param array|null $condition -- fieldName=>value pairs or other expression
-     * @param array|null $orders
+     * @param array|string|null $orders
      * @param Connection|null $connection
      * @return array|null -- array of Model instances or null on failure (not indexed by primary key)
-     * @throws Exception|ReflectionException
+     * @throws Exception
      */
-    public static function getAll(array $condition = null, array $orders = null, Connection $connection = null): ?array
+    public static function getAll(array $condition = null, array|string $orders = null, Connection $connection = null): ?array
     {
         if (!$connection) {
             $connection = App::$app->getConnection(true);
@@ -681,15 +681,15 @@ class Model extends BaseModel
     /**
      * ## Validates model to uniqueness of the given field or fields.
      *
-     * Returns true if any of the the given fields has a value of null.
+     * Returns true if any of the given fields has a value of null.
      *
-     * @param string $fieldName -- for single field (null if called as multiple)
+     * @param string|null $fieldName -- for single field (null if called as multiple)
      * @param array $fieldNames -- field names for multiple-field validation
      *
      * @return bool -- model is valid
      * @throws Exception  -- when a DB request failed
      */
-    public function validateUnique(string $fieldName, array $fieldNames = []): bool
+    public function validateUnique(?string $fieldName, array $fieldNames = []): bool
     {
         if ($fieldName === null) {
             // Multiple-field uniqueness
@@ -704,15 +704,13 @@ class Model extends BaseModel
                 $existingInstance = static::getOne($values);
             } else {
                 // If already saved, itself must be ignored
-                $existingInstance = static::first(
+                $existingInstance = static::getOne(
                     array_merge(
                         ['and'],
-                        $this->db->asExpression($this->getAttributes($fieldNames)),
-                        [['not', [$this->db->asExpression($this->getOldPrimaryKey(true))]]]
+                        $this->connection->quoteValues($this->getAttributes($fieldNames)),
+                        [['not', [$this->connection->quoteValues($this->getOldPrimaryKey(true))]]]
                     ),
-                    null,
-                    null,
-                    $this->db
+                    $this->connection
                 );
             }
             if ($existingInstance) {

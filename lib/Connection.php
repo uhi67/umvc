@@ -128,6 +128,17 @@ abstract class Connection extends Component
     }
 
     /**
+     * Make the value safe from SQL injections (MySQL-specific)
+     *
+     * @param array $values -- (associative) array
+     * @return array -- the same values with necessary single quotes (except integers and NULL)
+     */
+    public function quoteValues(array $values): array
+    {
+        return array_map([$this, 'quoteValue'], $values);
+    }
+
+    /**
      * Replaces common operator names to vendor-specific version
      * The default implementation does not change the name
      */

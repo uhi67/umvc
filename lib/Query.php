@@ -1,9 +1,9 @@
-<?php
+<?php /** @noinspection PhpUnused */
+
 /** @noinspection PhpIllegalPsrClassPathInspection */
 
 namespace uhi67\umvc;
 
-use Codeception\Util\Debug;
 use DateTime;
 use Exception;
 use PDO;
@@ -23,6 +23,7 @@ use Throwable;
  * @property string $type -- the query type, default is SELECT. Other values: INSERT, UPDATE
  * @property Connection $connection
  * @property array $fields - select part of SELECT, or field list of INSERT. Array of literal field-names or other expressions
+ * @property bool $distinct -- {@see Query::getDistinct(), Query::setDistinct()}
  * @property string|array $from -- Model class or model list for the FROM clause
  * @property array $joins  -- list of JOINS as [alias=>[model, join-type, condition, ...], ...] condition is a `mainField=>foreignField` associative pair, or any numeric-indexed other expression
  * @property array $where -- expression of WHERE conditions in SELECT, DELETE or UPDATE
@@ -48,10 +49,10 @@ use Throwable;
  */
 class Query extends Component
 {
-    const ORDER_ASC = 0;
-    const ORDER_DESC = 1;
-    const NULLS_FIRST = 0;
-    const NULLS_LAST = 1;
+    const int ORDER_ASC = 0;
+    const int ORDER_DESC = 1;
+    const int NULLS_FIRST = 0;
+    const int NULLS_LAST = 1;
 
     /**
      * @var array $_operators
@@ -106,7 +107,7 @@ class Query extends Component
         'case' => 7,
     ];
 
-    /** @var string|Model $_modelClass -- The model class to be returned as a SELECT result, or model to INSERT into or DELETE from */
+    /** @var string|Model|null $_modelClass -- The model class to be returned as a SELECT result, or model to INSERT into or DELETE from */
     private string|Model|null $_modelClass = null;
     /** @var string|null $_indexField -- The result array must be indexed by the named field */
     private ?string $_indexField = null;
@@ -124,7 +125,7 @@ class Query extends Component
     private array $_joins = [];
     /** @var array|mixed $_where - expression of WHERE conditions in SELECT, DELETE or UPDATE */
     private mixed $_where = null;
-    /** @var array $_orders - expression list of ORDERS clause in SELECT. Does not use automatic alias of main table! */
+    /** @var array|string|null $_orders - expression list of ORDERS clause in SELECT. Does not use automatic alias of main table! */
     private array|string|null $_orders = null;
     /** @var array $_groups - expression list of ORDERS clause in SELECT. Does not use automatic alias of main table! */
     private array $_groups = [];
@@ -133,7 +134,7 @@ class Query extends Component
     /** @var int|null $_offset - OFFSET part of SELECT */
     private ?int $_offset = null;
     /**
-     * @var array|Query $_values -- value list of VALUES part of insert or fieldName=>value pairs of UPDATE.
+     * @var array|Query|null $_values -- value list of VALUES part of insert or fieldName=>value pairs of UPDATE.
      *
      * - UPDATE: fieldName=>expression syntax is used. Use ':' named parameter or explicit literals for literal values.
      * - INSERT:
@@ -143,7 +144,7 @@ class Query extends Component
     private array|Query|null $_values = null;
     /** @var array $_params -- The params the user specified, writable-only through params property */
     private array $_params = [];
-    private $_sql;
+    private ?string $_sql = null;
     /** @var array $_innerParams -- All parameters to be bound to the prepared statement -- read-only through params property */
     private array $_innerParams = [];
 
@@ -158,12 +159,13 @@ class Query extends Component
     private string|int|bool|float|null $_scalar;
     /** @var array|null $_column */
     private ?array $_column = null;
+    public bool $_distinct = false;
 
     /**
      * Generates a field-list based on model list
      *
      * @param array $models -- Model classes or subQueries
-     * @return array
+     * @return array -- field names from all models, with alias prefixes.
      * @throws Exception
      */
     private function allModelFields(array $models): array
@@ -276,12 +278,18 @@ class Query extends Component
             }
             $this->_fields = $this->_fields ? array_merge(
                 $this->_fields,
-                (array)$expressionList
-            ) : (array)$expressionList;
+                $expressionList
+            ) : $expressionList;
             $this->type = 'SELECT';
             $this->_sql = null;
             $this->invalidateResults();
         }
+        return $this;
+    }
+
+    public function distinct(bool $distinct = true): static
+    {
+        $this->distinct = $distinct;
         return $this;
     }
 
@@ -533,6 +541,19 @@ class Query extends Component
     public function getFields(): ?array
     {
         return $this->_fields;
+    }
+
+    public function setDistinct($value): static
+    {
+        $this->_distinct = $value;
+        $this->invalidateResults();
+        $this->_sql = null;
+        return $this;
+    }
+
+    public function getDistinct(): bool
+    {
+        return $this->_distinct;
     }
 
     public function setFrom($value): static
@@ -864,6 +885,7 @@ class Query extends Component
         if ($column === 0 && $this->sql && $this->_column !== null) {
             return $this->_column;
         }
+        $start = microtime(true);
         $this->stmt = $this->prepareStatement([PDO::ATTR_CURSOR => PDO::CURSOR_SCROLL]);
         $this->stmt->execute();
         $result = [];
@@ -882,6 +904,9 @@ class Query extends Component
             } else {
                 $result[] = $row[$column];
             }
+        }
+        if (ENV_DEV) {
+            App::log(LogLevel::DEBUG, sprintf('Elapsed=%.3f SQL = %s', microtime(true) - $start, $this->sql));
         }
 
         if ($column === 0) {
@@ -987,7 +1012,10 @@ class Query extends Component
             return $this->stmt->execute();
         } catch (Exception $e) {
             throw new Exception(
-                'Error executing ' . $this->sql . ' with params (' . implode(', ', $this->params) . '): '.$e->getMessage(),
+                'Error executing ' . $this->sql . ' with params (' . implode(
+                    ', ',
+                    $this->params
+                ) . '): ' . $e->getMessage(),
                 0,
                 $e
             );
@@ -1084,7 +1112,7 @@ class Query extends Component
      * Creates an UPDATE Query object
      *
      * @param array|string|Model|null $modelClass -- name of the main Model/table or options array
-     * @param array|null $fields -- field-names to select, default is all fields of the model.
+     * @param array|string|null $fields -- field-names to select, default is all fields of the model.
      * @param array|null $condition
      * @param array|null $params
      * @param Connection|null $connection
@@ -1368,7 +1396,7 @@ class Query extends Component
                 }
             }
         }
-        foreach ((array)$this->_joins as $i => $def) {
+        foreach ($this->_joins as $i => $def) {
             if (!is_int($i)) {
                 $aliases[] = $i;
             }
@@ -1397,7 +1425,7 @@ class Query extends Component
         }
 
         // Generate aliases for JOIN tables
-        foreach ((array)$this->_joins as $i => $joinDef) {
+        foreach ($this->_joins as $i => $joinDef) {
             if (is_int($i)) {
                 $aliases[] = $alias = $this->findUniqueAlias($joinDef[0]::tableName(), $aliases);
                 $this->_joins[$alias] = $joinDef;
@@ -1439,6 +1467,7 @@ class Query extends Component
             throw new Exception('FROM or modelClass is mandatory when WHERE part is present');
         }
         return 'SELECT ' .
+            ($this->_distinct ? 'DISTINCT ' : '') .
             trim($this->buildFieldNames($from, $this->fields, $number)) .
             $this->buildFrom($from) .
             $this->buildJoins($this->modelClass, $alias, $this->joins) .
@@ -1654,7 +1683,7 @@ class Query extends Component
             if ($expression == '?') {
                 return $expression;
             }
-            if (preg_match('~^:[\w]+$~', $expression)) {
+            if (preg_match('~^:\w+$~', $expression)) {
                 return $expression;
             }
 
@@ -1956,7 +1985,7 @@ class Query extends Component
      *
      * @param string|Model $model -- main model to join to (has no alias)
      * @param string|null $mainAlias -- optional alias for main model
-     * @param array|Model $foreignModel -- name of foreign model
+     * @param array|Model|string $foreignModel -- name of foreign model
      * @param string $alias -- alias of joined table - mandatory
      * @param string $type -- 'left' or 'inner' or empty, etc.
      * @param array $conditions -- 'ON' conditions [mainField=>foreignField, ...] or other expressions (mandatory for some JOIN types, must be empty for others.)
@@ -2132,6 +2161,18 @@ class Query extends Component
                 return $db->buildOrder($o, $alias);
             }, $orders));
         } catch (Exception $e) {
+            if (ENV_DEV) {
+                App::$app->log(
+                    'debug',
+                    sprintf(
+                        'Invalid order list: %s; %s in file %s at line %d',
+                        json_encode($orders),
+                        $e->getMessage(),
+                        $e->getFile(),
+                        $e->getLine()
+                    )
+                );
+            }
             throw new Exception('Invalid order list', $e->getCode(), $e);
         }
     }
@@ -2185,7 +2226,7 @@ class Query extends Component
                                 $order
                             ) == 'NULLS LAST')) ? ' NULLS LAST' : '');
             } catch (Exception $e) {
-                throw new Exception('Invalid order expression', $fieldName, $e);
+                throw new Exception('Invalid order expression: ' . json_encode($fieldName), 0, $e);
             }
         }
         throw new Exception('Invalid order item.');
