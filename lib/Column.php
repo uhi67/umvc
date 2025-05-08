@@ -1,5 +1,6 @@
 <?php
 /** @noinspection PhpIllegalPsrClassPathInspection */
+
 /** @noinspection PhpUnused */
 
 namespace uhi67\umvc;
@@ -17,8 +18,8 @@ use Exception;
  *  - row value cell
  *
  * ### The configuration options of the Column
- * - string|null **$field** -- the field-name of the model to display . May be null if a not-model column is displayed
- * - string **$width** -- the css value of the column's with attribute, may be "12%" or "250px"
+ * - string|null **$field** -- the field-name of the model to display. May be null if a not-model column is displayed
+ * - string **$width** -- the CSS value of the column's with attribute, may be "12%" or "250px"
  * - string|null|false **$label** -- the label to display. Default is the model's label associated with the field. False to no label.
  * - null|string|callable **$value** -- other (compound) field-name or `function(Model $model):string` which computes the value of the column -- the default is the value of the field of the model
  * - bool|string **$filter** -- the column is filtered, or custom filter cell content
@@ -37,38 +38,38 @@ use Exception;
 class Column extends Component
 {
     /** @var Grid $grid -- the parent Grid */
-    public $grid;
+    public Grid $grid;
     /** @var string|null $field -- the field-name of the model to display. May be null if a not-model column is displayed */
-    public $field;
+    public ?string $field = null;
     /** @var string|null $field -- the search field of the model to display. Default is the field ('.'-s are replaced with '_'-s) */
-    public $searchField;
-    public $width;
+    public ?string $searchField = null;
+    public string $width = '';
     /** @var string|null|false $label -- the label to display. Default is the model's label associated with the field. False to no label. */
-    public $label;
-    /** @var string|bool $hint -- title (hint displayed at mouse hover) default is original label if label is overridden, set to false to disable */
-    public $hint;
+    public string|null|false $label = null;
+    /** @var string|bool|null $hint -- title (hint displayed at mouse hover) default is original label if label is overridden, set to false to disable */
+    public string|null|bool $hint = null;
     /** @var callable $value -- function(Model $model):string -- computes the value of the column -- the default is the value of the field of the model */
     public $value;
-    /** @var bool|string -- the column is filtered, or custom filter cell content */
-    public $filter = true;
-    /** @var bool|string -- the column is ordered, or custom order clauses separated by ; and ASC is the first. Default is ordered. Set to 'false' to disable ordering. */
-    public $order = true;
+    /** @var bool|array|string -- the column is filtered, or custom filter cell content */
+    public string|array|bool $filter = true;
+    /** @var bool|string -- the column is ordered, or custom order clauses separated by; and ASC is the first. Default is ordered. Set to 'false' to disable ordering. */
+    public string|bool $order = true;
     /** @var bool|string $searchIcon -- search icon to display before search input in the search lane. Default is none. True = built-in magnifier icon. */
-    public $searchIcon;
+    public string|bool $searchIcon = false;
     /** @var bool $searchCancel -- display a search-cancel icon in the search lane */
-    public $searchCancel;
+    public bool $searchCancel = false;
     /** @var string $class -- custom class for value cell */
-    public $class;
+    public string $class = '';
     /** @var string $headerClass -- custom header class */
-    public $headerClass;
+    public string $headerClass = '';
     /** @var string|Model $model -- the model name used in the table */
-    public $model;
+    public string|Model $model;
     /** @var string|null|bool -- display null value as. default is Grid's. Set false to disable (=empty string) */
-    public $emptyValue;
+    public string|bool|null $emptyValue = null;
     /** @var string|null $filterHint -- title attribute for filter cell */
     public ?string $filterHint = null;
     /** @var string $format -- currently only 'raw' is supported to supress htmlspecialchar filtering */
-    public $format;
+    public string $format = '';
 
     /**
      * @param Grid|null $grid
@@ -78,7 +79,7 @@ class Column extends Component
      * @return Column[]
      * @throws Exception
      */
-    public static function createColumns(Grid $grid, string $model, array $columnDef)
+    public static function createColumns(Grid|null $grid, string $model, array $columnDef): array
     {
         return array_map(function ($col) use ($grid, $model) {
             return static::createColumn($grid, $col, $model);
@@ -93,7 +94,7 @@ class Column extends Component
      * @return Column
      * @throws Exception
      */
-    private static function createColumn($grid, $col, $model = null)
+    private static function createColumn(?Grid $grid, array $col, string $model = null): Column
     {
         if (array_key_exists(0, $col)) {
             $col['field'] = array_shift($col);
@@ -110,10 +111,10 @@ class Column extends Component
     /**
      * @throws Exception
      */
-    public function init()
+    public function init(): void
     {
         $originalLabel = $this->model && $this->field ? $this->model::attributeLabel($this->field) : '';
-        /** Auto-hint if custom label is given  */
+        /** Auto-hint if a custom label is given  */
         if ($this->hint === null || $this->hint === true) {
             $this->hint = $this->label ? $originalLabel : '';
             if ($this->order) {
@@ -153,7 +154,7 @@ class Column extends Component
      * @return string
      * @throws Exception
      */
-    public function renderSearch($search)
+    public function renderSearch(BaseModel|array $search): string
     {
         $searchModel = 'search';
         $fieldName = $searchModel . '[' . $this->searchField . ']';
@@ -196,7 +197,7 @@ class Column extends Component
     /**
      * @throws Exception
      */
-    public function renderValue(Model $model)
+    public function renderValue(Model $model): string
     {
         $options = $this->class ? ['class' => $this->class] : [];
         if (is_callable($this->value)) {
@@ -222,16 +223,17 @@ class Column extends Component
     }
 
     /**
-     * Renders the table header cell. Using priority multiple orders can be applied.
+     * Renders the table header cell. Using priority, multiple orders can be applied.
      *
-     * $orders is the $actualColumnOrder values by field names.
-     * $actualColumnOrder is null, or actual order direction, with an optional priority postfix separated by ;
+     * $orders are the $actualColumnOrder values by field names.
+     * $actualColumnOrder is null, or actual order direction, with an optional priority postfix separated by;
      * Example: ['id'=>null, 'name'=>'ASC;1', ...]
      *
      * @param array|null $orders
+     * @return string
      * @throws Exception
      */
-    public function renderHeader($orders)
+    public function renderHeader(?array $orders): string
     {
         $class = $this->order ? 'header-ordered' : '';
         if ($this->headerClass) {
@@ -239,10 +241,11 @@ class Column extends Component
         }
         $sorting = $this->renderSorting($orders);
         $span = Html::tag('span', $sorting . $this->label, ['title' => $this->hint]);
-        return Html::tag('th', $span, [
-            'style' => 'width:' . $this->width,
+        $options = [
             'class' => $class
-        ]);
+        ];
+        if($this->width) $options['style'] = 'width:' . $this->width;
+        return Html::tag('th', $span, $options);
     }
 
     /**
@@ -251,7 +254,7 @@ class Column extends Component
      * @param array $orders -- Example: ['id'=>'DESC;2', 'name'=>'ASC;1']
      * @return string
      */
-    private function renderSorting($orders)
+    private function renderSorting(array $orders): string
     {
         if (!$this->order) {
             return '';

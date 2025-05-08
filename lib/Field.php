@@ -1,4 +1,5 @@
 <?php
+/** @noinspection PhpIllegalPsrClassPathInspection */
 /** @noinspection PhpUnused */
 
 namespace uhi67\umvc;
@@ -16,57 +17,57 @@ use Exception;
  */
 class Field extends Component
 {
-    /** @var Model $model -- The model of the field or null if standalone field is to be created */
-    public $model;
-    /** @var string $fieldName -- the name of the property of the Model (database field) */
-    public $fieldName;
+    /** @var Model|array|null $model -- The model of the field or null if a standalone field is to be created */
+    public Model|array|null $model = null;
+    /** @var string|null $fieldName -- the name of the property of the Model (database field) */
+    public ?string $fieldName = null;
     /** @var string $modelName -- the name of the model instance. Default is the tablename of the model. */
-    public $modelName;
+    public string $modelName = '';
     /** @var string $divClass -- the additional classnames for the enclosing div */
-    public $divClass = '';
-    /** @var string $label -- the label text, default is the attribute label defined in the Model class */
-    public $label = null;
+    public string $divClass = '';
+    /** @var string|null $label -- the label text, default is the attribute label defined in the Model class */
+    public ?string $label = null;
     /** @var string|array $labelClass -- the additional classnames for the field label */
-    public $labelClass = '';
+    public string|array $labelClass = '';
     /** @var string $notice -- a notice text between the label and the input */
-    public $notice;
+    public string $notice = '';
     /** @var string|array $noticeClass -- the additional classnames for the notice if exists */
-    public $noticeClass = '';
+    public string|array $noticeClass = '';
     /** @var string|array $wrapperClass -- the classnames for the input wrapper div */
-    public $wrapperClass = '';
-    /** @var string $name -- the name of the HTML field. Default is 'tablename[fieldName]' */
-    public $name;
+    public string|array $wrapperClass = '';
+    /** @var string $name -- the name of the HTML field. The default is 'tablename[fieldName]' */
+    public string $name = '';
     /** @var string $id -- the id attribute of the input tag, default is 'field-tablename-fieldName' */
-    public $id;
+    public string $id = '';
     /** @var string $type -- the input type, default is 'text'. Other values: password, checkbox, radio, textarea, select, select2 (later) */
-    public $type = 'text';
+    public string $type = 'text';
     /** @var string $class -- the additional classnames for the input tag */
-    public $class = '';
-    /** @var mixed $value -- the value of the input. Default is $model->fieldName */
-    public $value;
+    public string $class = '';
+    /** @var mixed $value -- the value of the input. The default is $model->fieldName */
+    public mixed $value = null;
     /** @var array $options -- any other HTML attributes for the input tag, e.g. readonly, placeholder */
-    public $options = [];
+    public array $options = [];
     /** @var array $divOptions -- any other HTML attributes for the enclosing div tag */
-    public $divOptions = [];
+    public array $divOptions = [];
     /** @var array $items -- selectable items for select, radio, checkboxlist */
-    public $items = [];
+    public array $items = [];
     /** @var string $icon -- 'glyphicon glyphicon-xxx' or 'fa fa-xxx' */
-    public $icon;
-    /** @var string $error -- The error message for the field or false if error message is disabled. If null (default) the modell error is used. */
-    public $error;
+    public string $icon = '';
+    /** @var string|null $error -- The error message for the field or false if the error message is disabled. If null (default), the modell error is used. */
+    public ?string $error = null;
     /** @var Form $form -- the form object this field belongs to */
-    public $form;
-    /** @var string $template -- the partial view name for the rendering. default is _form/_field */
-    public $template;
+    public Form $form;
+    /** @var string $template -- the partial view name for the rendering. The default is _form/_field */
+    public string $template;
     /** @var string $hint -- a helper text under the field input */
-    public $hint;
+    public string $hint = '';
 
     /**
      * Initializes the field
      *
      * @throws Exception
      */
-    public function init()
+    public function init(): void
     {
         if ($this->model) {
             if (!$this->modelName) {
@@ -114,12 +115,12 @@ class Field extends Component
         }
     }
 
-    public function icon()
+    public function icon(): string
     {
         if (!$this->icon) {
             return '';
         }
-        if (substr($this->icon, 0, 2) == 'fa') {
+        if (str_starts_with($this->icon, 'fa')) {
             return '<i class="' . $this->icon . '"></i>';
         }
         return '<span class="' . $this->icon . '"></span>';
@@ -132,7 +133,7 @@ class Field extends Component
      *
      * @return string
      */
-    public function renderOptions($options = null)
+    public function renderOptions($options = null): string
     {
         if (!$options) {
             $options = $this->options;
@@ -153,7 +154,7 @@ class Field extends Component
     /**
      * Renders the class tag for field label
      */
-    public function labelClass()
+    public function labelClass(): string
     {
         $class = [];
         if ($this->form->layout == 'horizontal') {
@@ -176,7 +177,7 @@ class Field extends Component
     /**
      * Renders the class tag for field notice
      */
-    public function noticeClass()
+    public function noticeClass(): string
     {
         $class = ['notice'];
         if (is_array($this->form->noticeClass)) {
@@ -197,7 +198,7 @@ class Field extends Component
     /**
      * Renders the class tag for field input block wrapper div
      */
-    public function wrapperClass()
+    public function wrapperClass(): string
     {
         $class[] = [];
         if (is_array($this->form->wrapperClass)) {
@@ -218,7 +219,7 @@ class Field extends Component
     /**
      * @throws Exception
      */
-    public function render()
+    public function render(): string
     {
         return App::$app->renderPartial($this->template, ['field' => $this]);
     }
@@ -237,26 +238,26 @@ class Field extends Component
         return call_user_func([$this, $functionname]);
     }
 
-    public function renderInputText()
+    public function renderInputText(): string
     {
         return $this->renderInputDefault();
     }
 
-    public function renderInputDefault()
+    public function renderInputDefault(): string
     {
         $options = $this->renderOptions();
         return "<input type='$this->type' id='$this->id' name='$this->name' class='form-control $this->class' value='$this->textValue' $options aria-invalid='false' />";
     }
 
-    public function renderInputDate()
+    public function renderInputDate(): string
     {
         return $this->renderInputDefault();
     }
 
-    public function renderInputSelect()
+    public function renderInputSelect(string $class2 = ''): string
     {
         $options = $this->renderOptions();
-        $result = "<select id='$this->id' name='$this->name' class='form-control $this->class' $options aria-invalid='false'>";
+        $result = "<select id='$this->id' name='$this->name' class='form-control $class2 $this->class' $options aria-invalid='false'>";
         $required = $this->options['required'] ?? false;
         if (!$required || !$this->value) {
             $placeHolder = $this->options['placeholder'] ?? 'Please select one';
@@ -271,16 +272,21 @@ class Field extends Component
         return $result;
     }
 
-    public function renderInputCheckbox()
+    public function renderInputSelect2(): string
+    {
+        return $this->renderInputSelect('select2');
+    }
+
+    public function renderInputCheckbox(): string
     {
         $options = $this->renderOptions();
         $checked = $this->value ? 'checked' : '';
         return "
             <input type='hidden' id='$this->id-default' name='$this->name' value='0'/>
-            <input type='checkbox' id='$this->id' name='$this->name' class='form-control $this->class' value='1' $checked $options aria-invalid='false' />\n";
+            <input type='checkbox' id='$this->id' name='$this->name' class='$this->class' value='1' $checked $options aria-invalid='false' />\n";
     }
 
-    public function renderInputRadiolist()
+    public function renderInputRadiolist(): string
     {
         $options = $this->renderOptions();
         $result = "<input type='hidden' id='$this->id-default' name='$this->name' value='' />";
@@ -310,7 +316,7 @@ class Field extends Component
      *
      * @return string
      */
-    public function renderInputCheckboxlist()
+    public function renderInputCheckboxlist(): string
     {
         $options = $this->renderOptions();
         $result = "<input type='hidden' id='$this->id-default' name='$this->name' value='' />";
@@ -326,33 +332,15 @@ class Field extends Component
         return $result;
     }
 
-    public function renderInputTextarea()
+    public function renderInputTextarea(): string
     {
         $options = $this->renderOptions();
         return "<textarea id='$this->id' name='$this->name' class='form-control $this->class' $options>$this->value</textarea>";
     }
 
-    public function renderInputSubmit()
+    public function renderInputSubmit(): string
     {
         return "<button type='submit' id='$this->id' class='btn $this->class' value='$this->value'>$this->label</button>\n";
-    }
-
-    public function renderInputSelect2()
-    {
-        $options = $this->renderOptions();
-        $result = "<select id='$this->id' name='$this->name[]' class='form-control select2 $this->class' $options aria-invalid='false'>";
-        $required = $this->options['required'] ?? false;
-        if (!$required || !$this->value) {
-            $placeHolder = $this->options['placeholder'] ?? 'Please select one';
-            $emptyText = $required ? $placeHolder : '';
-            $result .= "<option value=''>$emptyText</option>";
-        }
-        foreach ($this->items as $v => $l) {
-            $selected = in_array($v, (array)$this->value) ? 'selected' : '';
-            $result .= "<option value='$v' $selected>$l</option>";
-        }
-        $result .= '</select>';
-        return $result;
     }
 
     /**
@@ -389,7 +377,7 @@ class Field extends Component
      * Getter for {@see $requiredMark} property
      * @return string
      */
-    public function getRequiredMark()
+    public function getRequiredMark(): string
     {
         $disabled = $this->options['disabled'] ?? false;
         return !$disabled && isset($this->options['required']) && $this->options['required'] ? '<b title="Required">*</b>' : '';
