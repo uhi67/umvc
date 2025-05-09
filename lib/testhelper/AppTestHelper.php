@@ -4,7 +4,6 @@
 namespace Helper;
 
 use Codeception\Lib\Framework;
-use Codeception\Lib\InnerBrowser;
 use Codeception\Lib\ModuleContainer;
 use Symfony\Component\BrowserKit\Response;
 use Symfony\Component\DomCrawler\Crawler;
@@ -47,7 +46,7 @@ class AppTestHelper extends Framework
     protected array $requiredFields = ['configFile'];
     protected array $config = ['loader' => 'core', 'sapi' => 'apache']; // optional parameters and defaults of module
 
-    /** @var App $app -- the application instance started by client */
+    /** @var App|null $app -- the application instance started by client */
     public ?App $app = null;
     /** @var string $configFile -- path of your configFile */
     protected string $configFile;
