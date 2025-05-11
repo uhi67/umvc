@@ -286,6 +286,10 @@ class Field extends Component
             <input type='checkbox' id='$this->id' name='$this->name' class='$this->class' value='1' $checked $options aria-invalid='false' />\n";
     }
 
+    public function renderInputRadio(): string
+    {
+        return $this->renderInputRadiolist();
+    }
     public function renderInputRadiolist(): string
     {
         $options = $this->renderOptions();

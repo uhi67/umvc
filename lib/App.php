@@ -293,9 +293,7 @@ class App extends Component
             }
 
             set_error_handler(function ($severity, $errstr, $errfile, $errline) {
-                $err = new ErrorException($errstr, 0, $severity, $errfile, $errline);
-                AppHelper::showException($err);
-                exit(self::EXIT_STATUS_ERROR);
+                throw new ErrorException($errstr, 0, $severity, $errfile, $errline);
             }, error_reporting());
             register_shutdown_function(function () {
                 $error = error_get_last();
