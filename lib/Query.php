@@ -15,8 +15,8 @@ use Throwable;
 /**
  * Query builder
  *
- * The Query class represents an SQL query of any type, and builds the SQL statement when executed.
- * Query is strongly connected to the Model class, and needs all the models to be defined to build proper SQL statements.
+ * The Query class represents an SQL query of any type and builds the SQL statement when executed.
+ * Query is strongly connected to the Model class and needs all the models to be defined to build proper SQL statements.
  *
  *
  * @property string|Model|null $modelClass -- The model class to be returned as a SELECT result, or model to INSERT into or DELETE from
@@ -49,10 +49,10 @@ use Throwable;
  */
 class Query extends Component
 {
-    const int ORDER_ASC = 0;
-    const int ORDER_DESC = 1;
-    const int NULLS_FIRST = 0;
-    const int NULLS_LAST = 1;
+    const ORDER_ASC = 0;
+    const ORDER_DESC = 1;
+    const NULLS_FIRST = 0;
+    const NULLS_LAST = 1;
 
     /**
      * @var array $_operators
@@ -125,9 +125,9 @@ class Query extends Component
     private array $_joins = [];
     /** @var array|mixed $_where - expression of WHERE conditions in SELECT, DELETE or UPDATE */
     private mixed $_where = null;
-    /** @var array|string|null $_orders - expression list of ORDERS clause in SELECT. Does not use automatic alias of main table! */
+    /** @var array|string|null $_orders - expression list of ORDERS clause in SELECT. Does not use automatic alias of the main table! */
     private array|string|null $_orders = null;
-    /** @var array $_groups - expression list of ORDERS clause in SELECT. Does not use automatic alias of main table! */
+    /** @var array $_groups - expression list of ORDERS clause in SELECT. Does not use automatic alias of the main table! */
     private array $_groups = [];
     /** @var int|null $_limit - LIMIT part of SELECT */
     private ?int $_limit = null;
@@ -138,8 +138,8 @@ class Query extends Component
      *
      * - UPDATE: fieldName=>expression syntax is used. Use ':' named parameter or explicit literals for literal values.
      * - INSERT:
-     *      - in case of _fields is null, for single-row insert the same syntax as UPDATE allowed.
-     *      - if _fields contains field names, values are 2-dimensional array of literal values or a sub-Query. No expressions or parameters are allowed.
+     *      - in '_fields' is null, for single-row insert the same syntax as UPDATE allowed.
+     *      - if '_fields' contains field names, values are 2-dimensional array of literal values or a sub-Query. No expressions or parameters are allowed.
      */
     private array|Query|null $_values = null;
     /** @var array $_params -- The params the user specified, writable-only through params property */
@@ -162,7 +162,7 @@ class Query extends Component
     public bool $_distinct = false;
 
     /**
-     * Generates a field-list based on model list
+     * Generates a field-list based on a model list
      *
      * @param array $models -- Model classes or subQueries
      * @return array -- field names from all models, with alias prefixes.
@@ -266,7 +266,7 @@ class Query extends Component
      *
      * (If no fields were defined earlier, all fields of all current models are used)
      *
-     * @param array|null $expressionList -- Array of literal field-names or other expressions. Single field-name is allowed, but single expression must be wrapped in an array.
+     * @param array|null $expressionList -- Array of literal field-names or other expressions. A single field-name is allowed, but a single expression must be wrapped in an array.
      * @return $this
      * @throws Exception
      */
@@ -310,11 +310,11 @@ class Query extends Component
 
     /**
      * Adds one or more JOIN clauses to the query. Chainable.
-     * Alias is optional. Default the table name is used.
+     * Alias is optional. By default, the table name is used.
      *
-     * For repeating table names you must supply unique aliases, unless the generated SQL will not be valid.
+     * For repeating table names, you must supply unique aliases, unless the generated SQL will not be valid.
      *
-     * @param array $joinList -- [alias=>[foreignModel, joinType, condition,...], ...]
+     * @param array $joinList -- [alias=>[foreignModel, joinType, condition, ...], ...]
      * @return Query
      */
     public function join(array $joinList): static
@@ -332,14 +332,14 @@ class Query extends Component
     }
 
     /**
-     * Sets the WHERE part of the query with an expression
+     * Sets the WHERE part of the query with an expression.
      * Overwrites the previous conditions!
      *
-     * Expression may be:
+     * Expression can be:
      *
      *  - a single scalar literal for single pk
-     *  - array of fieldName=>literalValue pairs (evaluated to parametrized query)
-     *  - other expression array, see {@see Query::buildExpression()}
+     *  - array of fieldName=>literalValue pairs (evaluated to a parametrized query)
+     *  - any other expression array, see {@see Query::buildExpression()}
      *
      * @param mixed $expression
      * @param array $params
@@ -359,8 +359,8 @@ class Query extends Component
      * Adds a new condition to the WHERE part of the query
      * Concatenated with AND to the previous conditions!
      *
-     *  - array of fieldName=>literalValue pairs (evaluated to parametrized query)
-     *  - other expression array, see {@see Query::buildExpression()}
+     *  - array of fieldName=>literalValue pairs (evaluated to a parametrized query)
+     *  - any other expression array, see {@see Query::buildExpression()}
      *  - Unlike the where(), single literal string here considered as an expression, i.e. a field name (possibly boolean type)
      *
      * @param mixed $expression
@@ -479,7 +479,7 @@ class Query extends Component
     /**
      * Adds named parameters to the query. Don't use it for numeric-indexed parameters.
      * Provide an associative array of parameters, to be substituted in patterns like `:name`.
-     * The new valueList will be merged with the existing, but same names will be overwritten.
+     * The new valueList will be merged with the existing, but the same names will be overwritten.
      * For completely replace params values, see {@see setParams}.
      *
      * Chainable.
@@ -752,7 +752,7 @@ class Query extends Component
     }
 
     /**
-     * Returns all records as an array of Models or arrays depending on result model set.
+     * Returns all records as an array of Models or arrays depending on a result model set.
      *
      * @return Model[]|array[]|null -- array of Model instances or null on failure
      * @throws Exception
@@ -840,7 +840,7 @@ class Query extends Component
             $result = $model;
         }
 
-        // Return as array
+        // Return it as an array
         return $this->_one = $result;
     }
 
@@ -869,7 +869,7 @@ class Query extends Component
             return $model;
         }
 
-        // Return as array
+        // Return it as an array
         return $result;
     }
 
@@ -933,7 +933,7 @@ class Query extends Component
             if (!$this->stmt->execute()) {
                 throw new Exception('Error executing SQL: ' . implode('; ', $this->stmt->errorInfo()));
             }
-            // Empty result is not error
+            // Empty result is not an error
             if (($row = $this->stmt->fetch()) === false) {
                 $errorInfo = $this->stmt->errorInfo();
                 if ($errorInfo[0] != '00000') {
@@ -1023,7 +1023,7 @@ class Query extends Component
     }
 
     /**
-     * Returns number of rows affected by executing the last SQL statement
+     * Returns the number of rows affected by executing the last SQL statement
      *
      * @return int
      */
@@ -1082,7 +1082,7 @@ class Query extends Component
      * ->into(modelClass, fields)
      * ->into(fields) -- can be used only if modelClass is already specified
      *
-     * @param string|array $modelClass -- The model to insert into (or fields, if modelClass is already defined and called only with one parameter)
+     * @param string|array $modelClass -- The model to insert into (or fields if modelClass is already defined and called only with one parameter)
      * @param array|null $fieldList -- Array of literal field-names or other expressions
      * @return $this
      * @throws Exception -- if modelClass is not valid
@@ -1117,7 +1117,7 @@ class Query extends Component
      * @param array|null $params
      * @param Connection|null $connection
      *
-     * Alternative call method: first parameter is an associative options array with the above options
+     * Alternative call method: The first parameter is an associative options array with the above options
      *
      * @return Query -- the query object
      * @throws Exception
@@ -1157,13 +1157,13 @@ class Query extends Component
      *   - if null, model attributes are used (or values' keys if associative)
      *   - if $values is null, $field must contain fieldName=>value pairs. For expression values use associative $values
      * @param array|null $values -- array of row value arrays
-     *   - if $fields includes values, must be NULL, otherwise NULL is not allowed.
+     *   - if '$fields' includes values, they must be NULL; otherwise NULL is not allowed.
      *   - if values is a numeric-indexed 2-dim array, the literal values will be inserted into multiple rows. No expressions are allowed.
-     *   - if values is an associative array, it considered as fieldName=>expression. $fields must be null. Use for single row only.
+     *   - if values is an associative array, it is considered as fieldName=>expression. $fields must be null. Use for a single row only.
      *   - if values is a Query, a sub-query will be used.
      * @param Connection|null $connection -- default is app's connection
      *
-     * Alternative call method: first parameter is an associative options array with the above options
+     * Alternative call method: The first parameter is an associative options array with the above options
      *
      * Alternative build:
      *
@@ -1206,7 +1206,7 @@ class Query extends Component
      * @param array|null $params
      * @param Connection|null $connection
      *
-     * Alternative call method: first parameter is an associative options array with the above options
+     * Alternative call method: The first parameter is an associative options array with the above options
      *
      * @return Query -- the query object
      * @throws Exception
@@ -1343,7 +1343,7 @@ class Query extends Component
 
     /**
      * Returns table-name for a model name.
-     * Returns itself if model name is not a Model classname, assuming a literal tableName
+     * Returns itself if the model name is not a Model classname, assuming a literal tableName
      *
      * @param string $modelName -- model classname
      * @return mixed
@@ -1361,7 +1361,7 @@ class Query extends Component
     }
 
     /**
-     * Return field names from the named model without alias
+     * Return field names from the named model without an alias
      *
      * @param string|Model $modelName
      *
@@ -1377,10 +1377,10 @@ class Query extends Component
     }
 
     /**
-     * If query has joins or more than one from table, adds alias keys to all from table to force using alias
+     * If a query has joins or more than one 'from' table, adds alias keys to all from table to force using alias
      * in subsequent field-name generation. The auto-generated alias is based on the short Class name.
      *
-     * Also returns alias name of main model table if exists, or null.
+     * Also returns the alias name of the main model table if it exists, or null.
      *
      * @param array|null $aliases -- (output only) returns the generated alis names
      * @return string|null -- alias name of main model table or null
@@ -1475,7 +1475,7 @@ class Query extends Component
             $this->buildGroupBy($this->_groups, $alias) .
             // TODO: implement HAVING -- later
             // TODO: implement UNION, INTERSECT, EXCEPT -- later
-            $this->buildOrders($this->orders, $alias) . // Auto alias not applied in order to use alias fields.
+            $this->buildOrders($this->orders, $alias) . // Auto alias isn't applied in order to use alias fields.
             ($this->limit ? ' LIMIT ' . (int)$this->limit : '') .
             ($this->offset ? ' OFFSET ' . (int)$this->offset : '');
     }
@@ -1541,12 +1541,12 @@ class Query extends Component
     }
 
     /**
-     * Builds an SQL fragment used in SELECT, DELETE and UPDATE as WHERE part.
-     * If condition expression is empty, the WHERE clause will not present.
+     * Builds an SQL fragment used in SELECT, DELETE and UPDATE as a WHERE part.
+     * If the condition expression is empty, the WHERE clause will not present.
      * Expression may be:
      *
      *  - array of (field=>value)
-     *  - other expression array, see {@see Query::buildExpression()}
+     *  - any other expression array, see {@see Query::buildExpression()}
      *  - a single scalar literal for single pk
      *
      * @param null $alias
@@ -1568,7 +1568,7 @@ class Query extends Component
             return ' WHERE false';
         }
         if (!is_array($condition)) {
-            $pk = call_user_func(array($this->modelClass, 'primaryKey')); // returns array of field names
+            $pk = call_user_func(array($this->modelClass, 'primaryKey')); // returns an array of field names
             if (count($pk) > 1) {
                 throw new Exception('Scalar condition can be used only for single primary key');
             }
@@ -1619,25 +1619,25 @@ class Query extends Component
     }
 
     /**
-     * Builds an SQL fragment used as expression for example in WHERE part or ON part in a JOIN.
+     * Builds an SQL fragment used as an expression, for example, in the WHERE part or ON part of a JOIN.
      * The expression must not be empty.
      * Expression may be:
      *
      *  - string beginning with `(` will be returned literally. No identifier quoting or model check will be applied.
-     *  - string beginning with single quote or E' will be treated as string literal. Closing quote will be omitted and internal double single quotes are allowed
+     *  - string beginning with a single quote or E' will be treated as string literal. Closing quote will be omitted, and internal double single quotes are allowed
      *  - integer or float: a numeric literal
-     *  - '?' is a numeric-indexed parameters. Don't use, always use ':' named parameters.
-     *  - string beginning with a ':' is string-indexed parameter
+     *  - '?' is a numeric-indexed parameter. Don't use, always use ':' named parameters.
+     *  - string beginning with a ':' is a string-indexed parameter
      *  - any other string: a field name. Unqualified field name will be qualified with alias if alias is given.
      *  - array(OP, ...): operator with operands (expressions), only numeric indices {@see $_operators}
      *  - array(FN(), ...): function call (function existence not checked) (arguments as expressions)
      *  - array(fieldName=>value, ...) ==> array('AND', array('=', fieldName, value), ...)
-     *  - any other array: same as ['AND', ...]. Note: empty array will be TRUE (implicit AND-ed zero elements)
+     *  - any other array: same as ['AND', ...]. Note: an empty array will be TRUE (implicit AND-ed zero elements)
      *
      * All subexpressions will be evaluated recursively.
      *
      * @param mixed $expression
-     * @param string|null $alias -- optional alias for model
+     * @param string|null $alias -- optional alias for the main model
      * @param integer|null $precedence -- whether it's necessary to use parenthesis with operator below this level.: 0=always, null=never
      *
      * @return float|int|string
@@ -1928,10 +1928,10 @@ class Query extends Component
     }
 
     /**
-     * Builds an SQL fragment used in SELECT as JOIN part.
+     * Builds an SQL fragment used in SELECT as the JOIN part.
      * Scalar string will be returned literally, without any identifier quoting.
      *
-     * Conditions are the remained parts of a $join array.
+     * Conditions are the remaining parts of a $join array.
      * Condition may be a `mainField=>foreignField` associative pair, or any numeric-indexed other expression
      *
      * @param array|string|null $model -- main table's model-name (single table only)
@@ -1981,18 +1981,18 @@ class Query extends Component
     }
 
     /**
-     * Builds a single JOIN part as SQL fragment.
+     * Builds a single JOIN part as an SQL fragment.
      *
      * @param string|Model $model -- main model to join to (has no alias)
-     * @param string|null $mainAlias -- optional alias for main model
-     * @param array|Model|string $foreignModel -- name of foreign model
+     * @param string|null $mainAlias -- optional alias for the main model
+     * @param array|Model|string $foreignModel -- name of the foreign model
      * @param string $alias -- alias of joined table - mandatory
      * @param string $type -- 'left' or 'inner' or empty, etc.
      * @param array $conditions -- 'ON' conditions [mainField=>foreignField, ...] or other expressions (mandatory for some JOIN types, must be empty for others.)
      * you may use any other expression using array($expression)
      *
      * @return string
-     * @throws Exception -- if join type is invalid, or the condition is missing or invalid
+     * @throws Exception -- if the join type is invalid, or the condition is missing or invalid
      * @see Self::buildJoins()
      */
     public function buildJoin(
@@ -2059,7 +2059,7 @@ class Query extends Component
     }
 
     /**
-     * Builds a `,`-separated expression list (without surrounding parenthesis)
+     * Builds a `,`-separated expression list (without a surrounding parenthesis)
      * or a sub-query
      *
      * @param array|Query $list -- array of expressions or a sub-query
@@ -2100,14 +2100,14 @@ class Query extends Component
     }
 
     /**
-     * Builds an SQL fragment used as ORDER BY part
+     * Builds an SQL fragment used as the ORDER BY part
      * Returns empty string on empty orders.
      *
      * @param array|string|null $orders -- array of order definitions as in {@see buildOrderList()}
-     * @param string|null $alias -- optional alias for model, used for field names in {@see buildFieldNameValue()}
+     * @param string|null $alias -- optional alias for the model, used for field names in {@see buildFieldNameValue()}
      *
      * @return string -- an 'ORDER BY ...' clause or empty string
-     * @throws Exception  -- if $orders parameter or any of the orders is invalid
+     * @throws Exception  -- if the '$orders' parameter or any of the orders is invalid
      */
     public function buildOrders(array|string|null $orders, string $alias = null): string
     {
@@ -2127,18 +2127,18 @@ class Query extends Component
     }
 
     /**
-     * Builds an order list without 'ORDER BY' keyword.
+     * Builds an order list without the 'ORDER BY' keyword.
      *
      * @param array|string $orders -- numeric indexed array of strings or array(fieldName, order direction, nulls)
      *  - simple string beginning with '(' will be used literally,
      *  - all other simple string is a field name
      *  - order direction: ORDER_ASC (default), ORDER_DESC
      *  - nulls: NULLS_FIRST (default), NULLS_LAST
-     *  - array expressions in second form are evaluated
-     * @param string|null $alias -- optional alias for model, used for field names in {@see buildFieldNameValue()}
+     *  - array expressions in the second form are evaluated
+     * @param string|null $alias -- optional alias for the model, used for field names in {@see buildFieldNameValue()}
      *
      * @return string -- the SQL fragment to be placed after the 'ORDER BY' or empty if no elements in orders.
-     * @throws Exception -- if $orders parameter or any of the orders is invalid
+     * @throws Exception -- if the $orders parameter or any of the orders is invalid
      */
     public function buildOrderList(array|string $orders, string $alias = null): string
     {
@@ -2185,10 +2185,10 @@ class Query extends Component
      *  - all other simple string is a field name
      *  - order direction: ORDER_ASC (default), ORDER_DESC
      *  - nulls: NULLS_FIRST (default), NULLS_LAST
-     * @param string|null $alias -- optional alias for model, used for field names
+     * @param string|null $alias -- optional alias for the model, used for field names
      *
      * @return string -- an item for ORDER BY, without separator comma
-     * @throws Exception -- if order is empty, a closing parenthesis is missing, or failed to build (invalid)
+     * @throws Exception -- if the order is empty, a closing parenthesis is missing or failed to build (invalid)
      */
     public function buildOrder(array|string $o, string $alias = null): string
     {
@@ -2299,7 +2299,7 @@ class Query extends Component
      *   - if **\_fields** is a numeric-indexed array of field names, **\_values** contains a numeric-indexed 2-dim array of literal values of multiple rows.
      *   - if **\_fields** is an associative array containing fieldName=>value pairs, **\_values** must be null. No expressions are allowed. Parametrized query will be built.
      *   - if **\_values** is a Query, a sub-query will be built for the VALUES part. Field names are in **\_fields** or default attributes are used.
-     *   - if **\_values** is a string, it is used as an SQL fragment for VALUES part. Use with care! Field names are in **\_fields** or default attributes are used.
+     *   - if **\_values** is a string, it is used as an SQL fragment for the VALUES part. Use with care! Field names are in **\_fields** or default attributes are used.
      *
      * @return string
      * @throws Exception
@@ -2353,12 +2353,12 @@ class Query extends Component
      * @param array|string|Query|null $values -- array of row value arrays
      *   if values is an array, the literal values of multiple rows will be inserted.
      *   if values is a Query, a sub-query will be used.
-     *   if values is a string, user literally (as an SQL-fragment) --- use it with care!
+     *   if values is a string, use it literally (as an SQL fragment) --- use it with care!
      * @param integer|null $number -- the number of fields to be inserted, default unspecified.
-     * If given, insufficient number of values will be filled out with NULLS. Not used if values is a string or sub-Query.
+     * If given, an insufficient number of values will be filled out with NULLS. Not used if values is a string or sub-Query.
      * Mandatory in multi-row inserts (number of fields from fields part or number of generated default attributes)
      *
-     * @return string -- the values part (including VALUES keyword if necessary)
+     * @return string -- the 'VALUES' part (including VALUES keyword if necessary)
      * @throws Exception -- if a row is not an array, has too many values, or $values is an invalid type.
      */
     public function buildValues(Query|array|string|null $values, int $number = null): string
@@ -2406,10 +2406,10 @@ class Query extends Component
      * Builds an SQL fragment of field names used in SELECT or INSERT or GROUP BY part.
      *
      * @param array|string|null $models -- main table name or array(alias=>tableName)
-     *        If an alias is given, it will be applied as prefix of the corresponding fields
+     *        If an alias is given, it will be applied as a prefix of the corresponding fields
      *        if no alias, single table's fields will not use prefix, otherwise table names will be used as prefix
      *        valid to use without any model, specify null
-     * @param array|null $fields -- array of field names (or single field name as string). If null, model attributes are used
+     * @param array|null $fields -- array of field names (or single field name as a string). If null, model attributes are used
      *        with or without table prefixes,
      *        or alias => fieldName
      *        or alias => (expression)
@@ -2435,7 +2435,7 @@ class Query extends Component
         }
 
         $mk = array_keys($models);
-        /** @var string $alias -- alias of first (main) table, will be used as prefix for all unqualified field when more than one table is present. */
+        /** @var string $alias -- alias of the first (main) table will be used as a prefix for all unqualified fields when more than one table is present. */
         $alias = $mk ? $mk[0] : null;
         if (is_integer($alias)) {
             $alias = $this->modelTableName($models[$alias]);
@@ -2479,7 +2479,7 @@ class Query extends Component
             // Auto output alias-prefixed field-name if similar field-name exist before it's index
             if (!$output && is_scalar($f) && strpos($f, '.')) {
                 $field_name = AppHelper::substring_after($f, '.', true);
-                // Search for the position of the occurrence of the field_name, where no alias present
+                // Search for the position of the occurrence of the field_name, where no alias is present
                 $pos = ArrayHelper::array_find_key($fields, function ($item, $alias) use ($f, $field_name) {
                     if (!is_numeric($alias)) {
                         return false;
@@ -2505,7 +2505,7 @@ class Query extends Component
      *
      * Possible names: fieldName, tableAlias.fieldName, "fieldName", "tableAlias"."fieldName"
      *
-     * @param array|string|Query $name -- quoted or unquoted field name with an optional table (-alias) prefix; or other expression or a subQuery with single field
+     * @param array|string|Query $name -- quoted or unquoted field name with an optional table (-alias) prefix; or another expression or a subQuery with a single field
      * @param string|null $prefix -- optional table alias connected with '.'. If fieldName already has a prefix, alias will be ignored.
      * @param string|null $output -- optional output alias connected with 'AS'
      *
@@ -2518,10 +2518,10 @@ class Query extends Component
     }
 
     /**
-     * Returns a safe field name by rules of the connection database without alias
+     * Returns a safe field name by rules of the connection database without an alias
      *
-     * @param array|string|Query|int $name field name quoted or unquoted with optional table part; or other expression
-     * @param string|null $prefix -- optional table alias connected with '.'. If field name already has a prefix, alias will be ignored.
+     * @param array|string|Query|int $name field name quoted or unquoted with an optional table part; or another expression
+     * @param string|null $prefix -- optional table alias connected with '.'. If the field name already has a prefix, alias will be ignored.
      *
      * @return float|int|array|string
      * @throws Exception
@@ -2559,7 +2559,7 @@ class Query extends Component
 
     /**
      * Quotes table- or fieldName (vendor-specific)
-     * If name is already quoted, returns the name.
+     * If the name is already quoted, returns the name.
      *
      * @param string $name
      *
@@ -2572,7 +2572,7 @@ class Query extends Component
         if ($name == '*') {
             return $name;
         }
-        $delimiter = $this->connection->quoteIdentifier('_'); // delimiter[0] and delimiter[2] is used.
+        $delimiter = $this->connection->quoteIdentifier('_'); // delimiter[0] and delimiter[2] are used.
         $delimited = strlen($name) > 2 && substr($name, 0, 1) == $delimiter[0] && substr($name, -1) == $delimiter[2];
         $bareName = $delimited ? substr($name, 1, -1) : $name;
         if (str_contains($bareName, $delimiter[0]) || str_contains($bareName, $delimiter[2])) {
@@ -2601,7 +2601,7 @@ class Query extends Component
     }
 
     /**
-     * Adds a LIKE-type filtering rule to the query, if value is not empty
+     * Adds a LIKE-type filtering rule to the query if value is not empty
      *
      * @param string|null $value
      * @param string $field
@@ -2618,7 +2618,7 @@ class Query extends Component
     }
 
     /**
-     * Adds an equal-type filtering rule to the query, if value is not empty
+     * Adds an equal-type filtering rule to the query if value is not empty
      *
      * @param string|null $value
      * @param string $field
@@ -2640,7 +2640,7 @@ class Query extends Component
      * @param string $field -- the field referring to the foreign model
      * @param string|Model $foreignClass -- the referred Model
      * @param string $foreignValueField -- the "name" field to search in the foreign table
-     * @param string|null $foreignIdField -- default is primary key: works only with a single primary key
+     * @param string|null $foreignIdField -- default is the primary key: works only with a single primary key
      * @return Query
      * @throws Exception
      */
@@ -2667,18 +2667,19 @@ class Query extends Component
     }
 
     /**
-     * Adds an "In-the-referred-table" type filtering rule to the query, if value is not empty.
-     * Works with virtual fields, but loads the entire referred table, so use only with small datasets.
-     * The comparison method is "value is substring of the value of $foreignValueField" in case-insensitive manner and UTF8-safe.
+     * Adds an "In-the-referred-table" type filtering rule to the query if the value is not empty.
+     * Works with virtual fields but loads the entire referred table, so use it only with small datasets.
+     * The comparison method is "value is substring of the value of $foreignValueField" in a case-insensitive manner and UTF8-safe.
      * The searched foreign field can be a virtual field, unlike in {@see filterInReferred}
      *
      * @param string|null $value -- the value to find in the "name" ($foreignValueField) field of the referred Model
      * @param string $field -- the field referring to the foreign model
      * @param string|Model $foreignClass -- the referred Model
      * @param string $foreignValueField -- the "name" field to search in the foreign model (can also be a virtual field)
-     * @param string|null $foreignIdField -- default is primary key: works only with a single primary key
+     * @param string|null $foreignIdField -- default is the primary key: works only with a single primary key
      * @return void
      * @throws ReflectionException
+     * @throws Exception
      */
     public function filterInReferredModels(
         ?string $value,
