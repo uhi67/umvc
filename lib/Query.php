@@ -39,7 +39,8 @@ use Throwable;
  * // Despite these are not typical properties, these get*() methods without arguments also can be accessed as properties
  * @property-read int $count;
  * @property-read Model[]|array[] $all;
- * @property-read Model|array|null $one;
+ * @property-read Model|array|null $one -- {@see Query::getOne()}
+ * @property-read Model|array|null $next -- {@see Query::getNext()}
  * @property-read Model|array $column;
  * @property-read mixed $scalar
  *
@@ -860,7 +861,7 @@ class Query extends Component
 
         // Populate model
         if ($this->modelClass) {
-            if ($result === null) {
+            if ($result === false || $result === null) {
                 $model = null;
             } else {
                 $model = new $this->modelClass($result);
