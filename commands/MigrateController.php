@@ -5,6 +5,7 @@
 
 namespace uhi67\umvc\commands;
 
+use Codeception\Util\Debug;
 use Exception;
 use Throwable;
 use uhi67\umvc\AppHelper;
@@ -33,12 +34,14 @@ use uhi67\umvc\SqlMigration;
  */
 class MigrateController extends Command
 {
-
     /**
      * @var Connection|null
      */
     private ?Connection $connection = null;
-    private $confirm, $verbose, $migrationTable, $migrationPath;
+    private ?string $confirm;
+    private ?int $verbose;
+    private string $migrationTable;
+    private string $migrationPath;
 
     /**
      * Prepares the actual action.
