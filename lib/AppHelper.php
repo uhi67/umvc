@@ -117,7 +117,8 @@ class AppHelper
         return ($date === false) ? '' : date_format($date, $fmt);
     }
 
-    static function renderException(Exception|Throwable|Error $e, int $responseStatus = null): string {
+    static function renderException(Exception|Throwable|Error $e, int $responseStatus = null): string
+    {
         ob_start();
         self::showException($e, $responseStatus);
         return ob_get_clean();
@@ -182,16 +183,16 @@ class AppHelper
 
         if (ENV_DEV) {
             $basePath = dirname(__DIR__, 4);
-            $s = '\\'.DIRECTORY_SEPARATOR;
+            $s = '\\' . DIRECTORY_SEPARATOR;
             echo '<pre>';
             echo preg_replace(
                 [
                     '~' . str_replace(['\\', '~'], ['\\\\', '\~'], $basePath) . '~',
-                    '/^(#\\d+ [^(]+)('.$s.'vendor'.$s.'uhi67'.$s.')(umvc)('.$s.'[^(]+)(.*)$/m',
-                    '/^(#\\d+ [^(]+)('.$s.'views'.$s.'[^(]+)(.*)$/m',
-                    '/^(#\\d+ [^(]+)('.$s.'controllers'.$s.'[^(]+)(.*)$/m',
-                    '/^(#\\d+ [^(]+)('.$s.'models'.$s.'[^(]+)(.*)$/m',
-                    '/^(#\\d+ [^(]+)('.$s.'lib'.$s.'[^(]+)(.*)$/m',
+                    '/^(#\\d+ [^(]+)(' . $s . 'vendor' . $s . 'uhi67' . $s . ')(umvc)(' . $s . '[^(]+)(.*)$/m',
+                    '/^(#\\d+ [^(]+)(' . $s . 'views' . $s . '[^(]+)(.*)$/m',
+                    '/^(#\\d+ [^(]+)(' . $s . 'controllers' . $s . '[^(]+)(.*)$/m',
+                    '/^(#\\d+ [^(]+)(' . $s . 'models' . $s . '[^(]+)(.*)$/m',
+                    '/^(#\\d+ [^(]+)(' . $s . 'lib' . $s . '[^(]+)(.*)$/m',
                 ],
                 [
                     '...',
@@ -248,8 +249,8 @@ class AppHelper
     /**
      * Camelizes a string.
      *
-     * All world will begin with uppercase character.
-     * World delimiters are: ' ', '_', '-', '.', '\'
+     * All words will begin with uppercase character.
+     * Word delimiters are: ' ', '_', '-', '.', '\'
      *
      * @return string|null The camelized string
      */
@@ -264,7 +265,7 @@ class AppHelper
     /**
      * Converts a string to human-readable form, e.g. for an auto-generated field label
      *
-     * Redundant '_id' or 'Id' postfix will be eliminated.
+     * Redundant '_id' or 'ID' postfix will be eliminated.
      *
      * @return string|null The camelized string
      */
@@ -281,7 +282,7 @@ class AppHelper
     /**
      * Converts a (camelized) string to underscore format.
      * Existing underscore ($separator) will be converted to '.'.
-     * Replaces all non-name character to _.
+     * Replaces all non-name characters to _.
      *
      * The result string should be appropriate for a filename or a Model attribute name (using _)
      *
@@ -307,7 +308,7 @@ class AppHelper
     }
 
     /**
-     * unicode-safe capitalize first letter of all words
+     * unicode-safe capitalize the first letter of all words
      *
      * @param string $string
      * @return string
@@ -341,7 +342,7 @@ class AppHelper
      *
      * @param string $s -- string
      * @param string $d -- delimiter
-     * @param bool $full -- returns full string if pattern not found
+     * @param bool $full -- returns full string if the pattern is not found
      * @return string -- substring to delimiter or empty string if not found
      */
     static function substring_before(string $s, string $d, bool $full = false): string
@@ -358,10 +359,10 @@ class AppHelper
      *
      * @param string $s -- string
      * @param string $d -- delimiter
-     * @param bool $full -- returns full string if pattern not found
+     * @param bool $full -- returns full string if the pattern not found
      *
      * @return string -- substring to delimiter or empty string if not found
-     * @throws Exception -- if delimiter is empty
+     * @throws Exception -- if the delimiter is empty
      */
     static function substring_after(string $s, string $d, bool $full = false): string
     {
@@ -376,7 +377,7 @@ class AppHelper
     }
 
     /**
-     * Generates a valid XML name-id based on given string
+     * Generates a valid XML name-id based on the given string
      *
      * Replaces invalid characters to valid ones. Replaces accented letters to ASCII letters.
      *
@@ -434,11 +435,11 @@ class AppHelper
     }
 
     /**
-     * Converts JSON string into array.
-     * Useful when dealing with JSON data stored in database as string.
+     * Converts JSON string into an array.
+     * Useful when dealing with JSON data stored in the database as string.
      *
      * @param string $data
-     * @return array -- returns empty array if $data was not an array.
+     * @return array -- returns an empty array if $data was not an array.
      * @author arlogy
      */
     public static function arrayFromJsonString(string $data): array
@@ -496,7 +497,7 @@ class AppHelper
                         }
                     }
                 } else {
-                    // Other expression (not implemented)
+                    // Other expressions (not implemented)
                     return $mm[0];
                 }
                 if ($d instanceof DateTime) {
@@ -515,7 +516,7 @@ class AppHelper
     }
 
     /**
-     * formats a DateTime value using given locale
+     * formats a DateTime value using the given locale
      *
      * @param DateTime $datetime
      * @param int $datetype -- date format as IntlDateFormatter::NONE, type values are 'NONE', 'SHORT', 'MEDIUM', 'LONG', 'FULL'
@@ -556,7 +557,7 @@ class AppHelper
      * @param Closure $test -- test to run. Must return truthy value on success
      * @param int $timeout -- seconds to giving up waiting, the minimum allowed value is 1
      * @param int $interval -- seconds between retry attempts, the minimum allowed value is 1
-     * @return bool -- true if test succeeded within timeout, false otherwise
+     * @return bool -- true if the test succeeded within timeout, false otherwise
      */
     public static function waitFor(Closure $test, int $timeout = 60, int $interval = 1): bool
     {
@@ -575,18 +576,17 @@ class AppHelper
     }
 
     /**
-     * Returns true if path is absolute, false if not (relative).
-     * Empty string considered as relative.
+     * Returns true if the path is absolute, false if not (relative).
+     * Empty string is considered as relative.
      * Can be used for file system and URL paths as well.
      * Both Windows and Linux file system paths are detected.
      * The path itself is not validated, malformed paths can be either absolute or relative.
-     * Note: Paths beginning with drive letter on Windows but not \\ still considered as absolute.
+     * Note: Paths beginning with a drive letter on Windows but not '\\' are still considered as absolute.
      *
      * @param string $path
      * @return bool
      */
-    public
-    static function pathIsAbsolute(
+    public static function pathIsAbsolute(
         string $path
     ): bool {
         return preg_match('~^(/|\\\\|[\w]+:)~', $path);
@@ -596,11 +596,13 @@ class AppHelper
      * Determines the base URL of the application considering the reverse proxy effect
      * @return string -- the valid base URL
      */
-    public
-    static function baseUrl(): string
+    public static function baseUrl(): string
     {
         $baseurl = getenv('APP_BASEURL');
         if ($baseurl) {
+            if(str_starts_with($baseurl, 'https://')) {
+                $_SERVER['HTTPS'] = 'on'; // SimpleSAMLphp will apply a wrong RelayState URL after login/logout if it's missing
+            }
             return trim($baseurl, '/');
         }
         $https = getenv('HTTPS') ?? 'off';
@@ -610,7 +612,7 @@ class AppHelper
             if ($https == "on") {
                 $protocol = 'https';
                 $_SERVER['SERVER_PORT'] = 443;
-                $_SERVER['HTTPS'] = 'on'; // SimpleSAMLphp will apply wrong RelayState URL after login/logout if it's missing
+                $_SERVER['HTTPS'] = 'on'; // SimpleSAMLphp will apply a wrong RelayState URL after login/logout if it's missing
             }
         }
         return $protocol . '://' . $_SERVER["HTTP_HOST"];
