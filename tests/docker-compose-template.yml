@@ -31,7 +31,7 @@ services:
       DB_PASSWORD: umvc-test123
 
       SIMPLESAMLPHP_CONFIG_DIR: /app/tests/_data/testapp/config/saml/config
-      SAML_ADMIN_PASSWORD: kalap
+      SAML_ADMIN_PASSWORD: "JGFyZ29uMmlkJHY9MTkkbT02NCx0PTQscD0xJFRuUXZaRzR4Wmk5RFlVSTNUR2gzZWckLzVmbERGeDN5RWtrUjhnWjgraXgrdEdMcTlRV3ZtYVdpeW4vclduN3ZFZw==" #kalap
       SAML_SECRET_SALT: reitn23li4v
       SAML_TECHNICALCONTACT_NAME: umvc.test
       SAML_TECHNICALCONTACT_EMAIL: umvc.test@umvc.test

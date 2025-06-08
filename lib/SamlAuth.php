@@ -17,8 +17,6 @@ use Throwable;
  */
 class SamlAuth extends AuthManager
 {
-    // Must be set to a secure password
-    public $admin_password;
     // Must be set to a secure random string
     public $secret_salt;
     // A specific IdP can be configured to log in with. If not specified, the discovery service will be called.

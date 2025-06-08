@@ -4,6 +4,7 @@ namespace uhi67\umvc\commands;
 use Exception;
 use uhi67\umvc\Ansi;
 use uhi67\umvc\App;
+use uhi67\umvc\AppHelper;
 use uhi67\umvc\ArrayHelper;
 use uhi67\umvc\Command;
 
@@ -52,12 +53,12 @@ class DefaultController extends Command {
         }
 
         foreach($commands as $command=>$className) {
-            echo '- ', Ansi::color($command, 'blue')." \n\tActions:\n";
+            echo '- ', Ansi::color(AppHelper::underscore($command, '-'), 'blue')." \n\tActions:\n";
             $methods = get_class_methods($className);
             $descriptions = is_callable([$className, 'descriptions']) ? call_user_func([$className, 'descriptions']) : [];
             foreach($methods as $method) {
                 if(preg_match('/^action([A-Z]\w+)/', $method, $m) && $m[1]!='Default') {
-                    $action = strtolower($m[1]);
+                    $action = AppHelper::underscore($m[1], '-');
                     $description = ArrayHelper::getValue($descriptions, $action);
                     echo Ansi::color("\t- ".sprintf('%-12s', $action), 'green')."\t$description\n";
                 }

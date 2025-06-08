@@ -30,8 +30,6 @@ return [
         'auth' => [
             \uhi67\umvc\SamlAuth::class,
             //---- SAML related configuration values
-            // Must be set to a secure password
-            'admin_password' => '',
             // Must be set to a secure random string
             'secret_salt' => '',
             // A specific IdP can be configured to log in with. If not specified, the discovery service will be called.
