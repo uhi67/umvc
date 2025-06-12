@@ -400,10 +400,11 @@ class App extends Component
      * Deletes the session data of the current user
      * @throws Exception
      */
-    public function logout(): null
+    public function logout(string $returnTo): null
     {
         if ($this->hasComponent('auth') && $this->auth->isAuthenticated()) {
-            $this->auth->logout();
+            $params = $returnTo ? ['ReturnTo' => $returnTo] : [];
+            $this->auth->logout($params);
         }
         $this->user = null;
         if (session_status() == PHP_SESSION_ACTIVE) {
