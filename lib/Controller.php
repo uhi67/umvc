@@ -208,10 +208,10 @@ class Controller extends BaseController
      *
      * @param string|mixed $message -- The error message (can be another structure)
      * @param int $status
-     * @return int
+     * @return string
      * @throws Exception
      */
-    public function jsonErrorResponse(mixed $message, int $status = HTTP::HTTP_INTERNAL_SERVER_ERROR): int
+    public function jsonErrorResponse(mixed $message, int $status = HTTP::HTTP_INTERNAL_SERVER_ERROR): string
     {
         $protocol = ($_SERVER['SERVER_PROTOCOL'] ?? 'HTTP/1.0');
         $title = HTTP::$statusTexts[$status] ?? '';
@@ -229,7 +229,7 @@ class Controller extends BaseController
      * @param string $format -- HTML: displays a HTML error page; JSON: returns a JSON error response
      * @param int $status
      * @return int
-     * @throws Exception -- in case of HTML (Exception will be caught and displayed as HTML)
+     * @throws Exception -- in the case of HTML (Exception will be caught and displayed as HTML)
      */
     public function errorResponse(
         string $error,
@@ -293,7 +293,7 @@ class Controller extends BaseController
     }
 
     /**
-     * Returns localized view name using long or short locale. Checks if the view file exists.
+     * Returns a localized view name using long or short locale. Checks if the view file exists.
      * Returns null if none of them exists.
      *
      * @param string $viewName
@@ -303,12 +303,12 @@ class Controller extends BaseController
      */
     private function localizedView(string $viewName, string $locale): ?string
     {
-        // Look up view file using full locale
+        // Look up a view file using full locale
         $lv = $this->localizedViewName($viewName, $locale);
         if ($this->app->viewFile($lv) && file_exists($this->app->viewFile($lv))) {
             return $lv;
         }
-        // Look up view file using short language code
+        // Look up a view file using short language code
         $lv = $this->localizedViewName($viewName, substr($locale, 0, 2));
         if ($this->app->viewFile($lv) && file_exists($this->app->viewFile($lv))) {
             return $lv;
@@ -338,7 +338,7 @@ class Controller extends BaseController
      * Link registered assets (optionally filtered by extensions)
      *
      * @param string|string[]|null $extensions -- extension name(s), e.g. 'css', default is null == all extensions
-     * @return string -- the generated html code
+     * @return string -- the generated HTML code
      * @throws Exception
      */
     public function linkAssets(array|string $extensions = null): string
@@ -346,7 +346,7 @@ class Controller extends BaseController
         $html = '';
         foreach ($this->assets as $asset) {
             foreach ($asset->files as $file) {
-                // Iterate file pattern in the cache (use extension filter)
+                // Iterate a file pattern in the cache (use extension filter)
                 Asset::matchPattern($asset->dir, '', $file, function ($file) use ($asset, $extensions, &$html) {
                     $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
                     if (!$extensions || in_array($ext, (array)$extensions)) {

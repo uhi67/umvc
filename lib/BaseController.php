@@ -24,11 +24,11 @@ class BaseController extends Component
     public ?string $action;
     /** @var array -- query parameters to use */
     public array $query;
-    /** @var string[] $path -- unused path elements after controller (or action) name */
+    /** @var string[] $path -- unused path elements after the controller (or action) name */
     public array $path;
 
     /**
-     * beforeAction is executed before each action, and cancels the action if returns false.
+     * beforeAction is executed before each action and cancels the action if returns false.
      * The default behavior is true (enable the action).
      * Called only if the action method exists.
      */
