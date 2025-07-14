@@ -243,6 +243,16 @@ class Field extends Component
         return $this->renderInputDefault();
     }
 
+    /**
+     * Note: .field-hidden must be hidden in the application CSS.
+     * @return string
+     */
+    public function renderInputHidden(): string
+    {
+        $options = $this->renderOptions();
+        return "<input type='$this->type' id='$this->id' name='$this->name' class='form-control $this->class' value='$this->textValue' $options aria-invalid='false' />";
+    }
+
     public function renderInputDefault(): string
     {
         $options = $this->renderOptions();
