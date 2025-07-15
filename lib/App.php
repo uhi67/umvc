@@ -615,7 +615,12 @@ class App extends Component
             throw new Exception("View path '$viewPath' does not exist");
         }
         $viewFile = $viewPath . '/' . $viewName . '.php';
-        // If view not found in the app, look up in the framework
+        // If view not found in the app, look up in the vendor
+        if (!file_exists($viewFile)) {
+            $viewPath = dirname(__DIR__, 3);
+            $viewFile = $viewPath . '/' . $viewName . '.php';
+        }
+        // If view not found, look up in the framework
         if (!file_exists($viewFile)) {
             $viewPath = dirname(__DIR__) . '/views';
             $viewFile = $viewPath . '/' . $viewName . '.php';
