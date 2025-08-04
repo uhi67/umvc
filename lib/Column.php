@@ -56,8 +56,8 @@ class Column extends Component
     public string|bool $order = true;
     /** @var bool|string $searchIcon -- search icon to display before search input in the search lane. Default is none. True = built-in magnifier icon. */
     public string|bool $searchIcon = false;
-    /** @var bool $searchCancel -- display a search-cancel icon in the search lane */
-    public bool $searchCancel = false;
+    /** @var bool|string $searchCancel -- display a search-cancel icon in the search lane. Set false to disable, true for the default icon or specify an HTML fragment to display */
+    public bool|string $searchCancel = false;
     /** @var string $class -- custom class for value cell */
     public string $class = '';
     /** @var string $headerClass -- custom header class */
@@ -244,7 +244,9 @@ class Column extends Component
         $options = [
             'class' => $class
         ];
-        if($this->width) $options['style'] = 'width:' . $this->width;
+        if ($this->width) {
+            $options['style'] = 'width:' . $this->width;
+        }
         return Html::tag('th', $span, $options);
     }
 
