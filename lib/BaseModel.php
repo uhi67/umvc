@@ -22,7 +22,7 @@ use ReflectionProperty;
  *  - validation
  *
  * @property array $attributes -- all attribute values indexed by attribute name
- * @property-read array $errors -- field-name indexed array of numeric indexed error messages
+ * @property-read array $errors -- field-name indexed array of numeric indexed error messages {@see self::getErrors()}
  * @package UMVC Simple Application Framework
  */
 class BaseModel extends Component implements JsonSerializable
@@ -310,6 +310,11 @@ class BaseModel extends Component implements JsonSerializable
     public function resetErrors(): void
     {
         $this->_errors = array();
+    }
+
+    public function unsetErrors(string $fieldName): void
+    {
+        unset($this->_errors[$fieldName]);
     }
 
     /**
