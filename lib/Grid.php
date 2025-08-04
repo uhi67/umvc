@@ -69,6 +69,9 @@ class Grid extends Component
     /** @var string|null|bool -- display null value as. default is 'not set'. Set false to disable (=empty string) */
     public string|bool|null $emptyValue = null;
     public string|Closure $before = '';
+    public string $sortIcon = 'fa-sort';
+    public string $sortAscIcon = 'fa-sort-asc';
+    public string $sortDescIcon = 'fa-sort-desc';
 
     /**
      * Creates and renders a Grid widget

@@ -70,6 +70,9 @@ class Column extends Component
     public ?string $filterHint = null;
     /** @var string $format -- currently only 'raw' is supported to supress htmlspecialchar filtering */
     public string $format = '';
+    public ?string $sortIcon = null;
+    public ?string $sortAscIcon = null;
+    public ?string $sortDescIcon = null;
 
     /**
      * @param Grid|null $grid
@@ -139,6 +142,15 @@ class Column extends Component
         }
         if ($this->emptyValue === false) {
             $this->emptyValue = '';
+        }
+        if($this->sortIcon === null) {
+            $this->sortIcon = $this->grid->sortIcon;
+        }
+        if($this->sortAscIcon === null) {
+            $this->sortAscIcon = $this->grid->sortAscIcon;
+        }
+        if($this->sortDescIcon === null) {
+            $this->sortDescIcon = $this->grid->sortDescIcon;
         }
     }
 
@@ -265,7 +277,7 @@ class Column extends Component
         $actualColumnDir = $actualColumnOrder[0] ?? '';
         $actualColumnPriority = $actualColumnOrder[1] ?? 0;
         $orderSerial = $actualColumnDir && $actualColumnPriority ? '<u>' . (int)$actualColumnPriority . '</u>' : '';
-        $c = $actualColumnDir ? ($actualColumnDir == 'ASC' ? 'fa-sort-asc' : 'fa-sort-desc') : 'fa-sort';
+        $c = $actualColumnDir ? ($actualColumnDir == 'ASC' ? $this->sortAscIcon : $this->sortDescIcon) : $this->sortIcon;
         $orderIcon = '<i class="fa ' . $c . '"></i>';
         $value = $actualColumnDir ? $actualColumnDir . ';' . $actualColumnPriority : '';
         $disabled = $value ? '' : ' disabled';
