@@ -21,7 +21,7 @@ class Field extends Component
     public Model|array|null $model = null;
     /** @var string|null $fieldName -- the name of the property of the Model (database field) */
     public ?string $fieldName = null;
-    /** @var string $modelName -- the name of the model instance. Default is the tablename of the model. */
+    /** @var string $modelName -- the name of the model instance. Default is the table name of the model. */
     public string $modelName = '';
     /** @var string $divClass -- the additional classnames for the enclosing div */
     public string $divClass = '';
@@ -35,7 +35,7 @@ class Field extends Component
     public string|array $noticeClass = '';
     /** @var string|array $wrapperClass -- the classnames for the input wrapper div */
     public string|array $wrapperClass = '';
-    /** @var string $name -- the name of the HTML field. The default is 'tablename[fieldName]' */
+    /** @var string $name -- the name of the HTML field. The default is 'table name[fieldName]' */
     public string $name = '';
     /** @var string $id -- the id attribute of the input tag, default is 'field-tablename-fieldName' */
     public string $id = '';
@@ -49,11 +49,11 @@ class Field extends Component
     public array $options = [];
     /** @var array $divOptions -- any other HTML attributes for the enclosing div tag */
     public array $divOptions = [];
-    /** @var array $items -- selectable items for select, radio, checkboxlist */
+    /** @var array $items -- selectable items for 'select', 'radio', 'checkboxlist' */
     public array $items = [];
     /** @var string $icon -- 'glyphicon glyphicon-xxx' or 'fa fa-xxx' */
     public string $icon = '';
-    /** @var string|null $error -- The error message for the field or false if the error message is disabled. If null (default), the modell error is used. */
+    /** @var string|null $error -- The error message for the field or false if the error message is disabled. If null (default), the model error is used. */
     public ?string $error = null;
     /** @var Form $form -- the form object this field belongs to */
     public Form $form;
@@ -231,11 +231,11 @@ class Field extends Component
      */
     public function renderInput()
     {
-        $functionname = 'renderInput' . AppHelper::camelize($this->type);
-        if (!is_callable([$this, $functionname])) {
+        $functionName = 'renderInput' . AppHelper::camelize($this->type);
+        if (!is_callable([$this, $functionName])) {
             throw new Exception("Undefined input type `$this->type`.");
         }
-        return call_user_func([$this, $functionname]);
+        return call_user_func([$this, $functionName]);
     }
 
     public function renderInputText(): string
@@ -300,6 +300,7 @@ class Field extends Component
     {
         return $this->renderInputRadiolist();
     }
+
     public function renderInputRadiolist(): string
     {
         $options = $this->renderOptions();
@@ -352,9 +353,70 @@ class Field extends Component
         return "<textarea id='$this->id' name='$this->name' class='form-control $this->class' $options>$this->value</textarea>";
     }
 
+    /**
+     * Renders a single 'submit' button or a row of buttons defined in 'items' property.
+     *
+     * Items' keys can be:
+     * - id
+     * - label
+     * - class
+     * - icon
+     * - type (Can be 'submit', 'reset', 'button', 'a'; default is $this->type or 'submit' if url is not defined, otherwise 'a')
+     * - name (default is $this->name)
+     * - value
+     * - url (Valid only if type is 'a')
+     *
+     * @throws Exception
+     */
     public function renderInputSubmit(): string
     {
-        return "<button type='submit' id='$this->id' class='btn $this->class' value='$this->value'>$this->label</button>\n";
+        if ($this->items) {
+            $result = [];
+            foreach ($this->items as $index => $item) {
+                $options = [
+                    'type' => $item['type'] ?? $this->type ?? 'submit',
+                    'class' => 'btn ' . ($item['class']??'btn-primary'),
+                ];
+                $id = $item['id'] ?? null;
+                if (!$id && $this->id) {
+                    $id = $this->id . '_' . $index;
+                }
+                if ($id) {
+                    $options['id'] = $id;
+                }
+                $icon = array_key_exists('icon', $item) ? "<i class='fa fa-{$item['icon']}'></i> " : '';
+                if (array_key_exists('url', $item)) {
+                    unset($options['type']);
+                    $options['href'] = App::$app->createUrl($item['url']);
+                    $result[] = Html::tag('a', $icon . $item['label'] ?? $item['value'], $options);
+                    continue;
+                }
+                if (array_key_exists('value', $item)) {
+                    $options['value'] = $this->value;
+                }
+                if (array_key_exists('name', $item)) {
+                    $options['name'] = $this->name;
+                }
+                $result[] = Html::tag('button', $icon . $item['label'] ?? $item['value'], $options);
+            }
+            return implode( ' ', $result);
+        } else {
+            // Single submit button
+            $options = [
+                'type' => 'submit',
+                'class' => 'btn ' . $this->class,
+            ];
+            if ($this->id) {
+                $options['id'] = $this->id;
+            }
+            if ($this->name) {
+                $options['name'] = $this->name;
+            }
+            if ($this->value) {
+                $options['value'] = $this->value;
+            }
+            return Html::tag('button', $this->label ?? $this->name, $options);
+        }
     }
 
     /**

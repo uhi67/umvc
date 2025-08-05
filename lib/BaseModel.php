@@ -113,10 +113,10 @@ class BaseModel extends Component implements JsonSerializable
         if (isset($labels[$attribute])) {
             return $labels[$attribute];
         }
-        if (str_ends_with($attribute, '_id')) {
+        if (str_ends_with($attribute??'', '_id')) {
             return static::attributeLabel(substr($attribute, 0, -3));
         }
-        if ($p = strpos($attribute, '.')) {
+        if ($p = strpos($attribute??'', '.')) {
             return static::attributeLabel(substr($attribute, 0, $p));
         }
         return AppHelper::humanize($attribute) ?? '';
