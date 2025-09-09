@@ -65,7 +65,11 @@ class FileCache extends Component implements CacheInterface
             unlink($filename);
             return $default;
         }
-        list($created, $expires) = explode(',', file_get_contents($ttlname));
+        $item = explode(',', file_get_contents($ttlname));
+        if(!is_array($item) || count($item) !== 2) {
+            return $default;
+        }
+        list($created, $expires) = $item;
         if ($ttl) {
             $expires = (int)$created + (int)$ttl;
         }
