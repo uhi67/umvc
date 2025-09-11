@@ -5,7 +5,6 @@
 
 namespace uhi67\umvc\commands;
 
-use Codeception\Util\Debug;
 use Exception;
 use Throwable;
 use uhi67\umvc\AppHelper;
@@ -237,10 +236,10 @@ class MigrateController extends Command
                     $e->getFile(),
                     $e->getLine()
                 );
-                if (ENV_DEV) {
-                    Debug::debug($m);
-                }
-                throw new Exception("Applying migration '" . $name . "' caused an exception", 500, $e);
+//                if (ENV_DEV) {
+//                    Debug::debug($m);
+//                }
+                throw new Exception("Applying migration '" . $name . "' caused an exception: ".$m, 500, $e);
             }
         }
         if ($n == 0 && $this->verbose) {
