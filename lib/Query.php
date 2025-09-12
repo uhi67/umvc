@@ -2610,7 +2610,7 @@ class Query extends Component
      */
     public function filterLike(?string $value, string $field): static
     {
-        if ($value != '') {
+        if ($value !== '' && $value !== null) {
             $patternName = AppHelper::toNameID($field, '_', '');
             $patternExpression = ['concat()', "'%'", ['lower()', ':' . $patternName], "'%'"];
             $this->andWhere(['LIKE', ['lower()', $field], $patternExpression], [$patternName => $value]);
@@ -2652,7 +2652,7 @@ class Query extends Component
         string $foreignValueField,
         string $foreignIdField = null
     ): static {
-        if ($value != '') {
+        if ($value !== '' && $value !== null) {
             if (!$foreignIdField) {
                 $foreignIdField = $foreignClass::primaryKey();
             }
@@ -2689,7 +2689,7 @@ class Query extends Component
         string $foreignValueField,
         ?string $foreignIdField = null
     ): void {
-        if ($value != '') {
+        if ($value !== '' && $value !== null) {
             if (!$foreignIdField) {
                 $foreignIdField = $foreignClass::primaryKey()[0];
             }
