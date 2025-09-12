@@ -120,7 +120,7 @@ class Query extends Component
     private ?PDOStatement $stmt = null;
     /** @var array|null $_fields - select part of SELECT, or field list of INSERT, if not given, * or the indices of the passed values are used. Ignored on UPDATE or DELETE. Array of literal field-names or other expressions */
     private array|null $_fields = null;
-    /** @var string|array|null|Model $_from - model list (optionally indexed with aliases) of FROM part of SELECT or UPDATE or a single model name */
+    /** @var string|array|null|Model $_from - model list (optionally indexed with aliases) of FROM part of SELECT or UPDATE or a single model name. A Query with an alias is also can be used as a FROM part. */
     private string|array|Model|null $_from = null;
     /** @var array $_joins -- -- list of JOINS as [alias=>[model, join-type, conditions], ...] condition is a `mainField=>foreignField` associative pair, or any numeric-indexed other expression */
     private array $_joins = [];
@@ -295,8 +295,11 @@ class Query extends Component
     }
 
     /**
-     * Sets the FROM part of the query
+     * Sets the FROM part of the query.
      * Overwrites the previous conditions!
+     *
+     * $tableNameList can be a model list (optionally indexed with aliases) of FROM part of SELECT or UPDATE or a single model name.
+     * A Query with a mandatory alias is also can be used as a FROM part.
      *
      * @param array|string $tableNameList
      * @return $this
@@ -960,14 +963,24 @@ class Query extends Component
     /**
      * Returns the number of the rows in the dataset of the query
      *
+     * @var bool $full -- if true, all fields of the query is preserved, otherwise only the count(*) is returned (default).
      * @return int
      */
-    public function getCount(): int
+    public function getCount(bool $full = false): int
     {
         if ($this->sql && $this->_count !== null) {
             return $this->_count;
         }
-        $query = clone $this;
+        if($full) {
+            $query = new Query([
+                'connection' => $this->connection,
+                'modelClass' => $this->modelClass,
+                'type' => 'SELECT',
+                'from' => ['x' => $this],
+            ]);
+        } else {
+            $query = clone $this;
+        }
         $query->select('(count(*))');
         return $this->_count = $query->scalar;
     }
