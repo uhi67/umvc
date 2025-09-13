@@ -340,6 +340,7 @@ class App extends Component
                 array_shift($baseUrlPathElements);
                 array_shift($this->path);
             }
+            $this->session->set('path', $this->path);
             if ($this->path == [''] && $this->mainControllerClass) {
                 // The default action of the main page can be called in the short way
                 $this->classPath = [$this->mainControllerClass::getClassPath()];
@@ -347,11 +348,14 @@ class App extends Component
             } else {
                 // Find the actual controller class for this path and let it go
                 for ($i = 1; $i <= count($this->path); $i++) {
-                    $this->classPath = array_slice($this->path, 0, $i);
-                    $camelizedClassPath = array_map(function ($p) {
-                        return AppHelper::camelize($p);
-                    }, $this->classPath);
-                    $controllerClass = 'app\controllers\\' . implode('\\', $camelizedClassPath) . 'Controller';
+                    $this->classPath = array_slice($this->path, 0, $i - 1);
+                    $xpath = implode('\\', $this->classPath);
+                    if ($xpath) {
+                        $xpath .= '\\';
+                    }
+                    $controllerClass = 'app\controllers\\' . $xpath . AppHelper::camelize(
+                            $this->path[$i - 1]
+                        ) . 'Controller';
                     if (class_exists($controllerClass)) {
                         return $this->runController($controllerClass, array_slice($this->path, $i), $this->query);
                     }
@@ -402,7 +406,7 @@ class App extends Component
      *
      * @throws Exception
      */
-    public function logout(string $returnTo=''): void
+    public function logout(string $returnTo = ''): void
     {
         if ($this->hasComponent('auth') && $this->auth->isAuthenticated()) {
             $params = $returnTo ? ['ReturnTo' => $returnTo] : [];
@@ -580,7 +584,9 @@ class App extends Component
                 throw new Exception("View file '$viewFile' does not exist", HTTP::HTTP_NOT_FOUND);
             }
             $content = $this->renderPhpFile($viewFile, $params ?? []);
-            if(is_int($content)) return $content;
+            if (is_int($content)) {
+                return $content;
+            }
             if ($layout) {
                 $content = $this->render($layout, array_merge(['content' => $content], $layoutParams ?? []), false);
             }
@@ -658,16 +664,19 @@ class App extends Component
         try {
             require $_file_;
             $result = ob_get_clean();
-            return $result!==false ? $result : 500;
+            return $result !== false ? $result : 500;
         } catch (Throwable $e) {
             App::$app->log('error', "Error rendering file '$_file_'");
             $result = 500;
             if (ENV_DEV) {
-                App::$app->log('error', sprintf('%s in file %s at line %d', $e->getMessage(), $e->getFile(), $e->getLine()));
+                App::$app->log(
+                    'error',
+                    sprintf('%s in file %s at line %d', $e->getMessage(), $e->getFile(), $e->getLine())
+                );
                 App::$app->log('debug', $e->getTraceAsString());
                 $result = AppHelper::renderException($e);
-                while($e = $e->getPrevious()) {
-                    App::$app->log('debug', "Previous:\n".$e->getTraceAsString());
+                while ($e = $e->getPrevious()) {
+                    App::$app->log('debug', "Previous:\n" . $e->getTraceAsString());
                     $result .= AppHelper::renderException($e);
                 }
             }
