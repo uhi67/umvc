@@ -68,7 +68,7 @@ class Column extends Component
     public string|bool|null $emptyValue = null;
     /** @var string|null $filterHint -- title attribute for filter cell */
     public ?string $filterHint = null;
-    /** @var string $format -- currently only 'raw' is supported to supress htmlspecialchar filtering */
+    /** @var string $format -- currently only 'raw' is supported to suppress htmlspecialchar filtering */
     public string $format = '';
     public ?string $sortIcon = null;
     public ?string $sortAscIcon = null;
