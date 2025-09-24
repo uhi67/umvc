@@ -266,8 +266,10 @@ class Field extends Component
 
     public function renderInputSelect(string $class2 = ''): string
     {
+        $multiple = $this->options['multiple'] ?? false;
+        $name = ($multiple && !str_ends_with($this->name, '[]')) ? $this->name . '[]' : $this->name;
         $options = $this->renderOptions();
-        $result = "<select id='$this->id' name='$this->name' class='form-control $class2 $this->class' $options aria-invalid='false'>";
+        $result = "<select id='$this->id' name='$name' class='form-control $class2 $this->class' $options aria-invalid='false'>";
         $required = $this->options['required'] ?? false;
         if (!$required || !$this->value) {
             $placeHolder = $this->options['placeholder'] ?? 'Please select one';
@@ -333,14 +335,15 @@ class Field extends Component
      */
     public function renderInputCheckboxlist(): string
     {
+        $name = !str_ends_with($this->name, '[]') ? $this->name . '[]' : $this->name;
         $options = $this->renderOptions();
-        $result = "<input type='hidden' id='$this->id-default' name='$this->name' value='' />";
+        $result = "<input type='hidden' id='$this->id-default' name='$name' value='' />";
         foreach ($this->items as $value => $label) {
             $index = is_integer($value) ? $value : crc32($value);
             $checked = in_array($value, $this->value) ? ' checked' : '';
             $result .= "
                 <label for='$this->id-$index'>
-                    <input type='checkbox' id='$this->id-$index' name='$this->name' class='$this->class' value='$value' $checked $options aria-invalid='false' />
+                    <input type='checkbox' id='$this->id-$index' name='$name' class='$this->class' value='$value' $checked $options aria-invalid='false' />
                     $label
                 </label>\n";
         }
