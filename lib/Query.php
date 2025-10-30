@@ -980,6 +980,7 @@ class Query extends Component
             ]);
         } else {
             $query = clone $this;
+            $query->orders = null;
         }
         $query->select('(count(*))');
         return $this->_count = $query->scalar;
