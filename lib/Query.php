@@ -2692,7 +2692,7 @@ class Query extends Component
      * @param string|Model $foreignClass -- the referred Model
      * @param string $foreignValueField -- the "name" field to search in the foreign model (can also be a virtual field)
      * @param string|null $foreignIdField -- default is the primary key: works only with a single primary key
-     * @return void
+     * @return static
      * @throws ReflectionException
      * @throws Exception
      */
@@ -2702,7 +2702,7 @@ class Query extends Component
         string|Model $foreignClass,
         string $foreignValueField,
         ?string $foreignIdField = null
-    ): void {
+    ): static {
         if ($value !== '' && $value !== null) {
             if (!$foreignIdField) {
                 $foreignIdField = $foreignClass::primaryKey()[0];
@@ -2713,7 +2713,120 @@ class Query extends Component
                     $referenceValues[] = $referredModel->$foreignIdField;
                 }
             }
-            $this->andWhere(['IN', $field, array_map([$this->connection, 'quoteValue'], $referenceValues)]);
+            return $this->andWhere(['IN', $field, array_map([$this->connection, 'quoteValue'], $referenceValues)]);
         }
+        return $this;
+    }
+
+    /**
+     * Adds a new filter condition for a date field based on value format if the value is not empty.
+     *
+     * Available value formats:
+     * - `< date` -- must be before the given date
+     * - `> date` -- must be after the given date
+     * - `date < date`
+     * - `date - date`
+     * - `date -- date` -- must be between the two dates
+     * - `date pattern` -- matches as subpattern on the date values
+     *
+     * where datetime must be in ISO format
+     *
+     * @param string $value
+     * @param string|Query|array $field
+     * @return $this
+     * @throws Exception
+     */
+    public function filterDateRange(string $value, string|Query|array $field): static {
+        if ($value !== '') {
+            $this->andWhere($this->dateRangeCondition($field, $value));
+        }
+        return $this;
+    }
+
+    /**
+     * Returns a new condition for a date field based on value format.
+     *
+     * Available value formats:
+     * - `< date`
+     * - `> date`
+     * - `date < date`
+     * - `date - date`
+     * - `date -- date`
+     * - `date pattern`
+     *
+     * where datetime must be in ISO format
+     *
+     * @param string|Query|array $field -- name of the field or subexpression to create condition on
+     * @param string $value -- the datetime value to compare
+     *
+     * @return array
+     * @throws Exception
+     */
+    public function dateRangeCondition(string|Query|array $field, string $value) {
+        $d = null;
+        // "< date" formats.
+        if(preg_match('~^\s*(<=?|>=)\s*([\d-]+)$~', $value, $mm)) {
+            $d = trim($mm[2]);
+            var_dump(Query::literal($d));
+            if($d) return [$mm[1], $field, $this->connection->quoteValue($d)];
+        }
+        // "> date" formats
+        elseif(preg_match('~^\s*>\s*([\d-]+)$~', $value, $mm) || preg_match('~^\s*([\d-]+)(\s*<\s*|\s+-\s*|\s*--\s*)$~', $value, $mm)) {
+            $d = trim($mm[1]);
+            if($d) return ['>', $field, $this->connection->quoteValue($d)];
+        }
+        // "date -- date" formats
+        elseif(preg_match('~^\s*([\d-]+)(\s*<\s*|\s+-\s+|\s*--\s*)([\d-]+)\s*$~', $value, $mm)) {
+            $d1 = trim($mm[1]);
+            $d2 = trim($mm[3]);
+            if($d1 && $d2)
+                return ['and', ['>', $field, $this->connection->quoteValue($d1)], ['<', $field, $this->connection->quoteValue($d2)]];
+        }
+
+        // Default: pattern ~ formatted date
+        return ['rlike', $field, $this->connection->quoteValue($value)];
+    }
+
+    /**
+     * Adds a filtering condition for a specific column and allow the user to choose a filter operator.
+     *
+     * It adds an additional WHERE condition for the given field and determines the comparison operator
+     * based on the first few characters of the given value.
+     * The condition is added in the same way as in [[andFilterWhere]] so [[isEmpty()|empty values]] are ignored.
+     * The new condition and the existing one will be joined using the `AND` operator.
+     *
+     * The comparison operator is intelligently determined based on the first few characters in the given value.
+     * In particular, it recognizes the following operators if they appear as the leading characters in the given value:
+     *
+     * - `<`: the column must be less than the given value.
+     * - `>`: the column must be greater than the given value.
+     * - `<=`: the column must be less than or equal to the given value.
+     * - `>=`: the column must be greater than or equal to the given value.
+     * - `<>`: the column must not be the same as the given value.
+     * - `=`: the column must be equal to the given value.
+     * - `# - #`: the column must be between the given values (including).
+     * - `# < #`: the column must be between the given values (excluding).
+     * - If none of the above operators is detected, `=` will be used.
+     *
+     * @param string $field the column name or subexpression
+     * @param string $value the column value optionally prepended with the comparison operator.
+     * @return static The query object itself
+     */
+    public function filterCompare(string $value, string|Query|array $field): static
+    {
+        if($value === '') return $this;
+        if (preg_match('~^\s*(\d+)\s*--?\s*(\d+)\s*$~', $value, $matches)) {
+            return $this->andWhere(['between', $field, $this->connection->quoteValue($matches[1]), $this->connection->quoteValue($matches[2])]);
+        }
+        if (preg_match('~^\s*(\d+)\s*<\s*(\d+)\s*$~', $value, $matches)) {
+            return $this->andWhere(['>', $field, $this->connection->quoteValue($matches[1])])->andWhere(['<', $field, $this->connection->quoteValue($matches[2])]);
+        }
+        if (preg_match('/^(<>|>=|>|<=|<|=)/', $value, $matches)) {
+            $operator = $matches[1];
+            $value = substr($value, strlen($operator));
+        } else {
+            $operator = '=';
+        }
+        return $this->andWhere([$operator, $field, $this->connection->quoteValue($value)]);
     }
 }
