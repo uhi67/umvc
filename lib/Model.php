@@ -1,6 +1,5 @@
 <?php
 /** @noinspection PhpIllegalPsrClassPathInspection */
-
 /** @noinspection PhpUnused */
 
 namespace uhi67\umvc;
@@ -13,12 +12,12 @@ use Throwable;
 /**
  * Database Model class based on PDO
  *
- * Create your derived Model classes for each database tables from this
+ * Create your derived Model classes for each database table from this
  *
  * You should override:
- * - tableName() -- default is short lowercase classname
+ * - tableName() -- defaults to the short lowercase classname
  * - primaryKey() -- default is ['id']
- * - autoIncrement() -- default is first field of primaryKey()
+ * - autoIncrement() -- default is the first field of primaryKey()
  * - attributeLabels() -- default is the field names converted to uppercase words
  *
  * @property boolean $isNew -- true if the record is new and not saved yet.
@@ -199,14 +198,17 @@ class Model extends BaseModel
     /**
      * Returns all records as an array of Models
      *
-     * @param array|null $condition -- fieldName=>value pairs or other expression
+     * @param array|null $condition -- fieldName=>value pairs or another expression
      * @param array|string|null $orders
      * @param Connection|null $connection
-     * @return array|null -- array of Model instances or null on failure (not indexed by primary key)
+     * @return array|null -- array of Model instances or null on failure (not indexed by a primary key)
      * @throws Exception
      */
-    public static function getAll(array $condition = null, array|string $orders = null, Connection $connection = null): ?array
-    {
+    public static function getAll(
+        array $condition = null,
+        array|string $orders = null,
+        Connection $connection = null
+    ): ?array {
         if (!$connection) {
             $connection = App::$app->getConnection(true);
         }
@@ -236,7 +238,7 @@ class Model extends BaseModel
     /**
      * Inserts a row into the associated database table using the attribute values of this record.
      *
-     * Only the changed attribute values will be inserted into database.
+     * Only the changed attribute values will be inserted into the database.
      * If the table's autoincrement key is `null` during insertion, it will be populated with the actual value after insertion.
      *
      * For example, to insert a customer record:
@@ -271,7 +273,7 @@ class Model extends BaseModel
 
         $query = null;
         try {
-            // We use the `fields` property of the Query, because have literal values in the $values array.
+            // We use the `fields` property of the Query because have literal values in the $values array.
             $query = new Query(
                 [
                     'type' => 'INSERT',
@@ -324,7 +326,7 @@ class Model extends BaseModel
      *
      * Note that it is possible that the update does not affect any row in the table.
      * In this case, this method will return 0.
-     * The following code can be used to check if update() was successful or not:
+     * The following code can be used to check if `update()` was successful or not:
      *
      * ```php
      * if ($customer->update() !== false) {
@@ -335,11 +337,11 @@ class Model extends BaseModel
      * ```
      *
      * @param array|null $attributeNames list of attribute names that need to be saved. Defaults to null,
-     * meaning all attributes that are loaded from DB will be saved. If empty array, no operation will be performed, and returns 0.
-     * Only changed (dirty) attributes will be included, if there isn't any, no operation will be performed, and returns 0.
+     * meaning all attributes that are loaded from DB will be saved. If empty array, no operation will be performed and returns 0.
+     * Only changed (dirty) attributes will be included, if there isn't any, no operation will be performed and returns 0.
      *
      * @return bool success
-     * @throws Exception in case update failed.
+     * @throws Exception in case the update failed.
      * @throws ReflectionException
      */
     public function update(array $attributeNames = null): bool
@@ -367,10 +369,10 @@ class Model extends BaseModel
     }
 
     /**
-     * Updates all matching record in database. Literal values only
+     * Updates all matching records in the database. Literal values only
      *
      * @param array $values -- associative list of fieldName=>value pairs (no expressions are allowed here)
-     * @param array|integer $condition -- condition for where part the sql
+     * @param array|integer $condition -- condition for where part the SQL
      *  - [fieldName=>value, ...]
      *  - literal value of single primary key
      *  - other expression formats
@@ -389,7 +391,7 @@ class Model extends BaseModel
             $connection = App::$app->getConnection(true);
         }
 
-        // Convert `fieldName=>value` pairs to parametrized `fieldName=>':param'` expressions
+        // Convert `fieldName=>value` pairs into parametrized `fieldName=>':param'` expressions
         $params = [];
         $values = array_map(function ($value) use (&$params) {
             $paramName = ArrayHelper::genUniqueIndex($params, '_m');
@@ -428,9 +430,9 @@ class Model extends BaseModel
      * Customer::deleteAll('status' => 3);
      * ```
      *
-     * > Warning: If you do not specify any condition, this method will not delete all rows, but throws an exception.
+     * > Warning: If you do not specify any condition, this method will not delete all rows but throws an exception.
      *
-     * For example an equivalent of the example above would be:
+     * For example, an equivalent of the example above would be:
      *
      * ```php
      * $models = Customer::all('(status = 3)');
@@ -502,8 +504,8 @@ class Model extends BaseModel
      * The value remains unchanged even if the primary key attribute is manually assigned with a different value.
      *
      * @param bool $asArray whether to return the primary key value as an array. If `true`,
-     * the return value will be an array with column name as key and column value as value.
-     * If this is `false` (default), a scalar value will be returned for non-composite primary key.
+     * the return value will be an array with the column name as the key and column value as the value.
+     * If this is `false` (default), a scalar value will be returned for a non-composite primary key.
      *
      * @return mixed the old primary key value. An array (column name => column value) is returned if the primary key
      * is composite or `$asArray` is `true`. A string is returned otherwise (null will be returned if
@@ -574,7 +576,7 @@ class Model extends BaseModel
      * Sets the old attribute values.
      * All existing old attribute values will be discarded.
      * @param array|null $values old attribute values to be set.
-     * If set to `null` this record is considered to be new.
+     * If set to `null`, this record is considered to be new.
      */
     public function setOldAttributes(?array $values): void
     {
@@ -583,7 +585,7 @@ class Model extends BaseModel
 
     /**
      * Gets the old attribute values.
-     * The old values are retrieved from database, and not overwritten yet by actual values with an update()
+     * The old values are retrieved from the database and not overwritten yet by actual values with an update()
      * If the record is new, null value will be returned
      */
     public function getOldAttributes(): ?array
@@ -634,7 +636,7 @@ class Model extends BaseModel
      * @throws Exception if the property is not defined
      * @throws ReflectionException
      */
-    public function __get(string $name)
+    public function __get(string $name): mixed
     {
         // Retrieved attribute
         if (isset($this->_attributes[$name]) || array_key_exists($name, $this->_attributes)) {
@@ -661,7 +663,33 @@ class Model extends BaseModel
     }
 
     /**
-     * Sets the value of a Model attribute via PHP setter magic method.
+     * @throws ReflectionException
+     * @throws Exception
+     */
+    public function __isset(string $name): bool
+    {
+        // Retrieved attribute
+        if (isset($this->_attributes[$name]) || array_key_exists($name, $this->_attributes)) {
+            return true;
+        }
+
+        // Existing but not loaded attribute
+        if ($this->hasAttribute($name)) {
+            $getter = 'get' . $name; // function names are case-insensitive in PHP!
+            return method_exists($this, $getter);
+        }
+
+        // Reference composition (e.g. 'ref1.name')
+        if (strpos($name, '.')) {
+            return ArrayHelper::getValue($this, $name) !== null;
+        }
+
+        // Other
+        return parent::__isset($name);
+    }
+
+    /**
+     * Sets the value of a Model attribute via the PHP setter magic method.
      *
      * @param string $name property name
      * @param mixed $value property value
@@ -683,8 +711,8 @@ class Model extends BaseModel
      *
      * Returns true if any of the given fields has a value of null.
      *
-     * @param string|null $fieldName -- for single field (null if called as multiple)
-     * @param array $fieldNames -- field names for multiple-field validation
+     * @param string|null $fieldName -- pass a single field here (set null if called as multiple)
+     * @param array $fieldNames -- pass multiple field names here for multiple-field validation
      *
      * @return bool -- model is valid
      * @throws Exception  -- when a DB request failed
@@ -810,7 +838,7 @@ class Model extends BaseModel
             $dirValue = array_search($direction, [Query::ORDER_ASC => 'ASC', Query::ORDER_DESC => 'DESC']);
             if ($dirValue === false) {
                 return null;
-            } // A sort-rule with invalid direction is skipped
+            } // A sort-rule with an invalid direction is skipped
             return ['field' => $fieldName, 'direction' => $dirValue, 'priority' => $priority];
         }, $orders, array_keys($orders)));
         usort($tempOrders, function ($a, $b) {
@@ -828,7 +856,7 @@ class Model extends BaseModel
                                 "Custom order clause for field '$field' must have exactly two expression-list separated by ';', got '$orderDefinitions[$field]'"
                             );
                         }
-                        // Depending on user intention, select the first or second part of the custom order definition, and parse it
+                        // Depending on user intention, select the first or second part of the custom order definition and parse it
                         $orderExpressions = explode(',', $cls[strtoupper($ord['direction']) == 1 ? 1 : 0]);
                         foreach ($orderExpressions as $orderExpression) {
                             $p = strrpos($orderExpression, ' ');
@@ -923,11 +951,11 @@ class Model extends BaseModel
     }
 
     /**
-     * Called after the model is loaded from database (using any Model-returning Query or Model::getOne, Model::getAll).
+     * Called after the model is loaded from the database (using any Model-returning Query or Model::getOne, Model::getAll).
      * Override this method to initialize further fields of the Model after loading from the database.
      * Useful for stored-computed fields.
      * The default implementation does nothing.
-     * Note: attibute values calculated here not stored automatically in old-attributes
+     * Note: attribute values calculated here are not stored automatically in old-attributes
      *
      * @return void
      */

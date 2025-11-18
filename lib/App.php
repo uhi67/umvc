@@ -1005,7 +1005,7 @@ class App extends Component
      * @return mixed the component object or a property value
      * @throws Exception
      */
-    public function __get(string $name)
+    public function __get(string $name): mixed
     {
         if (array_key_exists($name, $this->_components)) {
             return $this->_components[$name];

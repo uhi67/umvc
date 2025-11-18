@@ -2764,19 +2764,47 @@ class Query extends Component
      */
     public function dateRangeCondition(string|Query|array $field, string $value) {
         $d = null;
-        // "< date" formats.
-        if(preg_match('~^\s*(<=?|>=)\s*([\d-]+)$~', $value, $mm)) {
+        $dp = '\d{4}-\d{2}-\d{2}';
+        $value = trim($value);
+        $shortcuts = [
+            // Year only
+            '~^<\s*(\d{4})$~' => '< $1-01-01',
+            '~^(<=|-\s+|--)\s*(\d{4})$~' => '$1 $2-12-31',
+            '~^>\s*(\d{4})$~' => '> $1-12-31',
+            '~^>=\s*(\d{4})$~' => '>= $1-01-01',
+            '~^(\d{4})(\s*--|\s+-)$~' => '$1-01-01 $2',
+            '~^(\d{4})(\s*--|\s+-)\s*(\d{4})$~' => '$1-01-01 $2 $3-12-31',
+            // Year and month
+            '~^<\s*(\d{4}-\d{2})$~' => '< $1-01',
+            '~^(<=|-\s+|--)\s*(\d{4}-\d{2})$~' => '$1 $2-31',
+            '~^>\s*(\d{4}-\d{2})$~' => '> $1-31',
+            '~^>=\s*(\d{4}-\d{2})$~' => '>= $1-01',
+            '~^(\d{4}-\d{2})(\s*--|\s+-)$~' => '$1-01 $2',
+            '~^(\d{4}-\d{2})(\s*--|\s+-)\s*(\d{4}-\d{2})$~' => '$1-01 $2 $3-31',
+            // Month length correction
+            '~-02-31~' => '-02-28',
+            '~-04-31~' => '-04-30',
+            '~-06-31~' => '-06-30',
+            '~-09-31~' => '-09-30',
+            '~-11-31~' => '-11-30',
+        ];
+        // Replaces matching shortcut date expressions with the corresponding complete date expression
+        foreach ($shortcuts as $shortcut => $replacement) {
+            $value = preg_replace($shortcut, $replacement, $value);
+        }
+        // "<, <=, >= date" formats.
+        if(preg_match('~^(<=?|>=)\s*('.$dp.')$~', $value, $mm)) {
             $d = trim($mm[2]);
             var_dump(Query::literal($d));
             if($d) return [$mm[1], $field, $this->connection->quoteValue($d)];
         }
         // "> date" formats
-        elseif(preg_match('~^\s*>\s*([\d-]+)$~', $value, $mm) || preg_match('~^\s*([\d-]+)(\s*<\s*|\s+-\s*|\s*--\s*)$~', $value, $mm)) {
+        elseif(preg_match('~^>\s*('.$dp.')$~', $value, $mm) || preg_match('~^('.$dp.')(\s*<|\s+-|\s*--)$~', $value, $mm)) {
             $d = trim($mm[1]);
             if($d) return ['>', $field, $this->connection->quoteValue($d)];
         }
         // "date -- date" formats
-        elseif(preg_match('~^\s*([\d-]+)(\s*<\s*|\s+-\s+|\s*--\s*)([\d-]+)\s*$~', $value, $mm)) {
+        elseif(preg_match('~^('.$dp.')(\s*<\s*|\s+-\s+|\s*--\s*)('.$dp.')$~', $value, $mm)) {
             $d1 = trim($mm[1]);
             $d2 = trim($mm[3]);
             if($d1 && $d2)

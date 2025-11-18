@@ -81,7 +81,7 @@ class BaseModel extends Component implements JsonSerializable
      * ## Must return the attribute labels.
      * Attribute labels are mainly used for display purpose
      * Order of labels is the default order of fields.
-     * The default implementation returns empty array.
+     * The default implementation returns an empty array.
      * If a label is not defined, the humanized field-name will be used (converted to uppercase words).
      *
      * For getting label for a specific attribute, see {@see attributeLabel()}
@@ -99,7 +99,7 @@ class BaseModel extends Component implements JsonSerializable
      * The label definitions are returned by {@see attributeLabels()}.
      * If a label is not defined:
      * - _id postfix is omitted.
-     * - only first part of any .-composition is used
+     * - only the first part of any .-composition is used
      * - or the humanized field-name will be used (converted to uppercase words).
      *
      * @param string|null $attribute the attribute name
@@ -113,10 +113,10 @@ class BaseModel extends Component implements JsonSerializable
         if (isset($labels[$attribute])) {
             return $labels[$attribute];
         }
-        if (str_ends_with($attribute??'', '_id')) {
+        if (str_ends_with($attribute ?? '', '_id')) {
             return static::attributeLabel(substr($attribute, 0, -3));
         }
-        if ($p = strpos($attribute??'', '.')) {
+        if ($p = strpos($attribute ?? '', '.')) {
             return static::attributeLabel(substr($attribute, 0, $p));
         }
         return AppHelper::humanize($attribute) ?? '';
@@ -128,7 +128,7 @@ class BaseModel extends Component implements JsonSerializable
      * [field-name => [rule1, [rule2, params], ...], ...]
      *
      * The default implementation is empty.
-     * Call `$model->validate()` to performs the validation.
+     * Call `$model->validate()` to perform the validation.
      * The rule may be a predefined rule or any user-defined method named `validateMyRule($fieldName, $params):bool`
      *
      * ### Predefined rules of Model:
@@ -166,7 +166,7 @@ class BaseModel extends Component implements JsonSerializable
      * @throws Exception if the property is not defined
      * @throws ReflectionException
      */
-    public function __get(string $name)
+    public function __get(string $name): mixed
     {
         // Reference composition (e.g. 'ref.name')
         if (strpos($name, '.')) {
@@ -242,7 +242,7 @@ class BaseModel extends Component implements JsonSerializable
      * Loads data of the source array, e.g. $_POST.
      *
      * @param array $source -- source array to load from
-     * @param string|null $instanceName -- default is table name of the Model
+     * @param string|null $instanceName -- default is the table name of the Model
      *
      * @return bool -- the model data is loaded from the source
      * @throws Exception
@@ -264,9 +264,9 @@ class BaseModel extends Component implements JsonSerializable
 
     /**
      * Inserts the field-name and its error message into $errors array.
-     * If multiple fieldnames are specified, all fields get the same error.
+     * If multiple field names are specified, all fields get the same error.
      *
-     * @param string|array $fieldNames -- the name of the field or array of multiple file names
+     * @param string|array $fieldNames -- the name of the field or array of multiple field names
      * @param string $message ($1 is a placeholder for the field name)
      *
      * @return false -- always
@@ -323,7 +323,7 @@ class BaseModel extends Component implements JsonSerializable
      * Invalid data returns false and {@see Model::$errors} will contain the validation failures.
      *
      * The default implementation validates against user defined {see rules()}.
-     * If you override it, and want to use predefined rules as well, don't forget to call parent::validate()
+     * If you override it and want to use predefined rules as well, don't forget to call parent::validate()
      *
      * For syntax of rule definitions, and the list of built-in validation methods, see {@see Model::rules()}
      *
@@ -568,7 +568,7 @@ class BaseModel extends Component implements JsonSerializable
     }
 
     /**
-     * If value is empty, defaults to current timestamp.
+     * If the value is empty, defaults to the current timestamp.
      * Fails if not a datetime
      *
      * @param string $fieldName
@@ -592,7 +592,7 @@ class BaseModel extends Component implements JsonSerializable
     }
 
     /**
-     * ## Validates a field using preg pattern (use // delimiters)
+     * ## Validates a field using a preg pattern (use // delimiters)
      *
      * Field type must be string or convertible to string
      * Null values always pass!
@@ -622,11 +622,11 @@ class BaseModel extends Component implements JsonSerializable
     }
 
     /**
-     * ## OR - Validates a field using multiple preg pattern (use // delimiters)
+     * ## OR - Validates a field using multiple preg patterns (use // delimiters)
      *
      * Field type must be string or convertible to string
      * Null values always pass!
-     * If any of patterns passes, the validation passes.
+     * If any of the patterns passes, the validation passes.
      *
      * @param string $field
      * @param string[] $patterns
@@ -656,7 +656,7 @@ class BaseModel extends Component implements JsonSerializable
     }
 
     /**
-     * Checks if field value is not empty
+     * Checks if the field value is not empty
      *
      * @param string $fieldName
      *
@@ -689,7 +689,7 @@ class BaseModel extends Component implements JsonSerializable
     }
 
     /**
-     * Checks if field value is between given limits (including)
+     * Checks if the field value is between given limits (including)
      * null limits are ignored
      *
      * @param string $fieldName
@@ -718,7 +718,7 @@ class BaseModel extends Component implements JsonSerializable
      * Modifies empty values to given default.
      *
      * @param string $fieldName
-     * @param mixed $default -- may be a callable($model)
+     * @param mixed $default -- can also be a callable($model)
      *
      * @return true
      */
