@@ -2795,7 +2795,6 @@ class Query extends Component
         // "<, <=, >= date" formats.
         if(preg_match('~^(<=?|>=)\s*('.$dp.')$~', $value, $mm)) {
             $d = trim($mm[2]);
-            var_dump(Query::literal($d));
             if($d) return [$mm[1], $field, $this->connection->quoteValue($d)];
         }
         // "> date" formats
