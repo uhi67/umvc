@@ -18,6 +18,37 @@ use PDOStatement;
  */
 class MysqlConnection extends Connection
 {
+    /**
+     * @var array $typeNames -- sql_type => common_type mapping
+     * common type names:
+     *  - basic php types (lowercase)
+     *  - 'xml' denotes XML valid string
+     *  - php classnames (Uppercase, e.g. DateTime)
+     *  - 'string' is default, not indicated
+     *  - date (DateTime without time)
+     *  - time (DateTime without date or integer in sec)
+     */
+    public static array $typeNames = [
+        1 => 'tinyint',
+        2 => 'smallint',
+        3 => 'int',
+        4 => 'float',
+        5 => 'double',
+        7 => 'timestamp',
+        8 => 'bigint',
+        9 => 'mediumint',
+        10 => 'date',
+        11 => 'time',
+        12 => 'DateTime',
+        13 => 'year',
+        16 => 'bit',
+        252 => 'string',
+        //252 is currently mapped to all text and blob types (MySQL 5.0.51a)
+        253 => 'string',
+        254 => 'string',
+        246 => 'double'
+    ];
+
     public function supportsOrderNullsLast(): bool
     {
         return false;
@@ -166,7 +197,7 @@ class MysqlConnection extends Connection
     }
 
     /**
-     * Returns sequence names as table.field
+     * Returns sequence names as 'table.field'
      * @param string|null $schema
      * @return string[]
      */
@@ -224,7 +255,7 @@ class MysqlConnection extends Connection
         if ($schema === null) {
             $schema = $this->name;
         }
-        //	'DROP '||routine_type||' IF EXISTS '||routine_name'
+        //	`'DROP '||routine_type||' IF EXISTS '||routine_name'`
         if (strpos($routineName, ' ')) {
             [$routineType, $routineName] = explode(' ', $routineName, 2);
         }
@@ -311,4 +342,55 @@ class MysqlConnection extends Connection
         }
         return $stmt->execute($params);
     }
+
+    /**
+     * Returns metadata of the table
+     *
+     * (Associative to field names)
+     *
+     * @param string $table
+     * @return array|boolean -- returns false if the table does not exist
+     * @throws Exception
+     */
+    public function tableMetadata(string $table): bool|array
+    {
+        $table = $this->quoteIdentifier($table);
+        $stmt = $this->pdo->query('show fields from ' . $table);
+        if (!$stmt) {
+            return false;
+        }
+        $rows = $stmt->fetchAll();
+        $i = 1;
+        $result = array();
+        foreach ($rows as $row) {
+            $type = $row['Type'];
+            $len = -1;
+            if (preg_match('/(\w+)\((\d+)\)/', $type, $mm)) {
+                $type = $mm[1];
+                $len = (int)$mm[2];
+            }
+            $result[$row['Field']] = [
+                'num' => $i++,
+                'type' => $type,
+                'len' => $len,
+                'not null' => $row['Null'] == 'NO',
+                'has default' => $row['Default'] !== null,
+                'default' => $row['Default'],
+                'key' => $row['Key'] ?? '',
+            ];
+        }
+        return $result;
+    }
+
+    /**
+     * Returns php type for a connection-specific SQL type
+     *
+     * @param string $typename -- SQL type
+     * @return string - php type or classname
+     */
+    function mapType(string $typename): string
+    {
+        return ArrayHelper::getValue(self::$typeNames, $typename, 'string');
+    }
+
 }

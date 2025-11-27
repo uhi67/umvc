@@ -7,6 +7,7 @@ namespace uhi67\umvc\commands;
 
 use Exception;
 use Throwable;
+use uhi67\umvc\App;
 use uhi67\umvc\AppHelper;
 use uhi67\umvc\ArrayHelper;
 use uhi67\umvc\CliHelper;
@@ -56,7 +57,7 @@ class MigrateController extends Command
         if (!$this->connection) {
             throw new Exception('No database connection defined');
         }
-        $this->verbose = ArrayHelper::fetchValue($this->query, 'verbose', $verbose ?? 1);
+        $this->verbose = ArrayHelper::fetchValue($this->query, 'verbose', 1);
         $this->confirm = ArrayHelper::fetchValue($this->query, 'confirm');
         // Environment-specific values can be set in the config
         $this->migrationTable = $this->connection->migrationTable ?? 'migration';
@@ -120,7 +121,7 @@ class MigrateController extends Command
             if ($this->verbose) {
                 echo "Everything is up to date!", PHP_EOL;
             }
-            return 0;
+            return App::EXIT_STATUS_OK;
         }
         sort($new);
         if ($this->verbose) {
@@ -255,22 +256,23 @@ class MigrateController extends Command
                 echo PHP_EOL, $n, $n > 1 ? " migrations were" : " migration was", " applied.", PHP_EOL;
             }
         }
-        return 0;
+        return App::EXIT_STATUS_OK;
     }
 
-    public function actionHelp(): void
+    public function actionHelp(): int
     {
         echo "Place plain SQL or PHP migration files into `/migrations/` directory.", PHP_EOL;
         echo "The default action creates the `migration` table which track the changes in your database, and applies all new migrations.", PHP_EOL, PHP_EOL;
         echo "Usage:", PHP_EOL, PHP_EOL;
         echo "   `php app migrate` -- migrate up. Interactive confirmations will be asked for.", PHP_EOL;
         echo "   `php app migrate/up verbose=2` -- migrate up with detailed output; `verbose=0` for silent operation.", PHP_EOL;
-        echo "   `php app migrate/up path=<path> namespace=<namespace>` -- migrate using a custom directory.", PHP_EOL;
-        echo "   `php app migrate/create <name>` -- create new php migration in the migration directory", PHP_EOL;
+        echo /* @lang */"   `php app migrate/up path=<path> namespace=<namespace>` -- migrate using a custom directory.", PHP_EOL;
+        echo /* @lang */"   `php app migrate/create <name>` -- create new php migration in the migration directory", PHP_EOL;
         echo "   `php app migrate/reset` -- delete database and migrate up from the beginning", PHP_EOL, PHP_EOL;
         echo "Options:", PHP_EOL, PHP_EOL;
         echo "   - `confirm=yes` to avoid interactive confirmations", PHP_EOL;
         echo "   - `verbose=0` for silent operation, 1 for normal, 2 for detailed output", PHP_EOL;
+        return App::EXIT_STATUS_OK;
     }
 
     /**
@@ -392,7 +394,7 @@ EOT;
             return 6;
         }
         echo "New migration created successfully.", PHP_EOL;
-        return 0;
+        return App::EXIT_STATUS_OK;
     }
 
     /**

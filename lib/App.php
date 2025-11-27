@@ -655,7 +655,7 @@ class App extends Component
      * @return int|string
      * @throws Exception
      */
-    private function renderPhpFile(string $_file_, array $_params_ = []): int|string
+    final function renderPhpFile(string $_file_, array $_params_ = []): int|string
     {
         $_level_ = ob_get_level();
         ob_start();

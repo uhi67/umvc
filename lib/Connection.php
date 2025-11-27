@@ -52,7 +52,7 @@ abstract class Connection extends Component
     public ?string $migrationTable = null;
 
     /** @var PDO|null $_pdo -- the original PDO connection. Empty if not yet connected. */
-    protected ?PDO $_pdo = null; // Note: must be protected, because descendant classes must use it in the reset() method.
+    protected ?PDO $_pdo = null; // Note: must be protected because descendant classes must use it in the reset() method.
 
     protected ?string $_user, $_password;
 
@@ -84,7 +84,7 @@ abstract class Connection extends Component
             return false;
         }
 
-        // Result is either boolean FALSE (no table found) or PDOStatement Object (table found)
+        // The result is either boolean FALSE (no table found) or PDOStatement Object (table found)
         return $result !== false;
     }
 
@@ -156,7 +156,7 @@ abstract class Connection extends Component
     }
 
     /**
-     * Must determine if SQL server supports NULLS LAST option in ORDER BY clause
+     * Must determine if SQL server supports the 'NULLS LAST' option in 'ORDER' BY clause
      * @return boolean
      */
     abstract public function supportsOrderNullsLast(): bool;
@@ -176,7 +176,7 @@ abstract class Connection extends Component
     }
 
     /**
-     * Returns array of table names (without schema prefix)
+     * Returns array of table names (without a schema prefix)
      *
      * @param string|null $schema
      *
@@ -200,45 +200,26 @@ abstract class Connection extends Component
     }
 
     /**
-     * Returns metadata of the table
+     * Must return the metadata of the table
      *
-     * (Associative to field names)
-     * Vendor-specific, this implementation is for MySQL only.
+     * The metadata is an associative array with the following keys:
+     * - num: a serial number
+     * - type: SQL type name
+     * - len: field length, -1 if not applicable
+     * - not null: if field is not nullable
+     * - default: default value, null if not applicable
+     * - key: 'PRI' if a primary key, 'UNI' if unique, empty string otherwise
+     * - has default: column has default value
+     * - default: default value, null if not applicable
      *
      * @param string $table
-     * @return array|boolean -- returns false if table does not exist
+     * @return array|boolean -- returns false if the table does not exist
      * @throws Exception
      */
-    public function tableMetadata(string $table): bool|array
-    {
-        $table = $this->quoteIdentifier($table);
-        $stmt = $this->pdo->query('show fields from ' . $table);
-        if (!$stmt) {
-            return false;
-        }
-        $rows = $stmt->fetchAll();
-        $i = 1;
-        $result = array();
-        foreach ($rows as $row) {
-            $type = $row['Type'];
-            $len = -1;
-            if (preg_match('/(\w+)\((\d+)\)/', $type, $mm)) {
-                $type = $mm[1];
-                $len = (int)$mm[2];
-            }
-            $result[$row['Field']] = [
-                'num' => $i++,
-                'type' => $type,
-                'len' => $len,
-                'not null' => $row['Null'] == 'NO',
-                'has default' => $row['Default'] !== null,
-            ];
-        }
-        return $result;
-    }
+    abstract public function tableMetadata(string $table): bool|array;
 
     /**
-     * Return dbname part of the DSN string, or empty string if dbname part not found
+     * Return dbname part of the DSN string or empty string if dbname part not found
      *
      * @return string
      * @throws Exception
@@ -260,12 +241,12 @@ abstract class Connection extends Component
     }
 
     /**
-     * Creates a new connection using vendor driver specified in the DSN
+     * Creates a new connection using a vendor driver specified in the DSN
      *
-     * Note: this method is not suitable for configuration array, only to create new ad-hoc connections.
+     * Note: this method is not suitable for a configuration array, only to create new adhoc connections.
      *
      * @return Connection -- the new Connection created
-     * @throws Exception -- if driver is missing for DSN vendor or vendor is not set in the DSN
+     * @throws Exception -- if the driver is missing for DSN vendor, or vendor is not set in the DSN
      */
     public static function connect($dsn, $user, $password): Connection
     {
@@ -290,7 +271,7 @@ abstract class Connection extends Component
 
     /**
      * Returns foreign keys information of the table as
-     *
+     * ```
      *    [
      *        'constraint_name' => [
      *            'column_name' => 'columnName',
@@ -300,8 +281,8 @@ abstract class Connection extends Component
      *        ],
      *        ...
      *  ]
-     *
-     * @param string $tableName -- may contain schema prefix
+     * ```
+     * @param string|null $tableName -- may contain schema prefix
      * @param string|null $schema -- optional (table prefix overrides; default is current schema)
      *
      * @return array|bool
@@ -310,7 +291,7 @@ abstract class Connection extends Component
 
     /**
      * Returns remote foreign keys referred to this table (reverse foreign key)
-     *
+     * ```
      *    [
      *        'constraint_name' => [
      *            'remote_schema' => 'schemaName',
@@ -323,7 +304,7 @@ abstract class Connection extends Component
      *        ],
      *        ...
      *  ]
-     *
+     * ```
      * @param string|null $tableName -- may contain schema prefix
      * @param string|null $schema -- optional (table prefix overrides; default is current schema)
      *
@@ -367,7 +348,7 @@ abstract class Connection extends Component
     abstract public function dropSequence(string $sequenceName, string $schema = null): bool|PDOStatement;
 
     /**
-     * Returns array with function names followed by parameter list and preceded with routine type from the give schema.
+     * Returns an array with function names followed by a parameter list and preceded with routine type from the give schema.
      *
      * @param string|null $schema -- default is "public"
      * @return string[]
@@ -390,7 +371,7 @@ abstract class Connection extends Component
     /**
      * Returns array with trigger names
      *
-     * @param $schema
+     * @param string|null $schema
      * @return string[] -- trigger names as schema.name
      */
     abstract public function getTriggers(string $schema = null): array;
@@ -449,4 +430,12 @@ abstract class Connection extends Component
      * @throws Exception
      */
     abstract public function execute(string $sql, array $params = []): bool;
+
+    /**
+     * Returns php type for a connection-specific SQL type
+     *
+     * @param string $typename -- SQL type
+     * @return string - php type or classname
+     */
+    abstract public function mapType(string $typename): string;
 }

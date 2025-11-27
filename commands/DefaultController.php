@@ -13,10 +13,10 @@ class DefaultController extends Command {
     /**
      * Default action: List commands
      *
-     * @return void
+     * @return int
      * @throws Exception
      */
-    public function actionDefault() {
+    public function actionDefault(): int {
         $name = $this->app->title ?: 'UMVC';
         echo Ansi::color($name, 'green'), PHP_EOL;
         echo "Index of commands\n";
@@ -54,6 +54,7 @@ class DefaultController extends Command {
 
         foreach($commands as $command=>$className) {
             echo '- ', Ansi::color(AppHelper::underscore($command, '-'), 'blue')." \n\tActions:\n";
+            if(!class_exists($className)) throw new Exception("Class $className not found");
             $methods = get_class_methods($className);
             $descriptions = is_callable([$className, 'descriptions']) ? call_user_func([$className, 'descriptions']) : [];
             foreach($methods as $method) {
@@ -64,5 +65,6 @@ class DefaultController extends Command {
                 }
             }
         }
+        return App::EXIT_STATUS_OK;
     }
 }
