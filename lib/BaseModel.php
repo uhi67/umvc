@@ -23,13 +23,14 @@ use ReflectionProperty;
  *
  * @property array $attributes -- all attribute values indexed by attribute name
  * @property-read array $errors -- field-name indexed array of numeric indexed error messages {@see self::getErrors()}
+ * @property-read string $friendlyErrors -- all errors as a single string {@see self::getFriendlyErrors()}
  * @package UMVC Simple Application Framework
  */
 class BaseModel extends Component implements JsonSerializable
 {
     // These constants are used in validators
     const VALID_EMAIL = '/^\w+[\w\-.]*@\w+[\w\-.]+$/';
-    const VALID_URL = '/^(https?|ftp):\/\/[^\s\/$.?#].[^\s]*$/iS';
+    const VALID_URL = '/^(https?|ftp):\/\/[^\s\/$.?#].\S*$/iS';
 
     /** @var array[] $_attributes -- attributes are memory-cached */
     private static array $_attributes = [];
@@ -305,6 +306,22 @@ class BaseModel extends Component implements JsonSerializable
             return $this->_errors;
         }
         return $this->_errors[$fieldName] ?? [];
+    }
+
+    /**
+     * Returns the validation error messages of a field or all fields (default) as a string
+     *
+     * @param string|null $fieldName
+     * @return string
+     */
+    public function getFriendlyErrors(string $fieldName = null): string
+    {
+        if (!$fieldName) {
+            return implode('. ', array_map(function(array $errors, string $fieldname) {
+                return $fieldname . ' ' . implode(', ', $errors);
+            }, $this->_errors, array_keys($this->_errors)));
+        }
+        return $fieldName . ' ' . implode(', ', $this->_errors[$fieldName] ?? []);
     }
 
     public function resetErrors(): void
