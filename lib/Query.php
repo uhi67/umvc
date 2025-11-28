@@ -980,6 +980,7 @@ class Query extends Component
                 'type' => 'SELECT',
                 'from' => ['x' => $this],
             ]);
+            $query->setParams($this->params);
         } else {
             $query = clone $this;
             $query->orders = null;
