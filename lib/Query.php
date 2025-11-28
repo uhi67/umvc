@@ -42,7 +42,7 @@ use Throwable;
  * @property-read Model|array|null $one -- {@see Query::getOne()}
  * @property-read Model|array|null $next -- {@see Query::getNext()}
  * @property-read Model|array $column;
- * @property-read mixed $scalar
+ * @property-read mixed $scalar -- {@see Query::getScalar()}
  *
  * Note: reading these fetcher properties may throw an Exception
  *
@@ -961,10 +961,12 @@ class Query extends Component
     }
 
     /**
-     * Returns the number of the rows in the dataset of the query
+     * Returns the number of the rows in the dataset of the query.
+     * The full version creates an outer query: `SELECT count(*) FROM <original query>`
      *
-     * @var bool $full -- if true, all fields of the query is preserved, otherwise only the count(*) is returned (default).
+     * @var bool $full -- if true, all fields of the query are preserved; otherwise only the count(*) is returned (default).
      * @return int
+     * @throws Exception
      */
     public function getCount(bool $full = false): int
     {
