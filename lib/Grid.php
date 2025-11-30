@@ -58,12 +58,12 @@ class Grid extends Component
     public array $orders;
     /** @var array|BaseModel|null $search -- the search model used in the second header row */
     public array|BaseModel|null $search = null;
-    /** @var int $page -- actual page for the pagination. null to disable pagination. */
-    public int $page;
-    /** @var int $totalPages -- number of total pages for the pagination. */
-    public int $totalPages;
-    /** @var int $totalRows -- number of total rows to display as info */
-    public int $totalRows;
+    /** @var int|null $page -- actual page for the pagination. null to disable pagination. */
+    public ?int $page = null;
+    /** @var int|null $totalPages -- number of total pages for the pagination. */
+    public ?int $totalPages = null;
+    /** @var int|null $totalRows -- number of total rows to display as info */
+    public ?int $totalRows = null;
     /** @var Controller $controller -- the current executed controller the Grid was called from */
     public Controller $controller;
     /** @var string|null|bool -- display null value as. default is 'not set'. Set false to disable (=empty string) */

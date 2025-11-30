@@ -209,7 +209,7 @@ class Column extends Component
     /**
      * @throws Exception
      */
-    public function renderValue(Model $model): string
+    public function renderValue(BaseModel $model): string
     {
         $options = $this->class ? ['class' => $this->class] : [];
         if (is_callable($this->value)) {

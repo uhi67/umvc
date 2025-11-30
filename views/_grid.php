@@ -1,4 +1,5 @@
 <?php
+/** @noinspection PhpUnhandledExceptionInspection */
 
 use uhi67\umvc\BaseModel;
 use uhi67\umvc\Column;
@@ -36,7 +37,7 @@ use app\lib\App;
         <?php if($search!==false): ?>
             <tr class="search">
                 <?php foreach($columns as $column) {
-                    echo $column->renderSearch($search);
+                    echo $column->renderSearch($search??[]);
                 } ?>
             </tr>
         <?php endif; ?>
