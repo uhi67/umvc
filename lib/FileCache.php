@@ -1,4 +1,5 @@
-<?php /** @noinspection PhpIllegalPsrClassPathInspection */
+<?php
+/** @noinspection PhpIllegalPsrClassPathInspection */
 
 namespace uhi67\umvc;
 
@@ -66,7 +67,7 @@ class FileCache extends Component implements CacheInterface
             return $default;
         }
         $item = explode(',', file_get_contents($ttlname));
-        if(!is_array($item) || count($item) !== 2) {
+        if (!is_array($item) || count($item) !== 2) {
             return $default;
         }
         list($created, $expires) = $item;
@@ -186,7 +187,9 @@ class FileCache extends Component implements CacheInterface
         $ttlname = $this->ttlName($key);
         if (!file_exists(dirname($filename))) {
             mkdir(dirname($filename), $this->permissions);
-            if(\app\lib\App::isCLI()) chown(dirname($filename), 'www-data');;
+            if (\app\lib\App::isCLI()) {
+                chown(dirname($filename), 'www-data');
+            };
         }
 
         if (file_exists($filename)) {
@@ -202,10 +205,14 @@ class FileCache extends Component implements CacheInterface
         if (!$ttl) {
             $ttl = $this->ttl;
         }
-        if($this->permissions!==null) $old = umask(0777 & ~$this->permissions);
+        if ($this->permissions !== null) {
+            $old = umask(0777 & ~$this->permissions);
+        }
         file_put_contents($ttlname, time() . ',' . (time() + $ttl));
         file_put_contents($filename, serialize($value));
-        if($this->permissions!==null) /** @noinspection PhpUndefinedVariableInspection */ umask($old);
+        if ($this->permissions !== null) /** @noinspection PhpUndefinedVariableInspection */ {
+            umask($old);
+        }
         return $value;
     }
 

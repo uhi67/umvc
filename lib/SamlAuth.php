@@ -9,7 +9,6 @@ use SimpleSAML\Configuration;
 use SimpleSAML\Session;
 use SimpleSAML\XHTML\Template;
 use SimpleXMLElement;
-use Throwable;
 
 /**
  * Using this class needs `composer require "simplesamlphp/simplesamlphp:^2.0"` in your application
@@ -18,22 +17,22 @@ use Throwable;
 class SamlAuth extends AuthManager
 {
     // Must be set to a secure random string
-    public $secret_salt;
+    public string $secret_salt;
     // A specific IdP can be configured to log in with. If not specified, the discovery service will be called.
-    public $idp;
+    public ?string $idp = null;
     // URL of the discovery service to be used. If not specified, the internal discovery service will be used with predefined IdPs.
-    public $disco;
+    public ?string $disco = null;
     // Refers to the proper SAML auth-source config element in the `config/saml/config/authsource.php` file
-    public $authSource;
+    public string $authSource;
     /** @var string $idAttribute -- attribute name used to identify the user */
-    public $idAttribute = 'eduPersonPrincipalName';
+    public string $idAttribute = 'eduPersonPrincipalName';
 
-    /** @var Simple -- the SAML auth source */
-    public $auth;
+    /** @var Simple|null -- the SAML auth source */
+    public ?Simple $auth = null;
 
     /** @var array|null $attr -- The cached attributes of the logged-in user or null */
-    private $_attributes = null;
-    private static $_template;
+    private ?array $_attributes = null;
+    private static ?Template $_template = null;
 
     /**
      * Magic method for retrieving SAML attribute values
@@ -66,12 +65,7 @@ class SamlAuth extends AuthManager
         if (!class_exists('\SimpleSAML\Auth\Simple') && !class_exists('\SimpleSAML_Auth_Simple')) {
             throw new Exception("SimpleSamlPHP cannot be found.");
         }
-        if (!class_exists('\SimpleSAML\Auth\Simple')) {
-            /** @noinspection PhpUndefinedClassInspection */
-            $this->auth = new SimpleSAML_Auth_Simple($this->authSource);
-        } else {
-            $this->auth = new Simple($this->authSource);
-        }
+        $this->auth = new Simple($this->authSource);
     }
 
     /**
@@ -103,10 +97,7 @@ class SamlAuth extends AuthManager
      */
     public function isAuthenticated(): bool
     {
-        if ($this->auth != null) {
-            return $this->auth->isAuthenticated();
-        }
-        return false;
+        return $this->auth->isAuthenticated();
     }
 
     /**
@@ -121,11 +112,8 @@ class SamlAuth extends AuthManager
      */
     public function requireAuth(array $params = []): bool
     {
-        if ($this->auth != null) {
-            $this->auth->requireAuth($params);
-            return true;
-        }
-        return false;
+        $this->auth->requireAuth($params);
+        return true;
     }
 
     /**
@@ -146,7 +134,7 @@ class SamlAuth extends AuthManager
     public function logout(array|string $params = null): bool
     {
         parent::logout();
-        if ($this->auth != null && $this->auth->isAuthenticated()) {
+        if ($this->auth->isAuthenticated()) {
             $this->auth->logout($params);
         }
         return false;
@@ -247,7 +235,7 @@ class SamlAuth extends AuthManager
             $t = static::$_template;
         } else {
             $globalConfig = Configuration::getInstance();
-            $t = (static::$_template = new Template($globalConfig, 'status.php', 'attributes'));
+            $t = (static::$_template = new Template($globalConfig, 'status.php'));
 
             if (method_exists('\SimpleSAML\Locale\Language', 'setLanguage')) {
                 $t->getTranslator()->getLanguage()->setLanguage(substr($la, 0, 2), false);
@@ -271,7 +259,7 @@ class SamlAuth extends AuthManager
      * @param array|string $values -- multiple values can be passed in an array
      *
      * @return string
-     * @noinspection PhpDocMissingThrowsInspection
+     * @throws Exception
      */
     public static function formatAttribute(string $attributeName, array|string $values): string
     {
@@ -295,12 +283,12 @@ class SamlAuth extends AuthManager
      * Html-formats a single value of the attribute, depending on the attribute name
      *
      * @param string $attributeName
-     * @param string $value
+     * @param string|array $value
      *
      * @return string
-     * @noinspection PhpDocMissingThrowsInspection
+     * @throws Exception
      */
-    public static function formatValue(string $attributeName, string $value): string
+    public static function formatValue(string $attributeName, string|array $value): string
     {
         if ($attributeName == 'jpegPhoto') {
             /** @noinspection PhpUnhandledExceptionInspection */
@@ -310,8 +298,9 @@ class SamlAuth extends AuthManager
             return '[' . implode(', ', array_map(function ($k, $v) use ($attributeName) {
                     return (is_integer($k) ? '' : $k . ': ') . self::formatValue($attributeName . '.' . $k, $v);
                 }, array_keys($value), array_values($value))) . ']';
+        } else {
+            return $value;
         }
-        return $value;
     }
 
     public function getAttributes(): ?array
