@@ -80,7 +80,7 @@ abstract class AuthManager extends Component
      * @return UserInterface|null
      * @throws Exception
      */
-    public function prepareUser()
+    public function prepareUser(): ?UserInterface
     {
         $this->uid = $_SESSION['uid'] ?? null;
         if ($this->uid && $this->uid != static::INVALID_USER) {
@@ -137,6 +137,7 @@ abstract class AuthManager extends Component
      * @param bool $canCreate
      * @return ?UserInterface
      * @throws Exception
+     * @noinspection PhpUnusedParameterInspection
      */
     public function login(UserInterface|string $uid, array $attributes = [], bool $canCreate = true): ?UserInterface
     {
@@ -208,7 +209,7 @@ abstract class AuthManager extends Component
      * @param array|string|null $params -- used only in descendants
      * @return bool
      */
-    public function logout($params = null): bool
+    public function logout(array|string $params = null): bool
     {
         $this->parent->user = null;
         $_SESSION['uid'] = null;
@@ -221,7 +222,7 @@ abstract class AuthManager extends Component
      *
      * @return bool
      */
-    abstract public function isAuthenticated();
+    abstract public function isAuthenticated(): bool;
 
     /**
      * Must manage the login process
@@ -235,7 +236,7 @@ abstract class AuthManager extends Component
      * @param array|string|null $params -- return URL or parameter array
      * @return UserInterface|null
      */
-    abstract public function requireLogin($params = null);
+    abstract public function requireLogin(array|string $params = null): ?UserInterface;
 
     abstract public function getAttributes();
 }

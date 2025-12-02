@@ -143,7 +143,7 @@ class SamlAuth extends AuthManager
      * @param array|string|null $params -- return URL or parameter array
      * @return bool
      */
-    public function logout($params = null): bool
+    public function logout(array|string $params = null): bool
     {
         parent::logout();
         if ($this->auth != null && $this->auth->isAuthenticated()) {
@@ -187,11 +187,11 @@ class SamlAuth extends AuthManager
      * 'ReturnTo': The URL the user should be returned to after authentication.
      * 'ReturnCallback': The function we should call after the user has finished authentication.
      *
-     * @param string|null|false $params -- null to auto-detect, false to disable
+     * @param array|string|null $params -- null to auto-detect, false to disable
      * @return UserInterface|null
      * @throws Exception
      */
-    public function requireLogin($params = null): ?UserInterface
+    public function requireLogin(array|string $params = null): ?UserInterface
     {
         if (is_string($params)) {
             $params = ['ReturnTo' => $params];
