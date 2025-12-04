@@ -271,10 +271,8 @@ class App extends Component
             $this->_components[$name] = $obj;
         }
 
-//        $this->session = $this->components['session'] instanceof Session ? $this->components['session'] : new Session();
-
         // When all component has been initialized, each of them is prepared
-        foreach ($this->_components as $name => $component) {
+        foreach ($this->_components as $component) {
             if (is_callable([$component, 'prepare'])) {
                 $component->prepare();
             }

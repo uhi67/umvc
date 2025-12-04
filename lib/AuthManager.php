@@ -74,7 +74,8 @@ abstract class AuthManager extends Component
         $this->prepareUser();
     }
 
-    static public function requiredComponents(): array {
+    static public function requiredComponents(): array
+    {
         return ['db', 'session'];
     }
 
