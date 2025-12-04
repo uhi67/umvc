@@ -54,6 +54,7 @@ class Session extends Component
         ini_set("session.gc_maxlifetime", $this->lifetime + 900);
         ini_set("session.lifetime", $this->lifetime);
         ini_set("session.gc_probability", "100");
+        ini_set('session.use_strict_mode', true);
         session_set_cookie_params(0, $this->cookie_path, $this->cookie_domain);
         session_name($this->name);
         session_cache_limiter('private_no_expire');
@@ -101,7 +102,7 @@ class Session extends Component
 
     public static function is_started()
     {
-        if (App::isCLI()) {
+        if (!App::isCLI()) {
             if (version_compare(phpversion(), '5.4.0', '>=')) {
                 return session_status() === PHP_SESSION_ACTIVE;
             } else {

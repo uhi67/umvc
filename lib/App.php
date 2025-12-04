@@ -183,9 +183,6 @@ class App extends Component
             if (!$this->request) {
                 $this->request = new Request();
             }
-            if (!$this->session) {
-                $this->session = new Session();
-            }
         }
         if (!$this->query) {
             $this->query = $_GET;
@@ -234,6 +231,9 @@ class App extends Component
                     $component->prepare();
                 }
             }
+        }
+        if ($this->sapi != 'cli' && !$this->session) {
+            $this->session = new Session();
         }
     }
 
@@ -287,10 +287,6 @@ class App extends Component
             }
 
             $cli = PHP_SAPI == 'cli';
-            if (!$cli && session_status() == PHP_SESSION_NONE) {
-                ini_set('session.use_strict_mode', true);
-                session_start();
-            }
 
             set_error_handler(function ($severity, $errstr, $errfile, $errline) {
                 throw new ErrorException($errstr, 0, $severity, $errfile, $errline);
