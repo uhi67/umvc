@@ -16,6 +16,8 @@ use Exception;
 class ArrayHelper
 {
     /** @noinspection PhpMethodNamingConventionInspection */
+    const ERROR_CYCLIC = 1;
+    const ERROR_NONEXISTENT = 2;
 
     /**
      * Converts an object or an array of objects into an array.
@@ -362,5 +364,68 @@ class ArrayHelper
             $result[$k2] = $array[$k1] ?? null;
         }
         return $result;
+    }
+
+    /**
+     * Order keys of the input array topologically based on the dependency function or 'require' property.
+     *
+     * @param array $items -- associative array of configuration arrays or reference names
+     * @param callable(array $item):array|null $getDependency -- callable($item) that returns an array of required keys.
+     * @return array
+     * @throws Exception -- see ERROR_* constants
+     */
+    public static function orderByDependency(array $items, callable $getDependency = null): array {
+        $order = [];
+        $status = [];      // State of the nodes: unvisited, visiting, visited
+        $item_keys = array_keys($items);
+        /** @var callable $getDependency */
+        if($getDependency === null) {
+            $getDependency = function($item) { return $item['require'] ?? []; };
+        }
+
+        foreach ($item_keys as $key) {
+            $status[$key] = 'unvisited';
+        }
+
+        /**
+         * Depth-first search - DFS, recursive.
+         *
+         * @param string $key
+         * @throws Exception
+         */
+        $dfs = function($key) use (&$items, &$order, &$status, &$dfs, $item_keys, $getDependency) {
+            if ($status[$key] === 'visiting') {
+                throw new Exception("Cyclic dependency detected at key '{$key}'.", self::ERROR_CYCLIC);
+            }
+
+            if ($status[$key] === 'visited') {
+                return;
+            }
+
+            $status[$key] = 'visiting';
+
+            $requires = $getDependency($items[$key]);
+            if (!is_array($requires)) {
+                $requires = [$requires];
+            }
+
+            foreach ($requires as $required_key) {
+                // Checking non-existent dependency
+                if (!in_array($required_key, $item_keys)) {
+                    throw new Exception("Non-existent dependency: Key '{$key}' requires the non-existent '{$required_key}'.", self::ERROR_NONEXISTENT);
+                }
+                $dfs($required_key);
+            }
+
+            $status[$key] = 'visited';
+            $order[] = $key;
+        };
+
+        foreach ($item_keys as $key) {
+            if ($status[$key] === 'unvisited') {
+                $dfs($key);
+            }
+        }
+        return $order;
     }
 }

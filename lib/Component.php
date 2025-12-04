@@ -37,6 +37,7 @@ abstract class Component
 
     /** @var Component|App|null $parent -- the parent component which created this object (The App itself for the config-defined components) */
     public App|Component|null $parent = null;
+    public array $_require = [];   // list of required component names in the App
 
     /**
      * # Component constructor

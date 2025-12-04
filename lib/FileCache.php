@@ -354,7 +354,7 @@ class FileCache extends Component implements CacheInterface
 
     /**
      * @param string $key -- the name of the cached value
-     * @param callable $compute -- the function retrieves the original value
+     * @param callable():mixed $compute -- the function retrieves the original value
      * @param int|null $ttl -- time to live in seconds (used in 'set' only)
      * @param bool $refresh -- set to true to force replace the cached value
      *

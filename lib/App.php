@@ -54,6 +54,7 @@ use Throwable;
  * @property-read AuthManager $auth -- the actual auth manager
  * @property-read Connection $connection -- the default database connection defined in 'db' component
  * @property-read L10n $l10n
+ * @property-read Session $session
  * @property User $user {@see static::getUser()}
  * @package UMVC Simple Application Framework
  */
@@ -101,8 +102,8 @@ class App extends Component
     public array $headers;
     /** @var Request|null $request */
     public ?Request $request = null;
-    /** @var Session|null $session */
-    public ?Session $session = null;
+//    /** @var Session|null $session */
+//    public ?Session $session = null;
     /** @var string $layout -- the default layout */
     public string $layout = 'layout';
     /**
@@ -189,51 +190,94 @@ class App extends Component
         }
         $this->path = $this->urlPath ? explode('/', trim($this->urlPath, '/')) : [];
 
+        // Define the referrable default components
+        $defaultComponents = [
+            'session' => ['class' => Session::class],
+            'l10n' => ['class' => L10n::class],
+        ];
+
+        // Component can be a 'name' => config array or a 'name' reference with a numeric index.
         $components = $this->config['components'] ?? [];
-        $referredComponents = [];
+        $referredComponents = $defaultComponents;
         if ($this->sapi == 'cli') {
             $components = $this->config['cli_components'] ?? $this->config['components'];
-            $referredComponents = $this->config['components'] ?? [];
+            $referredComponents = array_merge($defaultComponents, $this->config['components'] ?? []);
         }
 
-        // Default components
-        if (!isset($components['l10n'])) {
-            $components['l10n'] = [
-                'class' => L10n::class,
-            ];
+        // Mandatory components
+        $mandatoryComponents = ['session'];
+        foreach ($mandatoryComponents as $name) {
+            if (!isset($components[$name])) {
+                $components[$name] = $referredComponents[$name];
+            }
         }
 
+        // Initialize component objects
         $this->_components = [];
-        if ($components) {
-            foreach ($components as $name => $config) {
-                if (is_integer($name)) {
-                    if (!is_string($config)) {
-                        throw new Exception('Component definition must have a name key');
-                    }
-                    if (!array_key_exists($config, $referredComponents)) {
-                        throw new Exception("Invalid component reference '$config'");
-                    }
-                    $name = $config;
-                    $config = $referredComponents[$config];
+        if (!is_array($components)) {
+            throw new Exception("Components configuration must be an array");
+        }
+        // Resolve unnamed referenced components with a string index
+        foreach ($components as $name => $config) {
+            if (is_integer($name) && is_string($config)) {
+                if (isset($components[$config])) {
+                    throw new Exception("Referred component '$config' is already defined");
                 }
-                if (!is_array($config)) {
-                    throw new Exception("Component configuration array was expected at '$name'");
+                if (!array_key_exists($config, $referredComponents)) {
+                    throw new Exception("Invalid component reference '$config'");
                 }
-                /** @var Component $obj */
-                $obj = Component::create($config);
-                $obj->parent = $this;
-                $this->_components[$name] = $obj;
-            }
-
-            // When all component has been initialized, each of them is prepared
-            foreach ($this->_components as $component) {
-                if (is_callable([$component, 'prepare'])) {
-                    $component->prepare();
-                }
+                $components[$config] = $config;
+                unset($components[$name]);
             }
         }
-        if ($this->sapi != 'cli' && !$this->session) {
-            $this->session = new Session();
+
+        // Resolve the component priority order based on dependency
+        /**
+         * @param array|string $item
+         * @return array
+         */
+        $getDependency = function (array|string $item): array {
+            if (is_string($item)) {
+                $item = $referredComponents[$item] ?? [];
+            }
+            $class = $item['class'] ?? $item[0] ?? null;
+            $required = (array)($item['_require'] ?? []);
+            if ($class && is_callable([$class, 'requiredComponents'])) {
+                $required = array_unique(array_merge($class::requiredComponents(), $required));
+            }
+            return $required;
+        };
+        $componentOrder = \app\lib\ArrayHelper::orderByDependency($components, $getDependency);
+
+        // Initialize components in the order defined by dependency
+        foreach ($componentOrder as $name) {
+            $config = $components[$name];
+            if (is_integer($name)) {
+                if (!is_string($config)) {
+                    throw new Exception('Component definition must have a name key');
+                }
+                if (!array_key_exists($config, $referredComponents)) {
+                    throw new Exception("Invalid component reference '$config'");
+                }
+                $name = $config;
+                $config = $referredComponents[$config];
+            }
+            if (!is_array($config)) {
+                throw new Exception("Component configuration array was expected at '$name'");
+            }
+            /** @var Component $obj */
+            $obj = Component::create($config);
+            $obj->parent = $this;
+            $this->_components[$name] = $obj;
+        }
+
+//        $this->session = $this->components['session'] instanceof Session ? $this->components['session'] : new Session();
+
+        // When all component has been initialized, each of them is prepared
+        foreach ($this->_components as $name => $component) {
+            if (is_callable([$component, 'prepare'])) {
+                $component->prepare();
+            }
         }
     }
 
@@ -242,7 +286,8 @@ class App extends Component
      *
      * @return string -- protocol://host
      */
-    public function hostInfo(): string
+    public
+    function hostInfo(): string
     {
         $https = $this->config['https'] ?? getenv('HTTPS');
         /** Reverse proxy protocol patch */
@@ -259,8 +304,11 @@ class App extends Component
     /**
      * Renders an error message
      */
-    public function error(int $status, string $message): int|string
-    {
+    public
+    function error(
+        int $status,
+        string $message
+    ): int|string {
         $protocol = ($_SERVER['SERVER_PROTOCOL'] ?? 'HTTP/1.0');
         $title = HTTP::$statusTexts[$status] ?? '';
         $this->sendHeader($protocol . ' ' . $status . ' ' . $title);
@@ -276,8 +324,10 @@ class App extends Component
      * @param string $configFile
      * @return int -- exit status
      */
-    public static function createRun(string $configFile): int
-    {
+    public
+    static function createRun(
+        string $configFile
+    ): int {
         try {
             $config = include $configFile;
             defined('ENV') || define('ENV', $config['application_env'] ?? 'production');
@@ -285,8 +335,6 @@ class App extends Component
             if (ENV_DEV) {
                 ini_set('display_errors', 'On');
             }
-
-            $cli = PHP_SAPI == 'cli';
 
             set_error_handler(function ($severity, $errstr, $errfile, $errline) {
                 throw new ErrorException($errstr, 0, $severity, $errfile, $errline);
@@ -327,7 +375,8 @@ class App extends Component
      *
      * @return string|int -- output or exit status code
      */
-    public function run(): int|string
+    public
+    function run(): int|string
     {
         try {
             // TODO: not works with nginx
@@ -382,8 +431,12 @@ class App extends Component
      * @return string|int -- output or exit status
      * @throws Exception -- if invalid action was requested
      */
-    public function runController(Controller|string $controllerClass, array $path, array $query): int|string
-    {
+    public
+    function runController(
+        Controller|string $controllerClass,
+        array $path,
+        array $query
+    ): int|string {
         if (App::isCLI()) {
             $this->classPath = [$controllerClass::shortName()];
         }
@@ -402,8 +455,10 @@ class App extends Component
      *
      * @throws Exception
      */
-    public function logout(string $returnTo = ''): void
-    {
+    public
+    function logout(
+        string $returnTo = ''
+    ): void {
         if ($this->hasComponent('auth') && $this->auth->isAuthenticated()) {
             $params = $returnTo ? ['ReturnTo' => $returnTo] : [];
             $this->auth->logout($params);
@@ -421,8 +476,10 @@ class App extends Component
      * @return Connection|string|null
      * @throws Exception
      */
-    public function getConnection(bool $required = false): Connection|string|null
-    {
+    public
+    function getConnection(
+        bool $required = false
+    ): Connection|string|null {
         if (!$this->_connection) {
             $this->_connection = $this->hasComponent('db', Connection::class);
         }
@@ -464,7 +521,8 @@ class App extends Component
      *
      * @return int|string -- output
      */
-    public function render(
+    public
+    function render(
         string $viewName,
         ?array $params = [],
         string|bool|null $layout = null,
@@ -515,8 +573,11 @@ class App extends Component
      * @return string|null
      * @throws Exception -- if the view path does not exist
      */
-    public function localizedViewFile(string $viewName, ?string $locale): ?string
-    {
+    public
+    function localizedViewFile(
+        string $viewName,
+        ?string $locale
+    ): ?string {
         // 1. Look up the view file using the full locale
         $lv = $locale ? $this->localizedViewName($viewName, $locale) : $viewName;
         $viewFile = $this->viewFile($lv);
@@ -542,8 +603,11 @@ class App extends Component
      * @param string $locale
      * @return string
      */
-    private function localizedViewName(string $viewName, string $locale): string
-    {
+    private
+    function localizedViewName(
+        string $viewName,
+        string $locale
+    ): string {
         $p = strrpos($viewName, '/');
         if ($p === false) {
             $p = -1;
@@ -563,7 +627,8 @@ class App extends Component
      *
      * @return int|string
      */
-    public function renderFile(
+    public
+    function renderFile(
         string $viewFile,
         array $params = [],
         bool|string $layout = null,
@@ -610,8 +675,10 @@ class App extends Component
      * @return string|null
      * @throws Exception -- if the view path does not exist
      */
-    public function viewFile(string $viewName): ?string
-    {
+    public
+    function viewFile(
+        string $viewName
+    ): ?string {
         $viewPath = $this->basePath . '/views';
         if (!is_dir($viewPath)) {
             throw new Exception("View path '$viewPath' does not exist");
@@ -636,8 +703,11 @@ class App extends Component
     /**
      * Renders a partial view without a layout
      */
-    public function renderPartial($viewName, $params = []): string
-    {
+    public
+    function renderPartial(
+        $viewName,
+        $params = []
+    ): string {
         return $this->render($viewName, $params, false, null, $this->userLocale);
     }
 
@@ -849,7 +919,7 @@ class App extends Component
      * Returns a value using the configured cache
      *
      * @param string|null $key -- The cache key. If null, cache will be skipped, value computed directly
-     * @param callable $compute -- function():mixed -- computes the actual value
+     * @param callable():mixed $compute -- computes the actual value
      * @param bool|int $refresh -- if true, a new value is computed and stored into the cache. If int, used as a TTL value
      * @return mixed
      * @throws Exception
@@ -1058,7 +1128,7 @@ class App extends Component
         }
     }
 
-    public static function nameSpace(): string
+    public static function namespace(): string
     {
         return substr(static::class, 0, strrpos(static::class, '\\'));
     }

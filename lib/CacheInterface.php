@@ -77,8 +77,8 @@ interface CacheInterface
      * Returns a cached value or computes it if not exists
      *
      * @param string $key -- the name of the cached value
-     * @param callable $compute -- the function retrieves the original value
-     * @param int|null $ttl -- time to live in seconds (used in set only)
+     * @param callable():mixed $compute -- the function retrieves the original value
+     * @param int|null $ttl -- time to live in seconds (used in a set only)
      * @param bool $refresh -- set to true to force replace the cached value
      *
      * @return mixed -- the cached value

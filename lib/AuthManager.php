@@ -74,6 +74,10 @@ abstract class AuthManager extends Component
         $this->prepareUser();
     }
 
+    static public function requiredComponents(): array {
+        return ['db', 'session'];
+    }
+
     /**
      * Manage already logged-in user
      *
@@ -82,7 +86,7 @@ abstract class AuthManager extends Component
      */
     public function prepareUser(): ?UserInterface
     {
-        $this->uid = $_SESSION['uid'] ?? null;
+        $this->uid = App::$app->session->get('uid') ?? null;
         if ($this->uid && $this->uid != static::INVALID_USER) {
             $user = $this->userModel::findUser($this->uid);
             if ($user) {
@@ -146,7 +150,7 @@ abstract class AuthManager extends Component
         }
         $user = $this->userModel::findUser($uid);
         if ($user) {
-            if (!isset($_SESSION['uid']) || $_SESSION['uid'] != $user->getUserId()) {
+            if (App::$app->session->get('uid') != $user->getUserId()) {
                 if (!$user->updateUser($attributes)) {
                     throw new Exception("User record cannot be saved ($uid)");
                 }
@@ -161,7 +165,8 @@ abstract class AuthManager extends Component
                 return $this->_login($user);
             } catch (Throwable $e) {
                 // -1 indicates that SAML login is successful, but the application login failed. Prevents endless loops.
-                $_SESSION['uid'] = $this->uid = static::INVALID_USER;
+                $this->uid = static::INVALID_USER;
+                App::$app->session->set('uid', $this->uid);
                 throw new Exception(
                     "User record cannot be created ($uid)", HTTP::HTTP_INTERNAL_SERVER_ERROR, $e
                 );
@@ -212,8 +217,8 @@ abstract class AuthManager extends Component
     public function logout(array|string $params = null): bool
     {
         $this->parent->user = null;
-        $_SESSION['uid'] = null;
-        $_SESSION = [];
+        App::$app->session->set('uid', null);
+        App::$app->session->empty();
         return true;
     }
 

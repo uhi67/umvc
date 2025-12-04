@@ -1,4 +1,7 @@
 <?php
+/** Session class -- a simple basic session handler */
+
+/** @noinspection PhpIllegalPsrClassPathInspection */
 /** @noinspection PhpUnused */
 
 namespace uhi67\umvc;
@@ -7,22 +10,17 @@ use Exception;
 use Psr\Log\LogLevel;
 
 /**
- * # Class BaseSession
- *
- * Session handler must be descendant of this.
+ * # Class Session
  *
  * ###Session configuration example for `config.php`
  *
  * ```php
- *    'session' => [
- *    'name' => 'sess_sample',
- *    'lifetime' => 1800,
- *    'cookie_path' => '',
- *    'cookie_domain' => 'sample.hu',
- *    'logfile' => $datapath.'/session.log',
- *    'db' => $db, // A DBX connection object
- *    'tableName' => 'session',
- *  '' =>
+ * 'session' => [
+ *     'class' => Session::class,
+ *     'name' => 'sess_sample',
+ *     'lifetime' => 1800,
+ *     'cookie_path' => '',
+ *     'cookie_domain' => 'sample.hu',
  * ],
  * ```
  * @property-read int $id
@@ -30,20 +28,18 @@ use Psr\Log\LogLevel;
 class Session extends Component
 {
     /** @var string */
-    public $name = 'umvc_app';
+    public string $name = 'umvc_app';
     /** @var int */
-    public $lifetime = 1800;
+    public int $lifetime = 1800;
     /** @var string */
-    public $cookie_path = '';
+    public string $cookie_path = '';
     /** @var string|bool */
-    public $cookie_domain;
-    /** @var string */
-    public $logfile;
+    public string|bool|null $cookie_domain = null;
 
     /**
      * @throws Exception
      */
-    public function prepare()
+    public function prepare(): void
     {
         if ($this->cookie_domain === true && $this->parent instanceof App) {
             $this->cookie_domain = parse_url($this->parent->urlPath ?? '', PHP_URL_HOST);
@@ -72,7 +68,7 @@ class Session extends Component
         }
     }
 
-    public function expired()
+    public function expired(): false
     {
         return false;
     }
@@ -87,7 +83,7 @@ class Session extends Component
 
     /**
      */
-    function finish()
+    function finish(): void
     {
         if (session_status() == PHP_SESSION_ACTIVE) {
             session_write_close();
@@ -95,12 +91,12 @@ class Session extends Component
         }
     }
 
-    function log($str)
+    function log($str): void
     {
         App::log(LogLevel::DEBUG, $str);
     }
 
-    public static function is_started()
+    public static function is_started(): bool
     {
         if (!App::isCLI()) {
             if (version_compare(phpversion(), '5.4.0', '>=')) {
@@ -112,12 +108,12 @@ class Session extends Component
         return false;
     }
 
-    public function getId()
+    public function getId(): false|string
     {
         return session_id();
     }
 
-    public static function unserialize($session_data)
+    public static function unserialize($session_data): array
     {
         /* save current session */
         $current_session = session_encode();
@@ -140,31 +136,24 @@ class Session extends Component
             s:<integer>:"<stringvalue>";
             a:<integer>:{<variablevalue>[;<variablevalue>...]}
     */
-    public static function strvars($s)
+    public static function strvars($s): false|array
     {
         $a = [];
         while ($s) {
-            if (substr($s, 0, 1) == '!') {
+            if (str_starts_with($s, '!')) {
                 $s = substr($s, 1);
                 $var = static::gettoch($s, '|');
-                if ($var === false) {
-                    return false;
-                }
                 $a[$var] = '';
             } else {
                 $var = static::gettoch($s, '|');
-                if ($var === false) {
-                    return false;
-                }
                 $a[$var] = static::getvarvalue($s);
             }
         }
         return $a;
     }
 
-    public static function gettoch(&$s, $l)
+    public static function gettoch(&$s, $l): string
     {
-        #trace("sp_gettoch('$l', '$s')");flush();
         $p = strpos($s, $l);
         if ($p === false) {
             $s = '';
@@ -175,9 +164,8 @@ class Session extends Component
         return $w;
     }
 
-    public static function getch(&$s)
+    public static function getch(&$s): string
     {
-        #trace("sp_getch(&$s)");flush();
         if ($s == '') {
             return '';
         }
@@ -190,9 +178,9 @@ class Session extends Component
      * Returns a value from the string (part of session parser)
      *
      * @param $s --
-     * @return array|false|string
+     * @return array|string
      */
-    private static function getvarvalue(&$s)
+    private static function getvarvalue(&$s): array|string
     {
         $t = static::getch($s); // type
         switch ($t) {
@@ -237,12 +225,12 @@ class Session extends Component
     /**
      * Returns value of a session variable or default if not defined
      *
-     * @param string $name
-     * @param mixed $default
+     * @param string|null $name
+     * @param mixed|null $default
      *
      * @return mixed|null
      */
-    public function get($name = null, $default = null)
+    public function get(string $name = null, mixed $default = null): mixed
     {
         if (!isset($_SESSION)) {
             return null;
@@ -254,18 +242,18 @@ class Session extends Component
     }
 
     /**
-     * Returns integer, or default (default null)
+     * Returns integer or default (default null)
      *
      * - integer of value if not empty
-     * - null if value is empty and no default or default is null
-     * - default (as integer), if value is empty
+     * - null if the value is empty and no default or default is null
+     * - default (as integer), if the value is empty
      *
      * @param null $name
      * @param null $default
      *
      * @return int|null
      */
-    public function getInt($name = null, $default = null)
+    public function getInt($name = null, $default = null): ?int
     {
         $value = $this->get($name, $default);
         if ($value === '') {
@@ -274,8 +262,13 @@ class Session extends Component
         return $value === null ? $default : (int)$value;
     }
 
-    public function set($name, $value)
+    public function set($name, $value): void
     {
         $_SESSION[$name] = $value;
+    }
+
+    public function empty(): void
+    {
+        $_SESSION = [];
     }
 }
