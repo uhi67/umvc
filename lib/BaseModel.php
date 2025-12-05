@@ -47,9 +47,6 @@ class BaseModel extends Component implements JsonSerializable
      */
     public static function attributes(): array
     {
-        if (static::class == 'app\lib\BaseModel') {
-            throw new Exception('Call this from a derived class.');
-        }
         if (array_key_exists(static::class, self::$_attributes)) {
             return self::$_attributes[static::class];
         }

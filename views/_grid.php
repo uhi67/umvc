@@ -1,10 +1,10 @@
 <?php
 /** @noinspection PhpUnhandledExceptionInspection */
 
+use uhi67\umvc\App;
 use uhi67\umvc\BaseModel;
 use uhi67\umvc\Column;
 use uhi67\umvc\Grid;
-use app\lib\App;
 
 /** @var App $this */
 /** @var Grid $grid -- the Grid instance called this view */

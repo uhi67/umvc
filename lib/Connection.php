@@ -257,7 +257,7 @@ abstract class Connection extends Component
         if (!$vendor) {
             throw new Exception('Invalid DSN: vendor is not set');
         }
-        $driver = 'app\lib\\' . ucfirst(strtolower($vendor)) . 'Connection';
+        $driver = ucfirst(strtolower($vendor)) . 'Connection';
         if (!class_exists($driver)) {
             throw new Exception('No database driver for ' . $vendor);
         }

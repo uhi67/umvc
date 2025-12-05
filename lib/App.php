@@ -247,19 +247,15 @@ class App extends Component
             }
             return $required;
         };
-        $componentOrder = \app\lib\ArrayHelper::orderByDependency($components, $getDependency);
+        $componentOrder = ArrayHelper::orderByDependency($components, $getDependency);
 
         // Initialize components in the order defined by dependency
         foreach ($componentOrder as $name) {
             $config = $components[$name];
-            if (is_integer($name)) {
-                if (!is_string($config)) {
-                    throw new Exception('Component definition must have a name key');
-                }
+            if (is_string($config)) {
                 if (!array_key_exists($config, $referredComponents)) {
                     throw new Exception("Invalid component reference '$config'");
                 }
-                $name = $config;
                 $config = $referredComponents[$config];
             }
             if (!is_array($config)) {
