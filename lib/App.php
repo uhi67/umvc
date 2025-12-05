@@ -1217,7 +1217,7 @@ class App extends Component
     public function login(?UserInterface $userModel): ?UserInterface
     {
         $this->_user = $userModel;
-        $_SESSION['uid'] = $userModel?->getUserId();
+        $this->session->set('uid', $userModel?->getUserId());
         return $userModel;
     }
 }

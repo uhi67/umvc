@@ -32,7 +32,7 @@ class Session extends Component
     /** @var int */
     public int $lifetime = 1800;
     /** @var string */
-    public string $cookie_path = '';
+    public string $cookie_path = '/';
     /** @var string|bool */
     public string|bool|null $cookie_domain = null;
 
