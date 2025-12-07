@@ -21,7 +21,7 @@ use Throwable;
  *      ...
  * ],
  * ```
- * @property-read array $attributes
+ * @property-read array $attributes -- cached value of the external attributes
  */
 abstract class AuthManager extends Component
 {
@@ -34,6 +34,8 @@ abstract class AuthManager extends Component
     public string|UserInterface $userModel;
     /** @var bool $autoUrl -- true to detect and perform ?login and ?logout in the REQUEST URL automatically */
     public bool $autoUrl = true;
+    /** @var string $sessionUid -- the session key to store the uid */
+    public string $sessionUid = 'uid';
 
     /**
      * Initializes the auth module.
@@ -87,7 +89,7 @@ abstract class AuthManager extends Component
      */
     public function prepareUser(): ?UserInterface
     {
-        $this->uid = App::$app->session->get('uid') ?? null;
+        $this->uid = App::$app->session->get($this->sessionUid) ?? null;
         if ($this->uid && $this->uid != static::INVALID_USER) {
             $user = $this->userModel::findUser($this->uid);
             if ($user) {
@@ -151,7 +153,7 @@ abstract class AuthManager extends Component
         }
         $user = $this->userModel::findUser($uid);
         if ($user) {
-            if (App::$app->session->get('uid') != $user->getUserId()) {
+            if (App::$app->session->get($this->sessionUid) != $user->getUserId()) {
                 if (!$user->updateUser($attributes)) {
                     throw new Exception("User record cannot be saved ($uid)");
                 }
@@ -167,7 +169,7 @@ abstract class AuthManager extends Component
             } catch (Throwable $e) {
                 // -1 indicates that SAML login is successful, but the application login failed. Prevents endless loops.
                 $this->uid = static::INVALID_USER;
-                App::$app->session->set('uid', $this->uid);
+                App::$app->session->set($this->sessionUid, $this->uid);
                 throw new Exception(
                     "User record cannot be created ($uid)", HTTP::HTTP_INTERNAL_SERVER_ERROR, $e
                 );
@@ -210,6 +212,8 @@ abstract class AuthManager extends Component
      * Must log out the user by the external authenticator.
      * May never return.
      *
+     * This implementation can be used to log out the user internally from the application.
+     *
      * Return false on error
      *
      * @param array|string|null $params -- used only in descendants
@@ -218,7 +222,7 @@ abstract class AuthManager extends Component
     public function logout(array|string $params = null): bool
     {
         $this->parent->user = null;
-        App::$app->session->set('uid', null);
+        App::$app->session->set($this->sessionUid, null);
         App::$app->session->empty();
         return true;
     }

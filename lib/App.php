@@ -830,7 +830,7 @@ class App extends Component
     }
 
     /**
-     * Requires login for this page
+     * Requires login for this page. Can be called from any controller action.
      *
      * @param bool $force -- if true and not logged in, redirects to the login page, will return only if the user logged in. If false, throws an exception if the user is not logged in.
      *
@@ -839,9 +839,8 @@ class App extends Component
      */
     public function requireLogin(bool $force = true): bool|int
     {
-        $uid = $_SESSION['uid'] ?? null;
         if (!$this->loggedIn()) {
-            if ($force && !array_key_exists('login', $_REQUEST) && $uid != AuthManager::INVALID_USER) {
+            if ($force && !array_key_exists('login', $_REQUEST) && $this->auth->uid != AuthManager::INVALID_USER) {
                 return $this->redirect(['login' => true, 'ReturnTo' => $this->url]);
             } else {
                 throw new Exception('Must be logged in', HTTP::HTTP_FORBIDDEN);

@@ -38,7 +38,7 @@ class SamlAuth extends AuthManager
      * Magic method for retrieving SAML attribute values
      *
      * @param string $attributeName
-     * @param int|null $index -- which one from the value array or (null=) all of them.
+     * @param int|null $index -- which one from the value array or (null=) all of them. Unused if the attribute value is not an array.
      *
      * @return string|array|null -- null: attribute is not found
      */
@@ -47,9 +47,8 @@ class SamlAuth extends AuthManager
         if (!$this->isAuthenticated()) {
             return null;
         }
-        if (array_key_exists($attributeName, $attributes = $this->auth->getAttributes())) {
-            $value = $attributes[$attributeName];
-            return ($index !== null) ? $value[$index] : $value;
+        if ($value = $this->attributes[$attributeName]??null) {
+            return is_array($value) ? (($index !== null) ? $value[$index] : $value) : $value;
         }
         return null;
     }
@@ -197,20 +196,20 @@ class SamlAuth extends AuthManager
         // Phase 2
         if ($this->auth->isAuthenticated()) {
             if (!isset($this->attributes[$this->idAttribute])) {
-                $_SESSION['uid'] = $this->uid = static::INVALID_USER;
+                App::$app->session->set($this->sessionUid, $this->uid = static::INVALID_USER);
                 throw new Exception(
                     App::l('umvc', 'Required attribute {$attribute} is missing', ['attribute' => $this->idAttribute])
                 );
             } else {
-                $uid = $this->attributes[$this->idAttribute][0];
+                $uid = $this->get($this->idAttribute, 0);
                 // Prevent the user save error to cause an endless loop of errors
-                if (isset($_SESSION['uid']) && $_SESSION['uid'] == static::INVALID_USER) {
+                if (App::$app->session->get($this->sessionUid) == static::INVALID_USER) {
                     return null;
                 }
                 return $this->login($uid, $this->attributes);
             }
         }
-        $_SESSION['uid'] = $this->uid = null;
+        App::$app->session->set($this->sessionUid, $this->uid = null);
         return null;
     }
 
