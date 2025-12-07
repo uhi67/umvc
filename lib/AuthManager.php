@@ -29,7 +29,7 @@ abstract class AuthManager extends Component
     const INVALID_USER = -1;
 
     /** @var string|null $uid -- The uid of the logged-in user or null (EPPN) */
-    public ?string $uid;
+    public ?string $uid = null;
     /** @var string|UserInterface $userModel -- the model identifies a user */
     public string|UserInterface $userModel;
     /** @var bool $autoUrl -- true to detect and perform ?login and ?logout in the REQUEST URL automatically */
