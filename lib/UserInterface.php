@@ -18,7 +18,7 @@ namespace uhi67\umvc;
 interface UserInterface
 {
     /**
-     * Must update the User object using the attributes provided by login process
+     * Must update the User object using the attributes provided by the login process
      *
      * @param array $attributes
      * @return mixed|false -- uid on success, false on failure
@@ -26,7 +26,7 @@ interface UserInterface
     public function updateUser(array $attributes): mixed;
 
     /**
-     * Must return the user object associated to the given uid (e.g. a model instance)
+     * Must return the user object associated with the given uid (e.g. a model instance)
      *
      * @param mixed $uid
      * @return UserInterface|null
@@ -38,7 +38,7 @@ interface UserInterface
      *
      * @param mixed $uid
      * @param array $attributes
-     * @return UserInterface|null -- null if user cannot be created
+     * @return UserInterface|null -- null if the user cannot be created
      */
     public static function createUser(mixed $uid, array $attributes): UserInterface|null;
 

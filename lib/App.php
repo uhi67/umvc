@@ -458,9 +458,7 @@ class App extends Component
             $this->auth->logout($params);
         }
         $this->user = null;
-        if (session_status() == PHP_SESSION_ACTIVE) {
-            session_destroy();
-        }
+        $this->session->empty();
     }
 
     /**

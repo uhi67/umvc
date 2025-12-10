@@ -30,8 +30,8 @@ abstract class AuthManager extends Component
 
     /** @var string|null $uid -- The uid of the logged-in user or null (EPPN) */
     public ?string $uid = null;
-    /** @var string|UserInterface $userModel -- the model identifies a user */
-    public string|UserInterface $userModel;
+    /** @var string|UserInterface|null $userModel -- the model identifies a user */
+    public string|UserInterface|null $userModel;
     /** @var bool $autoUrl -- true to detect and perform ?login and ?logout in the REQUEST URL automatically */
     public bool $autoUrl = true;
     /** @var string $sessionUid -- the session key to store the uid */

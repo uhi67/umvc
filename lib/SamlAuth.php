@@ -13,6 +13,7 @@ use SimpleXMLElement;
 /**
  * Using this class needs `composer require "simplesamlphp/simplesamlphp:^2.0"` in your application
  * The dependency is not included in this library, since it's not mandatory for other parts.
+ * @property-read array $attributes
  */
 class SamlAuth extends AuthManager
 {
