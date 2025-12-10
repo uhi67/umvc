@@ -76,6 +76,10 @@ class Command extends BaseController
                 }
             }
             $status = call_user_func_array([$this, $methodName], $args);
+            if(is_string($status)) {
+                echo $status;
+                $status = App::EXIT_STATUS_OK;
+            }
             return $status ?: ($this->app->responseStatus ?: 200);
         }
 

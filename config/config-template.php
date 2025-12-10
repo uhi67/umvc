@@ -8,12 +8,12 @@
 
 return [
 	\uhi67\umvc\App::class, // Can be an application-specific descendant
-	// Can be set to "development" or "local" on development site
+	// Can be set to "development" or "local" on a development site
     'application_env' => 'production',
 	'mainControllerClass' => '\app\controllers\MainController', // A user class derived from \uhi67\umvc\Controller
 	'layout'=>'layouts/main',
 
-    // Must be set to 'on' if site is behind a reverse proxy terminating the HTTPS connection and forwarding HTTP.
+    // Must be set to 'on' if the site is behind a reverse proxy terminating the HTTPS connection and forwarding HTTP.
     'https' => 'off',
 
     'components' => [

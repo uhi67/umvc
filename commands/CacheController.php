@@ -18,14 +18,13 @@ class CacheController extends Command {
 	 */
 	public function beforeAction(): bool
     {
-        if(!$this->parent instanceof App) throw new Exception('CacheController must be a component of the App');
-        if(!$this->parent->hasComponent('cache')) {
+        if(!$this->app->hasComponent('cache')) {
             echo 'No cache is defined. Cache can be defined in the `config/config.php` file, at `components/cache` key if needed. Example:', PHP_EOL;
             echo "\t'cache' => [\n\t\t'class' => \uhi67\umvc\FileCache::class,\n\t]", PHP_EOL;
             echo "Note: the cache class must implement the \uhi67\umvc\CacheInterface", PHP_EOL;
-            return true;
+            return false;
         }
-        return false;
+        return true;
     }
     
     public function actionDefault(): int
@@ -45,13 +44,13 @@ class CacheController extends Command {
     
     public function actionClear(): string
     {
-        $c = $this->parent->cache->clear();
+        $c = $this->app->cache->clear();
         return "$c items deleted" . PHP_EOL;
     }
     
     public function actionCleanup(): string
     {
-        $c = $this->parent->cache->cleanup();
+        $c = $this->app->cache->cleanup();
         return "$c items deleted" . PHP_EOL;
     }
 }
