@@ -696,7 +696,7 @@ class Model extends BaseModel
      *
      * @throws Exception
      */
-    public function __set($name, $value)
+    public function __set($name, mixed $value)
     {
         if (static::hasAttribute($name)) {
             $this->_attributes[$name] = $value;

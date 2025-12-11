@@ -50,6 +50,8 @@ abstract class Connection extends Component
     public ?string $migrationPath = null;
     /** @var string|null $migrationTable -- name of the migration table if not the default (`migration`) */
     public ?string $migrationTable = null;
+    /** @var array|null $params -- optional parameters for SQL migrations */
+    public ?array $params = null;
 
     /** @var PDO|null $_pdo -- the original PDO connection. Empty if not yet connected. */
     protected ?PDO $_pdo = null; // Note: must be protected because descendant classes must use it in the reset() method.
@@ -206,7 +208,7 @@ abstract class Connection extends Component
      * - num: a serial number
      * - type: SQL type name
      * - len: field length, -1 if not applicable
-     * - not null: if field is not nullable
+     * - not null: if the field is not nullable
      * - default: default value, null if not applicable
      * - key: 'PRI' if a primary key, 'UNI' if unique, empty string otherwise
      * - has default: column has default value

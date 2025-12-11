@@ -3,6 +3,7 @@
 
 namespace uhi67\umvc;
 
+use Closure;
 use Exception;
 use ReflectionClass;
 use ReflectionException;
@@ -12,7 +13,7 @@ use ReflectionException;
  *
  * A base class for most of the others.
  *
- * - Implements **property** features: magic getter and setter uses getProperty and setProperty methods
+ * - Implements **property** features: magic getter and setter use getProperty and setProperty methods
  * - **Configurable**: constructor accepts a configuration array containing values for public properties
  *
  * All descendants of Component can be created using a *"configuration array"* (AKA options).
@@ -38,6 +39,7 @@ abstract class Component
     /** @var Component|App|null $parent -- the parent component which created this object (The App itself for the config-defined components) */
     public App|Component|null $parent = null;
     public array $_require = [];   // list of required component names in the App
+    public ?Closure $_prepare = null;
 
     /**
      * # Component constructor
@@ -48,8 +50,8 @@ abstract class Component
      *
      * If this method is overridden in a child class, it is recommended that
      *
-     * - the last parameter of the constructor is a configuration array, like `$config` here.
-     * - call the parent implementation in the constructor.
+     * - The last parameter of the constructor is a configuration array, like `$config` here.
+     * - Call the parent implementation in the constructor.
      *
      * @param array|null $config name-value pairs that will be used to initialize the object properties
      * @throws Exception -- when the config is not an array (or null)
@@ -126,7 +128,7 @@ abstract class Component
      * @throws Exception if the property is not defined or the property is read-only.
      * @see __get()
      */
-    public function __set(string $name, $value)
+    public function __set(string $name, mixed $value)
     {
         $setter = 'set' . $name;
         if (method_exists($this, $setter)) {
@@ -245,7 +247,7 @@ abstract class Component
      * Creates a new Component using the given configuration.
      *
      * You may view this method as an enhanced version of the `new` operator.
-     * The method supports creating an object based on a class name, a configuration array or
+     * The method supports creating an object based on a class name, a configuration array, or
      * an anonymous function.
      *
      * Below are some usage examples:
@@ -266,12 +268,12 @@ abstract class Component
      *
      * @param string|array|callable $type the object type. This can be specified in one of the following forms:
      *
-     * - a string: representing the class name of the object to be created
-     * - a configuration array: the array must contain a `class` element which is treated as the object class,
-     *   and the rest of the name-value pairs will be used to initialize the corresponding object properties
-     * - a configuration array: the array must contain a `0` element which is treated as the object class,
-     *   and the rest of the name-value pairs will be used to initialize the corresponding object properties
-     * - a PHP callable: either an anonymous function or an array representing a class method (`[$class or $object, $method]`).
+     * - A string: representing the class name of the object to be created.
+     * - A configuration array: the array must contain a `class` element which is treated as the object class,
+     *   and the rest of the name-value pairs will be used to initialize the corresponding object properties.
+     * - A configuration array: the array must contain a `0` element which is treated as the object class,
+     *   and the rest of the name-value pairs will be used to initialize the corresponding object properties.
+     * - A PHP callable: either an anonymous function or an array representing a class method (`[$class or $object, $method]`).
      *   The callable should return a new instance of the object being created.
      *
      * @param array $params the constructor parameters

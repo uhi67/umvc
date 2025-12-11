@@ -5,9 +5,6 @@ namespace uhi67\umvc;
 
 use Exception;
 use SimpleSAML\Auth\Simple;
-use SimpleSAML\Configuration;
-use SimpleSAML\Session;
-use SimpleSAML\XHTML\Template;
 use SimpleXMLElement;
 
 /**
@@ -28,8 +25,6 @@ class SimpleSamlAuth extends AuthManager
     /** @var array|null $attr -- The cached attributes of the logged-in user or null */
     private ?array $_attributes = null;
     public string $idAttribute = 'user';
-
-    private static ?Template $_template = null;
 
     /**
      * Initializes the object.

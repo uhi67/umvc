@@ -45,7 +45,7 @@ use Throwable;
  * - redirect: renders a redirect state
  * - render: renders a view and applies the layout
  * - renderPartial: renders a partial view without applying layout
- * - sendHeader(): sends put an HTTP header. Use this instead of native function
+ * - sendHeader(): sends put an HTTP header. Use this instead of the native function
  * - requireLogin(): redirects to SAML login or throws an exception if the current user is not logged in
  *
  * @property-read Component[] $components
@@ -271,6 +271,7 @@ class App extends Component
         foreach ($this->_components as $component) {
             if (is_callable([$component, 'prepare'])) {
                 $component->prepare();
+                if(is_callable($component->_prepare)) ($component->_prepare)($component);
             }
         }
     }
@@ -495,7 +496,7 @@ class App extends Component
      * ### Rules for locale and language codes**
      *
      * - If the current locale is 'en-GB', the path with 'en-GB' is preferred; otherwise 'en' is used. No other 'en-*' is used
-     * - If the current locale is 'en', the path with 'en' is used, no 'en-*' is recognized.
+     * - If the current locale is 'en', the path with 'en' is used; no 'en-*' is recognized.
      *
      * ### Locale selection
      *

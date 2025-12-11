@@ -47,7 +47,7 @@ class MigrateController extends Command
      * Prepares the actual action.
      *
      * - Initializes the database connection and global migration parameters
-     * - Reads the common command-line switches (verbose, confirm),
+     * - Reads the common command-line switches (verbose, confirm)
      *
      * @throws Exception
      */
@@ -106,7 +106,7 @@ class MigrateController extends Command
                     '/^m\d{6}_\d{6}_[\w_]+\.(php|sql)$/',
                     $file
                 )) {
-                // Check in database
+                // Check in the database
                 $name = pathinfo($file, PATHINFO_FILENAME);
                 $applied = \uhi67\umvc\models\Migration::getOne(['name' => $name]);
                 if (!$applied) {
@@ -150,7 +150,7 @@ class MigrateController extends Command
                 if ($ext == 'php') {
                     $success = false;
 
-                    // Run php file
+                    // Run PHP file
                     try {
                         /** @var Migration $className */
                         $className = $namespace . '\\' . $name;
@@ -434,7 +434,7 @@ EOT;
         $metadata = $this->connection->schemaMetadata;
         $success = true;
 
-        // First drop all foreign keys,
+        // First, drop all foreign keys
         if ($verbose > 1) {
             echo "Dropping foreign keys...\n";
         }
@@ -483,7 +483,7 @@ EOT;
             }
         }
 
-        // Drop functions from public schema (exclude pg_catalog)
+        // Drop functions from the public schema (exclude pg_catalog)
         $functions = $this->connection->getRoutines();
         if ($verbose > 1 && $functions) {
             echo "Dropping functions and routines\n";

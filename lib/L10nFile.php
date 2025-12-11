@@ -1,4 +1,4 @@
-<?php
+<?php /** @noinspection PhpIllegalPsrClassPathInspection */
 
 namespace uhi67\umvc;
 
@@ -8,7 +8,7 @@ use Exception;
  * L10n (Localization is 12 letter long)
  * File-based solution for L10n functions
  *
- * Uses php files in translation directory for translations
+ * Uses PHP files in the translation directory for translations
  * Uses default L10n for formatting dates.
  *
  * ### Configuration
@@ -44,13 +44,13 @@ use Exception;
 class L10nFile extends L10n
 {
     /** @var string $dir -- directory of translation files in form 'la.php', default is def/traslations */
-    public $dir;
+    public string $dir;
 
     /**
      * {@inheritdoc}
      * @throws Exception
      */
-    public function prepare()
+    public function prepare(): void
     {
         parent::prepare();
         if ($this->dir) {
@@ -66,8 +66,8 @@ class L10nFile extends L10n
     /**
      * Translates a text from source language to given language.
      *
-     * If category directory is not found, returns source**.
-     * If translation is not found, returns source*.
+     * If a category directory is not found, returns "source**".
+     * If a translation is not found, returns "source*".
      *
      * @param string $category -- message category, the framework itself uses 'umvc'. Application default is 'app'
      * @param string $source - source language text or text identifier
@@ -76,7 +76,7 @@ class L10nFile extends L10n
      *
      * @return string
      */
-    public function getText($category, $source, $params = null, $lang = null)
+    public function getText($category, $source, $params = null, $lang = null): string
     {
         if ($lang === null) {
             $lang = $this->lang;
@@ -109,7 +109,7 @@ class L10nFile extends L10n
      * @param string $category
      * @return string
      */
-    public function directory($category)
+    public function directory(string $category): string
     {
         $category = str_replace('..', '.', $category); // prevent backstep in the directory tree
         $directory = $this->dir . '/' . $category;
