@@ -1009,7 +1009,7 @@ class App extends Component
             throw new Exception("Command not found ($pathinfo, $controllerClass)", HTTP::HTTP_NOT_FOUND);
         } catch (Throwable $e) {
             $this->responseStatus = $e->getCode() ?: HTTP::HTTP_INTERNAL_SERVER_ERROR;
-            AppHelper::showException($e, $this->responseStatus);
+            AppHelper::showException($e, (int)$this->responseStatus);
         }
         return $this->responseStatus;
     }
