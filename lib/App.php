@@ -1214,4 +1214,31 @@ class App extends Component
         $this->session->set('uid', $userModel?->getUserId());
         return $userModel;
     }
+
+    public static function dump($var, ...$args): void
+    {
+        if(!App::isCLI()) echo '<pre class="alert alert-info dump">';
+        static::dumpValue($var);
+        foreach ($args as $arg) {
+            if(!App::isCLI()) echo '<div class="dump-var">';
+            static::dumpValue($arg);
+            if(!App::isCLI()) echo '</div>';
+        }
+        if(!App::isCLI()) echo '</pre>';
+    }
+
+    public static function dumpValue(mixed $arg, bool $return=false): string
+    {
+        if(is_string($arg) || is_numeric($arg)) {
+            if(!App::isCLI()) $r = htmlspecialchars($arg); else $r = $arg;
+        }
+        elseif (is_bool($arg)) $r = $arg ? 'true' : 'false';
+        elseif (is_null($arg)) $r ='null';
+        elseif(is_array($arg)) $r = json_encode($arg, JSON_PRETTY_PRINT);
+        elseif(is_object($arg)) $r = get_class($arg) .':'.json_encode($arg, JSON_PRETTY_PRINT);
+        else $r = '{'.gettype($arg).'}';
+        if($return) return $r;
+        echo $r;
+        return '';
+    }
 }
