@@ -22,7 +22,7 @@ class ArrayHelper
     /**
      * Converts an object or an array of objects into an array.
      *
-     * The properties specified for each class is an array of the following format:
+     * The properties specified for each class are an array of the following format:
      *
      * ```php
      * [
@@ -55,7 +55,7 @@ class ArrayHelper
      * @param bool $recursive -- whether to recursively convert properties which are objects into arrays.
      * @return array -- the array representation of the object
      */
-    public static function toArray(object|array|string $object, array $properties = [], bool $recursive = true)
+    public static function toArray(object|array|string $object, array $properties = [], bool $recursive = true): array
     {
         if (is_array($object)) {
             if ($recursive) {
@@ -104,8 +104,8 @@ class ArrayHelper
      * Retrieves the value of an array element or object property with the given key or property name.
      * If the key does not exist in the array or object, the default value will be returned.
      *
-     * A composite key may be specified as array like `['x', 'y', 'z']`.
-     * If the key contains '.', and dotted key does not exist, a composite key is used, e.g 'aa.bb' will mean ['aa', 'bb']
+     * A composite key may be specified as an array like `['x', 'y', 'z']`.
+     * If the key contains '.', and a dotted key does not exist, a composite key is used; e.g. 'aa.bb' will mean ['aa', 'bb']
      *
      * Examples
      *
@@ -123,7 +123,7 @@ class ArrayHelper
      * ```
      *
      * @param object|array|null $array -- array or object to extract value from
-     * @param array|string|Closure $key -- key name of the array element, an array of keys or property name of the object,
+     * @param array|string|Closure $key -- key name of the array element, an array of keys, or property name of the object,
      * or an anonymous function returning the value. The anonymous function signature should be:
      * `function($array, $defaultValue)`.
      * @param mixed|null $default -- the default value to be returned if the specified array key does not exist. Not used when
@@ -240,12 +240,12 @@ class ArrayHelper
 
     /** @noinspection PhpMethodNamingConventionInspection */
     /**
-     * Finds first array element with key which satisfies $fn
+     * Finds the first array element with a key which satisfies $fn
      *
      * @param iterable $aa
      * @param callable $fn ($item, $key)
      *
-     * @return false|int|string -- index of first match or false if not found
+     * @return false|int|string -- index of the first match or false if not found
      */
     public static function array_find_key(iterable $aa, callable $fn): false|int|string
     {
@@ -261,11 +261,11 @@ class ArrayHelper
      * Creates an associative array from an array of objects
      * The original keys are ignored (except of null index)
      * null indices will not generate output.
-     * Multiple indices with the same value yields the value of last occurrence
+     * Multiple indices with the same value yield the value of the last occurrence
      *
      * @param array $objects
-     * @param callable|string|null $indexProp -- property name or callable($obj) for index, null will keep original key
-     * @param callable|string|null $valueProp -- property name or callable($obj) for value; in case of null the original object will return
+     * @param callable|string|null $indexProp -- property name or callable($obj) for index, null will keep the original key
+     * @param callable|string|null $valueProp -- property name or callable($obj) for value; in case of null, the original object will return
      *
      * @return array -- mapped associative array
      * @throws Exception
@@ -304,7 +304,7 @@ class ArrayHelper
      * Merges two or more arrays into one recursively.
      * If each array has an element with the same string key value, the latter
      * will overwrite the former (different from array_merge_recursive).
-     * Recursive merging will be conducted if both arrays have an element of array
+     * Recursive merging will be conducted if both arrays have an array element
      * type and are having the same key.
      * For integer-keyed elements, the elements from the latter array will
      * be appended to the former array.
@@ -349,10 +349,10 @@ class ArrayHelper
      *
      * @param array $array -- the array to copy
      * @param array $keymap -- the keymap definition to use
-     *  - each key in this array must be mapped to a replacement key
-     *  - replacement keys and only these are used to initialize the new array
+     *  - Each key in this array must be mapped to a replacement key.
+     *  - Replacement keys and only these are used to initialize the new array.
      *  (so keys in the input array that are not part of the keymap definition are ignored)
-     *  - when a replacement key cannot be reached from the input array, its corresponding value will be null in the new array
+     *  - When a replacement key cannot be reached from the input array, its corresponding value will be null in the new array
      *
      * @return array
      * @author arlogy
@@ -374,13 +374,16 @@ class ArrayHelper
      * @return array
      * @throws Exception -- see ERROR_* constants
      */
-    public static function orderByDependency(array $items, callable $getDependency = null): array {
+    public static function orderByDependency(array $items, callable $getDependency = null): array
+    {
         $order = [];
         $status = [];      // State of the nodes: unvisited, visiting, visited
         $item_keys = array_keys($items);
         /** @var callable $getDependency */
-        if($getDependency === null) {
-            $getDependency = function($item) { return $item['require'] ?? []; };
+        if ($getDependency === null) {
+            $getDependency = function ($item) {
+                return $item['require'] ?? [];
+            };
         }
 
         foreach ($item_keys as $key) {
@@ -393,9 +396,9 @@ class ArrayHelper
          * @param string $key
          * @throws Exception
          */
-        $dfs = function($key) use (&$items, &$order, &$status, &$dfs, $item_keys, $getDependency) {
+        $dfs = function (string $key) use (&$items, &$order, &$status, &$dfs, $item_keys, $getDependency) {
             if ($status[$key] === 'visiting') {
-                throw new Exception("Cyclic dependency detected at key '{$key}'.", self::ERROR_CYCLIC);
+                throw new Exception("Cyclic dependency detected at key '$key'.", self::ERROR_CYCLIC);
             }
 
             if ($status[$key] === 'visited') {
@@ -412,7 +415,10 @@ class ArrayHelper
             foreach ($requires as $required_key) {
                 // Checking non-existent dependency
                 if (!in_array($required_key, $item_keys)) {
-                    throw new Exception("Non-existent dependency: Key '{$key}' requires the non-existent '{$required_key}'.", self::ERROR_NONEXISTENT);
+                    throw new Exception(
+                        "Non-existent dependency: Key '$key' requires the non-existent '$required_key'.",
+                        self::ERROR_NONEXISTENT
+                    );
                 }
                 $dfs($required_key);
             }
@@ -427,5 +433,38 @@ class ArrayHelper
             }
         }
         return $order;
+    }
+
+    /**
+     * @param array $oldItems -- array of old items to be removed (if not present in the new)
+     * @param array $newItems -- array of new items to be added
+     * @param Closure $removeItem -- function to remove an item from the set
+     * @param Closure $addItem -- function to add an item to the set
+     * @return array -- returns the removed, added, and error items as ['removed' => [...], 'added' => [...], 'error' => [...]]
+     **/
+    public static function updateSet(array $oldItems, array $newItems, Closure $removeItem, Closure $addItem): array
+    {
+        $added = $removed = $error = [];
+        // Remove old items if not present in the new set
+        foreach ($oldItems as $item) {
+            if (!in_array($item, $newItems)) {
+                if ($removeItem($item)) {
+                    $removed[] = $item;
+                } else {
+                    $error[] = $item;
+                }
+            }
+        }
+        // Add new items
+        foreach ($newItems as $item) {
+            if (!in_array($item, $oldItems)) {
+                if ($addItem($item)) {
+                    $added[] = $item;
+                } else {
+                    $error[] = $item;
+                }
+            }
+        }
+        return ['added' => $added, 'removed' => $removed, 'error' => $error];
     }
 }

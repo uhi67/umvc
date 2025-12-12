@@ -696,7 +696,7 @@ class Model extends BaseModel
      *
      * @throws Exception
      */
-    public function __set($name, mixed $value)
+    public function __set(string $name, mixed $value)
     {
         if (static::hasAttribute($name)) {
             $this->_attributes[$name] = $value;
@@ -807,7 +807,7 @@ class Model extends BaseModel
      * - simple fieldName
      * - user_fieldName => model_fieldName
      * - user_fieldName => definition-array with 2 elements for ASC and DESC rule
-     * - example: 'modified'=> ['deleted_at asc, modified_at asc, created_at asc', 'deleted_at desc, modified_at desc, created_at desc']
+     * - Example: 'modified'=> ['deleted_at asc, modified_at asc, created_at asc', 'deleted_at desc, modified_at desc, created_at desc']
      *
      * @param array $orders -- [fieldName=>'DIR;PRIORITY', notSorted=>null, ...] as it got from the HTML form
      * @param array|null $orderDefinitions -- enabled and custom order clauses by fields, directions separated by ;
