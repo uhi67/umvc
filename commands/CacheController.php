@@ -30,15 +30,15 @@ class CacheController extends Command {
     public function actionDefault(): int
     {
         echo "The `cache` command operates the cache configured to the application.", PHP_EOL;
-        echo "Run `php app cache help` for more details.", PHP_EOL, PHP_EOL;
+        echo "Run `php app cache/help` for more details.", PHP_EOL, PHP_EOL;
         return 0;
     }
     
     public function actionHelp(): int
     {
         echo "Usage:", PHP_EOL, PHP_EOL;
-        echo "   php app cache cleanup -- Delete the expired data from the cache.", PHP_EOL;
-        echo "   php app cache clear -- Delete all data from the cache.", PHP_EOL;
+        echo "   php app cache/cleanup -- Delete the expired data from the cache.", PHP_EOL;
+        echo "   php app cache/clear -- Delete all data from the cache.", PHP_EOL;
         return 0;
     }
     

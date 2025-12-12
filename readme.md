@@ -28,8 +28,11 @@ Globally installed codeception must be compatible with required (currently v3.1.
 UMVC supports CLI. You may create your own commands. The built-in commands are:
 
 - migrate
+- cache
+- create
 
-Run commands as `php app $command $action $parameters`
+Run commands as `php app $command/$action $parameters`.
+Run `php app` to get the list of available commands, including the built-in and the application-defined ones.
 
 Installation
 ------------

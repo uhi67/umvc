@@ -45,7 +45,7 @@ use Throwable;
  *
  * ### 2. php format
  *
- * A php class extending Migration. May be created by the `php app migrate create name` command.
+ * A php class extending Migration. May be created by the `php app migrate/create name` command.
  * The class must have a public function `up()`. This function performs a migration to the current state.
  * The migration is enclosed in a mySQL transaction, therefore, if any part of it fails, the entire migration step will be rolled back.
  *

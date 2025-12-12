@@ -81,7 +81,7 @@ This explains why migrate/wait should be used with docker to wait for database c
 2022-12-03 18:51:03 umvc-php-1      | Connected
 2022-12-03 18:51:03 umvc-php-1      | Migrating database
 2022-12-03 18:51:03 umvc-php-1      | The migrate command keeps database changes in sync with source code.
-2022-12-03 18:51:03 umvc-php-1      | Run `php app migrate help` for more details.
+2022-12-03 18:51:03 umvc-php-1      | Run `php app migrate/help` for more details.
 2022-12-03 18:51:03 umvc-php-1      |
 2022-12-03 18:51:03 umvc-php-1      | Creating `migration` table...
 2022-12-03 18:51:03 umvc-php-1      | There are 2 new updates:
