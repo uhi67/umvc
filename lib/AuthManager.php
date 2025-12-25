@@ -139,6 +139,8 @@ abstract class AuthManager extends Component
     }
 
     /**
+     * Logs in the user into the application.
+     *
      * @param UserInterface|string $uid -- A user object or a login id
      * @param array $attributes -- login attributes
      * @param bool $canCreate

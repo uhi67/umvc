@@ -450,10 +450,9 @@ class App extends Component
      *
      * @throws Exception
      */
-    public
-    function logout(
-        string $returnTo = ''
-    ): void {
+    public function logout(string|array $returnTo = null): void {
+        if($returnTo === null) $returnTo = $this->baseUrl;
+        if(is_array($returnTo)) $returnTo = $this->createUrl($returnTo);
         if ($this->hasComponent('auth') && $this->auth->isAuthenticated()) {
             $params = $returnTo ? ['ReturnTo' => $returnTo] : [];
             $this->auth->logout($params);
@@ -849,14 +848,19 @@ class App extends Component
     }
 
     /**
-     * @param $url
-     * @return int
+     * @param array|string|null $url
+     * @return int|string
      * @throws Exception
      */
-    public function redirect($url): int
+    public function redirect(array|string $url = null): int|string
     {
+        if ($url === null) { $url = $this->baseUrl; }
         if (is_array($url)) {
             $url = $this->createUrl($url);
+        }
+        if(ENV==='local') {
+            echo "<h1>Redirect</h1><div>Redirect to: <a href='$url'>[$url]</a></div>";
+            return App::EXIT_STATUS_OK;
         }
         $this->sendHeader('Location: ' . $url);
         $this->responseStatus = 302;

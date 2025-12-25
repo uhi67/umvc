@@ -44,6 +44,10 @@ class SimpleSamlAuth extends AuthManager
     {
     }
 
+    public function __get($name): mixed {
+        return $this->getAttribute($name) ?? parent::__get($name);
+    }
+
     /**
      * Magic method for retrieving SAML attribute values
      *
@@ -52,7 +56,7 @@ class SimpleSamlAuth extends AuthManager
      *
      * @return string|array|null -- null: attribute is not found
      */
-    public function get(string $attributeName, int $index = null): array|string|null
+    public function getAttribute(string $attributeName, int $index = null): array|string|null
     {
         if (!$this->isAuthenticated()) {
             return null;
@@ -134,6 +138,11 @@ class SimpleSamlAuth extends AuthManager
         return false;
     }
 
+    /**
+     * @param array|string|null $params
+     * @return UserInterface|null
+     * @throws Exception
+     */
     public function requireLogin(array|string $params = null): ?UserInterface
     {
         if (is_string($params)) {

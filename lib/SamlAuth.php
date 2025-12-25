@@ -13,7 +13,7 @@ use SimpleXMLElement;
 /**
  * Using this class needs `composer require "simplesamlphp/simplesamlphp:^2.0"` in your application
  * The dependency is not included in this library, since it's not mandatory for other parts.
- * @property-read array $attributes
+ * @property-read array $attributes {@see AuthManager::getAttributes()}
  */
 class SamlAuth extends AuthManager
 {
@@ -38,20 +38,13 @@ class SamlAuth extends AuthManager
     /**
      * Magic method for retrieving SAML attribute values
      *
-     * @param string $attributeName
-     * @param int|null $index -- which one from the value array or (null=) all of them. Unused if the attribute value is not an array.
-     *
-     * @return string|array|null -- null: attribute is not found
+     * @param string $name
+     * @return mixed -- null: attribute is not found
+     * @throws Exception
      */
-    public function get(string $attributeName, int $index = null): array|string|null
+    public function __get(string $name): mixed
     {
-        if (!$this->isAuthenticated()) {
-            return null;
-        }
-        if ($value = $this->attributes[$attributeName]??null) {
-            return is_array($value) ? (($index !== null) ? $value[$index] : $value) : $value;
-        }
-        return null;
+        return $this->getAttribute($name) ?? parent::__get($name) ;
     }
 
     /**
@@ -62,10 +55,35 @@ class SamlAuth extends AuthManager
     public function init(): void
     {
         parent::init();
-        if (!class_exists('\SimpleSAML\Auth\Simple') && !class_exists('\SimpleSAML_Auth_Simple')) {
+        if (!class_exists('\SimpleSAML\Auth\Simple')) {
             throw new Exception("SimpleSamlPHP cannot be found.");
         }
         $this->auth = new Simple($this->authSource);
+    }
+
+    /**
+     * Manage already logged-in user
+     *
+     * @return UserInterface|null
+     * @throws Exception
+     */
+    public function prepareUser(): ?UserInterface
+    {
+        // Check SAML login status
+        $this->uid = App::$app->session->get($this->sessionUid) ?? null;
+        if(!$this->isAuthenticated() || $this->getAttribute($this->idAttribute, 0) != $this->uid) {
+            // Auto logout
+            $this->logout();
+            return null;
+        }
+
+        if ($this->uid && $this->uid != static::INVALID_USER) {
+            $user = $this->userModel::findUser($this->uid);
+            if ($user) {
+                return $this->_login($user);
+            }
+        }
+        return null;
     }
 
     /**
@@ -202,7 +220,7 @@ class SamlAuth extends AuthManager
                     App::l('umvc', 'Required attribute {$attribute} is missing', ['attribute' => $this->idAttribute])
                 );
             } else {
-                $uid = $this->get($this->idAttribute, 0);
+                $uid = $this->getAttribute($this->idAttribute, 0);
                 // Prevent the user save error to cause an endless loop of errors
                 if (App::$app->session->get($this->sessionUid) == static::INVALID_USER) {
                     return null;
@@ -309,5 +327,11 @@ class SamlAuth extends AuthManager
             $this->_attributes = $this->auth->getAttributes();
         }
         return $this->_attributes;
+    }
+
+    public function getAttribute(string $idAttribute, ?int $index=null): ?string
+    {
+        if(!$this->attributes) return null;
+        return $index===null ? ($this->_attributes[$idAttribute] ?? null) : ($this->_attributes[$idAttribute][$index] ?? null);
     }
 }
