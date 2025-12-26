@@ -271,7 +271,9 @@ class App extends Component
         foreach ($this->_components as $component) {
             if (is_callable([$component, 'prepare'])) {
                 $component->prepare();
-                if(is_callable($component->_prepare)) ($component->_prepare)($component);
+                if (is_callable($component->_prepare)) {
+                    ($component->_prepare)($component);
+                }
             }
         }
     }
@@ -324,7 +326,9 @@ class App extends Component
         string $configFile
     ): int {
         try {
-            $config = include $configFile;
+            if (!file_exists($configFile)) {
+                $config = include $configFile;
+            }
             defined('ENV') || define('ENV', $config['application_env'] ?? 'production');
             defined('ENV_DEV') || define('ENV_DEV', ENV != 'production');
             if (ENV_DEV) {
@@ -345,7 +349,16 @@ class App extends Component
             // Default application class (uhi67\umvc\App) may be overriden in config
             $class = $config['class'] ?? ($config[0] ?? App::class);
             $app = App::create(['class' => $class, 'config' => $config]);
+            if (!$app->isCLI()) {
+                header('Pragma: no-cache');
+                header('Cache-Control: no-cache, no-store, must-revalidate');
+            }
             $response = $app->run();
+            if (!$app->isCLI()) {
+                foreach ($app->headers as $header) {
+                    header($header);
+                }
+            }
             if (is_int($response)) {
                 return $response;
             }
@@ -450,9 +463,14 @@ class App extends Component
      *
      * @throws Exception
      */
-    public function logout(string|array $returnTo = null): void {
-        if($returnTo === null) $returnTo = $this->baseUrl;
-        if(is_array($returnTo)) $returnTo = $this->createUrl($returnTo);
+    public function logout(string|array $returnTo = null): void
+    {
+        if ($returnTo === null) {
+            $returnTo = $this->baseUrl;
+        }
+        if (is_array($returnTo)) {
+            $returnTo = $this->createUrl($returnTo);
+        }
         if ($this->hasComponent('auth') && $this->auth->isAuthenticated()) {
             $params = $returnTo ? ['ReturnTo' => $returnTo] : [];
             $this->auth->logout($params);
@@ -854,19 +872,21 @@ class App extends Component
      */
     public function redirect(array|string $url = null): int|string
     {
-        if ($url === null) { $url = $this->baseUrl; }
+        if ($url === null) {
+            $url = $this->baseUrl;
+        }
         if (is_array($url)) {
             $url = $this->createUrl($url);
         }
-        if(ENV==='local') {
+        if (ENV === 'local') {
             $backTrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
             $file = $backTrace[0]['file'];
             $line = $backTrace[0]['line'];
-            $class = AppHelper::substring_after($backTrace[1]['class']??'', '\\', true, true);
+            $class = AppHelper::substring_after($backTrace[1]['class'] ?? '', '\\', true, true);
             $function = $class . '::' . $backTrace[1]['function'];
             echo "<h1>Redirect</h1>";
             echo "<div>Redirection at $function in file $file at line $line</div>";
-            echo "<div>Redirect to: <a href='$url'>".json_encode($url)."</a></div>";
+            echo "<div>Redirect to: <a href='$url'>" . json_encode($url) . "</a></div>";
             return App::EXIT_STATUS_OK;
         }
         $this->sendHeader('Location: ' . $url);
@@ -1228,27 +1248,46 @@ class App extends Component
 
     public static function dump($var, ...$args): void
     {
-        if(!App::isCLI()) echo '<pre class="alert alert-info dump">';
+        if (!App::isCLI()) {
+            echo '<pre class="alert alert-info dump">';
+        }
         static::dumpValue($var);
         foreach ($args as $arg) {
-            if(!App::isCLI()) echo '<div class="dump-var">';
+            if (!App::isCLI()) {
+                echo '<div class="dump-var">';
+            }
             static::dumpValue($arg);
-            if(!App::isCLI()) echo '</div>';
+            if (!App::isCLI()) {
+                echo '</div>';
+            }
         }
-        if(!App::isCLI()) echo '</pre>';
+        if (!App::isCLI()) {
+            echo '</pre>';
+        }
     }
 
-    public static function dumpValue(mixed $arg, bool $return=false): string
+    public static function dumpValue(mixed $arg, bool $return = false): string
     {
-        if(is_string($arg) || is_numeric($arg)) {
-            if(!App::isCLI()) $r = htmlspecialchars($arg); else $r = $arg;
+        if (is_string($arg) || is_numeric($arg)) {
+            if (!App::isCLI()) {
+                $r = htmlspecialchars($arg);
+            } else {
+                $r = $arg;
+            }
+        } elseif (is_bool($arg)) {
+            $r = $arg ? 'true' : 'false';
+        } elseif (is_null($arg)) {
+            $r = 'null';
+        } elseif (is_array($arg)) {
+            $r = json_encode($arg, JSON_PRETTY_PRINT);
+        } elseif (is_object($arg)) {
+            $r = get_class($arg) . ':' . json_encode($arg, JSON_PRETTY_PRINT);
+        } else {
+            $r = '{' . gettype($arg) . '}';
         }
-        elseif (is_bool($arg)) $r = $arg ? 'true' : 'false';
-        elseif (is_null($arg)) $r ='null';
-        elseif(is_array($arg)) $r = json_encode($arg, JSON_PRETTY_PRINT);
-        elseif(is_object($arg)) $r = get_class($arg) .':'.json_encode($arg, JSON_PRETTY_PRINT);
-        else $r = '{'.gettype($arg).'}';
-        if($return) return $r;
+        if ($return) {
+            return $r;
+        }
         echo $r;
         return '';
     }
