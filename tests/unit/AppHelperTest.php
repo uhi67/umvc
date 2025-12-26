@@ -1,7 +1,12 @@
-<?php /** @noinspection PhpIllegalPsrClassPathInspection */
+<?php
+/** @noinspection PhpUnitAnnotationToAttributeInspection */
+
+/** @noinspection PhpIllegalPsrClassPathInspection */
 
 namespace unit;
 
+use Exception;
+use PHPUnit\Framework\Attributes\DataProvider;
 use uhi67\umvc\AppHelper;
 
 class AppHelperTest extends \Codeception\Test\Unit
@@ -10,7 +15,7 @@ class AppHelperTest extends \Codeception\Test\Unit
      * @var \UnitTester
      */
     protected $tester;
-    
+
     protected function _before()
     {
     }
@@ -21,61 +26,87 @@ class AppHelperTest extends \Codeception\Test\Unit
 
     // tests
 
-	/**
-	 * @dataProvider provWaitFor
-	 * @group slow
-	 * @return void
-	 */
+    /**
+     * @dataProvider provWaitFor
+     * @group slow
+     * @return void
+     */
     public function testWaitFor($timeout, $interval, $length, $success, $attempts, $elapsed)
     {
-		$start = time();
-		$end = $start + $length;
-	    $a = 0;
+        $start = time();
+        $end = $start + $length;
+        $a = 0;
         // Call the function periodically until it returns true. Result is false if timeout occurred.
-	    $result = AppHelper::waitFor(function() use($end, &$a) {
-			$a++;
-		    return time() >= $end;
-	    }, $timeout, $interval);
-        $e = time()-$start;
+        $result = AppHelper::waitFor(function () use ($end, &$a) {
+            $a++;
+            return time() >= $end;
+        }, $timeout, $interval);
+        $e = time() - $start;
 
-		$this->assertEquals($success, $result);
-		$this->assertEqualsWithDelta($attempts, $a, 1.0);
-		$this->assertEqualsWithDelta($elapsed, $e, 1.0);
-
+        $this->assertEquals($success, $result);
+        $this->assertEqualsWithDelta($attempts, $a, 1.0);
+        $this->assertEqualsWithDelta($elapsed, $e, 1.0);
     }
-	public function provWaitFor() {
-		return [
-			// $timeout, $interval, $length, $success, $attempts, $elapsed
-			[10, 1, 3, true, 4, 3],
-			[3, 2, 4, false, 2, 3],
-			[3, 10, 4, false, 1, 3],
-			[0, 0, 4, false, 1, 1],
-		];
-	}
 
-	/**
-	 * @dataProvider provPathIsAbsolute
-	 * @return void
-	 */
-	public function testPathIsAbsolute($path, $expected) {
-		$this->assertEquals($expected, AppHelper::pathIsAbsolute($path));
-	}
-	public function provPathIsAbsolute() {
-		return [
-			['.', false],
-			['', false],
-			['../', false],
-			['./any', false],
-			['alma', false],
-			['/', true],
-			['/alma', true],
-			['\\alma', true],
-			['C:\\alma', true],
-			['eee:\\alma', true],
-			['_:\\alma', true],
-			['D:alma', true],
-			['http://alma', true],
-			['mailto:info@umvc.test', true],
-		];
-	}
+    public function provWaitFor()
+    {
+        return [
+            // $timeout, $interval, $length, $success, $attempts, $elapsed
+            [10, 1, 3, true, 4, 3],
+            [3, 2, 4, false, 2, 3],
+            [3, 10, 4, false, 1, 3],
+            [0, 0, 4, false, 1, 1],
+        ];
+    }
+
+    /**
+     * @dataProvider provPathIsAbsolute
+     * @return void
+     */
+    public function testPathIsAbsolute($path, $expected)
+    {
+        $this->assertEquals($expected, AppHelper::pathIsAbsolute($path));
+    }
+
+    public static function provPathIsAbsolute(): array
+    {
+        return [
+            ['.', false],
+            ['', false],
+            ['../', false],
+            ['./any', false],
+            ['alma', false],
+            ['/', true],
+            ['/alma', true],
+            ['\\alma', true],
+            ['C:\\alma', true],
+            ['eee:\\alma', true],
+            ['_:\\alma', true],
+            ['D:alma', true],
+            ['http://alma', true],
+            ['mailto:info@umvc.test', true],
+        ];
+    }
+
+    /**
+     * @dataProvider provSubstringAfter
+     * @throws Exception
+     */
+    public function testSubstringAfter($haystack, $needle, $full, $last, $expected)
+    {
+        $this->assertSame($expected, AppHelper::substring_after($haystack, $needle, $full, $last));
+    }
+    public static function provSubstringAfter(): array
+    {
+        return [
+            ['x', 'a', false, false, ''],
+            ['alpha', 'x', false, false, ''],
+            ['alpha', 'x', true, false, 'alpha'],
+            ['alpha', '', false, false, 'alpha'],
+            ['beta', '', true, false, 'beta'],
+            ['gamma', 'm', true, false, 'ma'],
+            ['gamma', 'm', true, true, 'a'],
+        ];
+    }
+
 }

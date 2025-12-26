@@ -43,8 +43,8 @@ use Exception;
  */
 class L10nFile extends L10n
 {
-    /** @var string $dir -- directory of translation files in form 'la.php', default is def/traslations */
-    public string $dir;
+    /** @var string|null $dir -- directory of translation files in form 'la.php', default is def/translations */
+    public ?string $dir = null;
 
     /**
      * {@inheritdoc}

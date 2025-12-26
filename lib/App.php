@@ -174,7 +174,7 @@ class App extends Component
         }
 
         if ($this->baseUrl === null) {
-            $this->baseUrl = '';
+            $this->baseUrl = AppHelper::baseUrl();
         }
         if (!$this->url) {
             $this->url = ArrayHelper::getValue($_SERVER, 'REQUEST_URI', '');
@@ -859,7 +859,14 @@ class App extends Component
             $url = $this->createUrl($url);
         }
         if(ENV==='local') {
-            echo "<h1>Redirect</h1><div>Redirect to: <a href='$url'>[$url]</a></div>";
+            $backTrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
+            $file = $backTrace[0]['file'];
+            $line = $backTrace[0]['line'];
+            $class = AppHelper::substring_after($backTrace[1]['class']??'', '\\', true, true);
+            $function = $class . '::' . $backTrace[1]['function'];
+            echo "<h1>Redirect</h1>";
+            echo "<div>Redirection at $function in file $file at line $line</div>";
+            echo "<div>Redirect to: <a href='$url'>".json_encode($url)."</a></div>";
             return App::EXIT_STATUS_OK;
         }
         $this->sendHeader('Location: ' . $url);

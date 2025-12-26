@@ -6,7 +6,7 @@ echo "=========================="
 APPDIR=/app/tests/_data/testapp
 RUNTIMEDIR=/app/tests/_output
 
-cd /app
+cd /app || exit
 
 # Check config file
 if [ ! -f "/app/tests/_data/test-config.php" ]; then
@@ -27,7 +27,7 @@ if [ -d "/app/modules" ]; then
     rm -rf /app/modules
 fi
 
-cd $APPDIR
+cd $APPDIR || exit
 
 echo "Waiting for database container to be ready..."
 php app migrate/wait || echo "Timeout connecting to database."
@@ -42,10 +42,5 @@ fi
 
 git describe --tags --abbrev=1 > /app/version
 
-echo "Starting apache"
-echo "---------------"
-
-if [ "$HTTP_PORT" != '' ]; then
-  a2ensite app-http
-fi
-a2enmod rewrite
+cd /app || exit
+php vendor/bin/codecept run unit

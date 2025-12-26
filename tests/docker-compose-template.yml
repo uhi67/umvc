@@ -1,9 +1,8 @@
 version: "3.6"
 # This stack is for codecept-testing the UMVC library in different environments.
-# 1. configure the needed database version here or php version in docker/Dockerfile
+# 1. configure the necessary database version here or php version in docker/Dockerfile
 # 2. edit .env (ports, urls)
-# 3. build the stack using `docker compose up --build -d`
-# 4. run unit tests with `docker exec -it umvc-php-1 php vendor/bin/codecept run unit`
+# 3. build and run the stack using `docker compose up --build`
 name: umvc
 services:
   php:

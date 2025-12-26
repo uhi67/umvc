@@ -183,6 +183,7 @@ class AppHelper
 
         if (ENV_DEV) {
             $basePath = dirname(__DIR__, 4);
+            /** @noinspection RegExpRedundantEscape */
             $s = '\\' . DIRECTORY_SEPARATOR;
             echo '<pre>';
             echo preg_replace(
@@ -357,23 +358,24 @@ class AppHelper
     /**
      * Returns substring after delimiter
      *
-     * @param string $s -- string
-     * @param string $d -- delimiter
-     * @param bool $full -- returns full string if the pattern not found
+     * @param string $haystack -- the string to search in
+     * @param string $delimiter -- delimiter
+     * @param bool $full -- returns the full string if the delimiter was not found
+     * @param bool $last -- returns the last occurrence of delimiter
      *
      * @return string -- substring to delimiter or empty string if not found
-     * @throws Exception -- if the delimiter is empty
+     * @throws Exception -- if the haystack is empty
      */
-    static function substring_after(string $s, string $d, bool $full = false): string
+    static function substring_after(string $haystack, string $delimiter, bool $full = false, bool $last = false): string
     {
-        if (empty($s)) {
-            throw new Exception('Empty needle');
+        if (empty($haystack)) {
+            throw new Exception('Empty haystack');
         }
-        $p = strpos($s, $d);
+        $p = $last ? strrpos($haystack, $delimiter) : strpos($haystack, $delimiter);
         if ($p === false) {
-            return $full ? $s : '';
+            return $full ? $haystack : '';
         }
-        return substr($s, $p + strlen($d));
+        return substr($haystack, $p + strlen($delimiter));
     }
 
     /**
