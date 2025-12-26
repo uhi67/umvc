@@ -99,7 +99,7 @@ class App extends Component
     /** @var int $responseStatus -- the http response status sent after completing the request */
     public int $responseStatus = 0;
     /** @var array $headers -- the http headers will be sent after completing the request */
-    public array $headers;
+    public array $headers = [];
     /** @var Request|null $request */
     public ?Request $request = null;
 //    /** @var Session|null $session */
@@ -326,9 +326,11 @@ class App extends Component
         string $configFile
     ): int {
         try {
-            if (!file_exists($configFile)) {
-                $config = include $configFile;
-            }
+            defined('ENV') || define('ENV', getenv('APPLICATION_ENV') ?: 'production');
+            defined('ENV_DEV') || define('ENV_DEV', ENV != 'production');
+            $config = file_exists($configFile) ? include $configFile : [
+                App::class,
+            ];
             defined('ENV') || define('ENV', $config['application_env'] ?? 'production');
             defined('ENV_DEV') || define('ENV_DEV', ENV != 'production');
             if (ENV_DEV) {
@@ -885,8 +887,9 @@ class App extends Component
             $class = AppHelper::substring_after($backTrace[1]['class'] ?? '', '\\', true, true);
             $function = $class . '::' . $backTrace[1]['function'];
             echo "<h1>Redirect</h1>";
-            echo "<div>Redirection at $function in file $file at line $line</div>";
+            echo "<pre style='font-size: small; color: #906;'>Redirection at $function in file $file at line $line</pre>";
             echo "<div>Redirect to: <a href='$url'>" . json_encode($url) . "</a></div>";
+            App::dump('Session', $_SESSION);
             return App::EXIT_STATUS_OK;
         }
         $this->sendHeader('Location: ' . $url);
@@ -1248,8 +1251,13 @@ class App extends Component
 
     public static function dump($var, ...$args): void
     {
+        $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
+        $location = $backtrace[0]['file'] . ':' . $backtrace[0]['line'];
         if (!App::isCLI()) {
+            echo "<pre style='color: #B00;font-size: small;'>Dump location: " . $location . "</pre>";
             echo '<pre class="alert alert-info dump">';
+        } else {
+            echo $location . ': ', PHP_EOL;
         }
         static::dumpValue($var);
         foreach ($args as $arg) {
