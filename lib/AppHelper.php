@@ -607,7 +607,7 @@ class AppHelper
             }
             return trim($baseurl, '/');
         }
-        $https = getenv('HTTPS') ?? 'off';
+        $https = getenv('HTTPS') ?: 'off';
         $protocol = ($https == 'on' || ($_SERVER['SERVER_PORT'] ?? 80) == 443) ? "https" : "http";
         if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) || $https == 'on') {
             $protocol = $_SERVER['HTTP_X_FORWARDED_PROTO'] ?? $protocol;

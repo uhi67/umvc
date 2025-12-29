@@ -31,7 +31,7 @@ use ReflectionMethod;
  * - render(): same as ->app->render();
  *
  * @package UMVC Simple Application Framework
- * @property-read string $actionPath -- controller/action, e.g. 'course/update'
+ * @property-read string $actionPath -- controller/action, e.g. 'course/update' {@see Controller::getActionPath()}
  */
 class Controller extends BaseController
 {

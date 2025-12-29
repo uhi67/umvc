@@ -199,7 +199,7 @@ class Model extends BaseModel
      * Returns all records as an array of Models
      *
      * @param array|null $condition -- fieldName=>value pairs or another expression
-     * @param array|string|null $orders
+     * @param array|string|null $orders -- array of order-by expressions or a single one, E.g. `[['name', Query::ORDER_DESC]]`
      * @param Connection|null $connection
      * @return array|null -- array of Model instances or null on failure (not indexed by a primary key)
      * @throws Exception

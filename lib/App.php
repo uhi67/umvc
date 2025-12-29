@@ -350,7 +350,7 @@ class App extends Component
             /** @var App $app */
             // Default application class (uhi67\umvc\App) may be overriden in config
             $class = $config['class'] ?? ($config[0] ?? App::class);
-            $app = App::create(['class' => $class, 'config' => $config]);
+            $app = static::create(['class' => $class, 'config' => $config]);
             if (!$app->isCLI()) {
                 header('Pragma: no-cache');
                 header('Cache-Control: no-cache, no-store, must-revalidate');
@@ -403,8 +403,8 @@ class App extends Component
             } else {
                 // Find the actual controller class for this path and let it go
                 for ($i = 1; $i <= count($this->path); $i++) {
-                    $this->classPath = array_slice($this->path, 0, $i - 1);
-                    $xpath = implode('\\', $this->classPath);
+                    $this->classPath = array_slice($this->path, 0, $i);
+                    $xpath = implode('\\', array_slice($this->path, 0, $i-1));
                     if ($xpath) {
                         $xpath .= '\\';
                     }
@@ -889,7 +889,6 @@ class App extends Component
             echo "<h1>Redirect</h1>";
             echo "<pre style='font-size: small; color: #906;'>Redirection at $function in file $file at line $line</pre>";
             echo "<div>Redirect to: <a href='$url'>" . json_encode($url) . "</a></div>";
-            App::dump('Session', $_SESSION);
             return App::EXIT_STATUS_OK;
         }
         $this->sendHeader('Location: ' . $url);
@@ -1251,11 +1250,12 @@ class App extends Component
 
     public static function dump($var, ...$args): void
     {
+        if(!ENV_DEV) return;
         $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
         $location = $backtrace[0]['file'] . ':' . $backtrace[0]['line'];
         if (!App::isCLI()) {
-            echo "<pre style='color: #B00;font-size: small;'>Dump location: " . $location . "</pre>";
-            echo '<pre class="alert alert-info dump">';
+            echo "<pre class='m-1' style='color: #B00;font-size: .6rem;'>Dump location: " . $location . "</pre>";
+            echo '<pre class="alert alert-info dump p-1 m-1" style="font-size: .6rem;">';
         } else {
             echo $location . ': ', PHP_EOL;
         }
