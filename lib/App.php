@@ -1250,6 +1250,8 @@ class App extends Component
 
     public static function dump($var, ...$args): void
     {
+        defined('ENV') || define('ENV', getenv('APPLICATION_ENV') ?: 'production');
+        defined('ENV_DEV') || define('ENV_DEV', ENV != 'production');
         if(!ENV_DEV) return;
         $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
         $location = $backtrace[0]['file'] . ':' . $backtrace[0]['line'];

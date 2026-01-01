@@ -83,8 +83,10 @@ abstract class Component
 
     /**
      * Prepares the object.
-     * This method is invoked during App creation after all components are initialized.
+     * This method is invoked during App creation after all configured components are initialized.
+     * Not implicitly called on other components not in App's components list.
      * Default implementation does nothing, override it if you want to use.
+     *
      * @return void
      */
     public function prepare()
