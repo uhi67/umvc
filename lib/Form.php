@@ -35,10 +35,10 @@ class Form extends Component
 {
     /** @var array|BaseModel|null $model -- The model instance to display fields of, or null if the form is model-independent or model is specified at fields */
     public array|null|BaseModel $model = null;
-    /** @var string $layout -- null (default, a simple layout), or horizontal (label and value are in the same line) */
-    public string $layout;
+    /** @var string|null $layout -- null (default, a simple layout), or horizontal (label and value are in the same line) */
+    public ?string $layout = null;
     /** @var string $template -- The partial view file for the fields. Can be computed from layout. The default is '_form/_field' */
-    public string $template;
+    public string $template = '_form/_field';
     /** @var string|array $labelClass -- additional classname(s) for all field labels */
     public string|array $labelClass = '';
     /** @var string|array $noticeClass -- additional classname(s) for all field notices */
@@ -87,17 +87,17 @@ class Form extends Component
      *
      * @param string|null $fieldName -- the fieldname of the model (property) or name of the standalone field. Can be null for a button type
      * @param array $options -- other options, see above
-     * @param Model|array|null $model -- the model instance to display a field of, or false (standalone field)
+     * @param Model|array|bool|null $model -- the model instance to display a field of, or false (standalone field)
      *
      * @throws Exception
      */
-    public function field(?string $fieldName, array $options = [], Model|array $model = null): string
+    public function field(?string $fieldName, array $options = [], Model|array|bool $model = null): string
     {
         if ($model === null) {
             $model = $this->model;
         }
         $field = new Field(array_merge([
-            'model' => $model,
+            'model' => $model?:null,
             'fieldName' => $fieldName,
             'form' => $this,
             'template' => $this->template,

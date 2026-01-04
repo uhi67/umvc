@@ -21,7 +21,7 @@ use ReflectionProperty;
  *  - mass attribute assign
  *  - validation
  *
- * @property array $attributes -- all attribute values indexed by attribute name
+ * @property array $attributes -- all attribute values indexed by attribute name {@see self::getAttributes()}
  * @property-read array $errors -- field-name indexed array of numeric indexed error messages {@see self::getErrors()}
  * @property-read string $friendlyErrors -- all errors as a single string {@see self::getFriendlyErrors()}
  * @package UMVC Simple Application Framework
