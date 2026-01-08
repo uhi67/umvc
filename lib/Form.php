@@ -45,6 +45,7 @@ class Form extends Component
     public string|array $noticeClass = '';
     /** @var string|array $wrapperClass -- classname(s) for the wrapper div around the input part (needed for horizontal) */
     public string|array $wrapperClass = '';
+    public bool $disabled = false;
 
     /**
      * @throws Exception
@@ -95,6 +96,9 @@ class Form extends Component
     {
         if ($model === null) {
             $model = $this->model;
+        }
+        if($this->disabled) {
+            $options['options']['disabled'] = true;
         }
         $field = new Field(array_merge([
             'model' => $model?:null,
