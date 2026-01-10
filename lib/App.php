@@ -306,10 +306,16 @@ class App extends Component
         int $status,
         string $message
     ): int|string {
+        $this->setHttpStatus($status);
+        return $this->render('error', ['status' => $status, 'title' =>  HTTP::$statusTexts[$status] ?? '', 'message' => $message]);
+    }
+
+    public function setHttpStatus(int $status): void
+    {
         $protocol = ($_SERVER['SERVER_PROTOCOL'] ?? 'HTTP/1.0');
         $title = HTTP::$statusTexts[$status] ?? '';
         $this->sendHeader($protocol . ' ' . $status . ' ' . $title);
-        return $this->render('error', ['status' => $status, 'title' => $title, 'message' => $message]);
+        $this->responseStatus = $status;
     }
 
     /**
@@ -356,9 +362,12 @@ class App extends Component
                 header('Cache-Control: no-cache, no-store, must-revalidate');
             }
             $response = $app->run();
-            if (!$app->isCLI()) {
+            if (!$app->isCLI() && !headers_sent()) {
                 foreach ($app->headers as $header) {
                     header($header);
+                }
+                if(is_int($response) && !in_array($response, [self::EXIT_STATUS_OK, HTTP::HTTP_OK])) {
+                    header('HTTP/1.1 ' . HTTP::$statusTexts[$response]);
                 }
             }
             if (is_int($response)) {
@@ -1300,5 +1309,46 @@ class App extends Component
         }
         echo $r;
         return '';
+    }
+
+    /**
+     * Send an e-mail message. A wrapper for the miler component.
+     *
+     * @param string|array[]|string[] $recipients -- e-mail cím (mailto: prefix NEM lehetséges)
+     * @param string $subject
+     * @param array|string $message -- html/plain or plain
+     * @param array $options -- [from, replyto, timeout]
+     * @return bool
+     * @return bool
+     * @throws Exception
+     */
+    public static function sendMail(array|string $recipients, string $subject, array|string $message, array $options = []): bool
+    {
+        if (!is_array($recipients)) {
+            $recipients = [$recipients];
+        }
+
+        // Remove optional mailto: prefix
+        $prefix = 'mailto:';
+        foreach ($recipients as &$address) {
+            if (is_array($address)) {
+                if (!isset($address[0]) || !is_string($address[0])) {
+                    throw new Exception('0-indexed string was expected');
+                }
+                if (str_starts_with($address[0], $prefix)) {
+                    $address[0] = substr($address[0], strlen($prefix));
+                }
+            } else {
+                if (str_starts_with($address, $prefix)) {
+                    $address = substr($address, strlen($prefix));
+                }
+            }
+        }
+
+        $mailer = static::$app->mailer ?? null;
+        if (!is_a($mailer, MailerInterface::class, true)) {
+            throw new Exception('mailer component must be a ' . MailerInterface::class);
+        }
+        return $mailer->send($recipients, $subject, $message, $options);
     }
 }
