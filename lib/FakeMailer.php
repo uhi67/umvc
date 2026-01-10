@@ -1,4 +1,5 @@
-<?php /** @noinspection PhpIllegalPsrClassPathInspection */
+<?php
+/** @noinspection PhpIllegalPsrClassPathInspection */
 
 /**
  * class FakeMailer
@@ -56,6 +57,9 @@ class FakeMailer extends Component implements MailerInterface
         }
         foreach ($options as $key => $value) {
             fputs($f, "$key: $value\n");
+        }
+        if (is_array($message)) {
+            $message = $message[1] ?? '' . "\n\n" . $message[0] ?? '';
         }
         fputs($f, "To: " . json_encode($recipients) . "\n");
         fputs($f, "Subject: $subject\n\n$message");

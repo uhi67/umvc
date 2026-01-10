@@ -898,6 +898,7 @@ class App extends Component
             echo "<h1>Redirect</h1>";
             echo "<pre style='font-size: small; color: #906;'>Redirection at $function in file $file at line $line</pre>";
             echo "<div>Redirect to: <a href='$url'>" . json_encode($url) . "</a></div>";
+            App::dump('SESSION', $_SESSION);
             return App::EXIT_STATUS_OK;
         }
         $this->sendHeader('Location: ' . $url);
@@ -1114,6 +1115,20 @@ class App extends Component
     }
 
     /**
+     * Needed for correct working of ?? operator on component names.
+     *
+     * @param string $name
+     * @return bool
+     */
+    public function __isset(string $name): bool
+    {
+        if (array_key_exists($name, $this->_components)) {
+            return $this->_components[$name] !== null;
+        }
+        return parent::__isset($name);
+    }
+
+    /**
      * @throws Exception
      */
     public function hasComponent($name, string|Component $type = Component::class): ?Component
@@ -1318,11 +1333,11 @@ class App extends Component
      * @param string $subject
      * @param array|string $message -- html/plain or plain
      * @param array $options -- [from, replyto, timeout]
-     * @return bool
+     * @param string|null $error
      * @return bool
      * @throws Exception
      */
-    public static function sendMail(array|string $recipients, string $subject, array|string $message, array $options = []): bool
+    public static function sendMail(array|string $recipients, string $subject, array|string $message, array $options = [], ?string &$error = ''): bool
     {
         if (!is_array($recipients)) {
             $recipients = [$recipients];
@@ -1349,6 +1364,9 @@ class App extends Component
         if (!is_a($mailer, MailerInterface::class, true)) {
             throw new Exception('mailer component must be a ' . MailerInterface::class);
         }
-        return $mailer->send($recipients, $subject, $message, $options);
+        App::dump($recipients);
+        $ok = $mailer->send($recipients, $subject, $message, $options);
+        if(!$ok) $error = $mailer->status;
+        return $ok;
     }
 }
