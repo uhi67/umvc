@@ -337,8 +337,6 @@ class App extends Component
             $config = file_exists($configFile) ? include $configFile : [
                 App::class,
             ];
-            defined('ENV') || define('ENV', $config['application_env'] ?? 'production');
-            defined('ENV_DEV') || define('ENV_DEV', ENV != 'production');
             if (ENV_DEV) {
                 ini_set('display_errors', 'On');
             }
@@ -1151,12 +1149,12 @@ class App extends Component
     public static function cli($configFile)
     {
         try {
+            defined('ENV') || define('ENV', getenv('APPLICATION_ENV') ?: 'production');
+            defined('ENV_DEV') || define('ENV_DEV', ENV != 'production');
             if (!file_exists($configFile)) {
                 throw new Exception("Config file at '$configFile' is missing.");
             }
             $config = include $configFile;
-            defined('ENV') || define('ENV', $config['application_env'] ?? 'production');
-            defined('ENV_DEV') || define('ENV_DEV', ENV != 'production');
             if (ENV_DEV) {
                 ini_set('display_errors', 'On');
             }
