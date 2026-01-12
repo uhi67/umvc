@@ -364,9 +364,6 @@ class App extends Component
                 foreach ($app->headers as $header) {
                     header($header);
                 }
-                if(is_int($response) && !in_array($response, [self::EXIT_STATUS_OK, HTTP::HTTP_OK])) {
-                    header('HTTP/1.1 ' . HTTP::$statusTexts[$response]);
-                }
             }
             if (is_int($response)) {
                 return $response;
