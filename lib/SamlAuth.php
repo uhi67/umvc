@@ -331,7 +331,7 @@ class SamlAuth extends AuthManager
 
     public function getAttribute(string $idAttribute, ?int $index=null): ?string
     {
-        if(!$this->attributes) return null;
+        if(!$this->getAttributes()) return null;
         return $index===null ? ($this->_attributes[$idAttribute] ?? null) : ($this->_attributes[$idAttribute][$index] ?? null);
     }
 }
