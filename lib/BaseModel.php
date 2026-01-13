@@ -126,7 +126,7 @@ class BaseModel extends Component implements JsonSerializable
      * [field-name => [rule1, [rule2, params], ...], ...]
      *
      * The default implementation is empty.
-     * Call `$model->validate()` to perform the validation.
+     * Call _$model->{@see validate()}_ to perform the validation.
      * The rule may be a predefined rule or any user-defined method named `validateMyRule($fieldName, $params):bool`
      *
      * ### Predefined rules of Model:
@@ -135,7 +135,8 @@ class BaseModel extends Component implements JsonSerializable
      * - 'nullable' -- empty value is stored as NULL
      * - ['default', value] -- always passes, replaces null value to default.
      * - 'defaultNow' -- for date/time fields, always passes, replaces null value to current timestamp.
-     * - 'int' -- accepts any value is convertible into integer. Replaces the value with a valid integer.     * - ['length', min, max]
+     * - 'int' -- accepts any value is convertible into integer. Replaces the value with a valid integer.
+     * - ['length', min, max]
      * - 'lowercase' -- always passes, converts to lowercase
      * - 'trim'  -- always passes, removes surrounding whitespaces
      * - ['pattern', pattern(s)] -- valid if at least one of RE patterns is valid (second level: all of them)
