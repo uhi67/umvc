@@ -154,8 +154,8 @@ class App extends Component
         error_reporting(E_ALL);
 
         // Other configurable settings
-        $conf = ['title', 'mainControllerClass', 'layout', 'basePath', 'baseUrl', 'runtimePath'];
-        foreach ($conf as $key) {
+        $configurables = ['title', 'mainControllerClass', 'layout', 'basePath', 'baseUrl', 'runtimePath'];
+        foreach ($configurables as $key) {
             if (array_key_exists($key, $this->config)) {
                 $this->$key = $this->config[$key];
             }
@@ -859,11 +859,13 @@ class App extends Component
      * @return bool|int -- non-false if redirect issued, false otherwise
      * @throws Exception -- throws an exception if user not logged in.
      */
-    public function requireLogin(bool $force = true): bool|int
+    public function requireLogin(bool $force = true, string|array $loginUrl = null): bool|int
     {
         if (!$this->loggedIn()) {
             if ($force && !array_key_exists('login', $_REQUEST) && $this->auth->uid != AuthManager::INVALID_USER) {
-                return $this->redirect(['login' => true, 'ReturnTo' => $this->url]);
+                if(is_string($loginUrl)) $loginUrl =  [$loginUrl, 'ReturnTo' => $this->url];
+                if(!$loginUrl) $loginUrl = ['login' => true, 'ReturnTo' => $this->url];
+                return $this->redirect($loginUrl);
             } else {
                 throw new Exception('Must be logged in', HTTP::HTTP_FORBIDDEN);
             }
@@ -894,7 +896,7 @@ class App extends Component
             echo "<pre style='font-size: small; color: #906;'>Redirection at $function in file $file at line $line</pre>";
             echo "<div>Redirect to: <a href='$url'>" . json_encode($url) . "</a></div>";
             App::dump('SESSION', $_SESSION);
-            return App::EXIT_STATUS_OK;
+            return App::EXIT_STATUS_ERROR; // Must return a nonzero value to prevent further processing
         }
         $this->sendHeader('Location: ' . $url);
         $this->responseStatus = 302;
