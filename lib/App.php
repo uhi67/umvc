@@ -1275,7 +1275,7 @@ class App extends Component
         $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
         $location = $backtrace[0]['file'] . ':' . $backtrace[0]['line'];
         if (!App::isCLI()) {
-            echo "<pre class='m-1' style='color: #B00;font-size: .6rem;'>Dump location: " . $location . "</pre>";
+            echo "\n\n<pre class='m-1' style='color: #B00;font-size: .6rem;'>Dump location: " . $location . "</pre>";
             echo '<pre class="alert alert-info dump p-1 m-1" style="font-size: .6rem;">';
         } else {
             echo $location . ': ', PHP_EOL;
@@ -1291,7 +1291,7 @@ class App extends Component
             }
         }
         if (!App::isCLI()) {
-            echo '</pre>';
+            echo "</pre>\n";
         }
     }
 

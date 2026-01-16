@@ -71,7 +71,9 @@ class SamlAuth extends AuthManager
     {
         // Check SAML login status
         $this->uid = App::$app->session->get($this->sessionUid) ?? null;
-        if(!$this->isAuthenticated() || $this->getAttribute($this->idAttribute, 0) != $this->uid) {
+        $idAttributeValue = $this->isAuthenticated() ? $this->getAttribute($this->idAttribute, 0) : null;
+        if(!$this->isAuthenticated() || $this->uid && $idAttributeValue != $this->uid) {
+            if($this->isAuthenticated() && ENV_DEV) throw new Exception('SAML authentication: UID mismatch, close the browser.');
             // Auto logout
             $this->logout();
             return null;
@@ -329,7 +331,14 @@ class SamlAuth extends AuthManager
         return $this->_attributes;
     }
 
-    public function getAttribute(string $idAttribute, ?int $index=null): ?string
+    /**
+     * Returns the SAML attribute value(s) by its name and optional index.
+     *
+     * @param string $idAttribute
+     * @param int|null $index -- index of the attribute value, or null to return all values as an array
+     * @return string|null|array -- single or multiple values. Null if attribute is not found.
+     */
+    public function getAttribute(string $idAttribute, ?int $index=null): null|string|array
     {
         if(!$this->getAttributes()) return null;
         return $index===null ? ($this->_attributes[$idAttribute] ?? null) : ($this->_attributes[$idAttribute][$index] ?? null);
