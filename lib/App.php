@@ -432,9 +432,19 @@ class App extends Component
             $pathInfo = implode('/', $this->path);
             throw new Exception("Page not found ($pathInfo)", HTTP::HTTP_NOT_FOUND);
         } catch (Throwable $e) {
-            $this->responseStatus = (int)$e->getCode() ?: HTTP::HTTP_INTERNAL_SERVER_ERROR;
-            AppHelper::showException($e, $this->responseStatus);
+            return $this->showException($e);
         }
+    }
+
+    /**
+     * Override this hook method to display a custom error page.
+     *
+     * @param Throwable $e
+     * @return int
+     */
+    public function showException(Throwable $e): int {
+        $this->responseStatus = (int)$e->getCode() ?: HTTP::HTTP_INTERNAL_SERVER_ERROR;
+        AppHelper::showException($e, $this->responseStatus);
         return $this->responseStatus;
     }
 
@@ -853,6 +863,7 @@ class App extends Component
 
     /**
      * Requires login for this page. Can be called from any controller action.
+     * Returns false if the user already logged in!
      *
      * @param bool $force -- if true and not logged in, redirects to the login page, will return only if the user logged in. If false, throws an exception if the user is not logged in.
      *
