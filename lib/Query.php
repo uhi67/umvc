@@ -2636,7 +2636,7 @@ class Query extends Component
     }
 
     /**
-     * Adds an equal-type filtering rule to the query if value is not empty
+     * Adds an equal-type filtering rule to the query if the value is not empty
      *
      * @param string|null $value
      * @param string $field

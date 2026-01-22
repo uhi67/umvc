@@ -31,7 +31,7 @@ use Exception;
  * - string|Model **$model** -- the model name used in the table
  * - string|bool **$hint** -- title (hint displayed at mouse hover) default is original label if label is overridden, set to 'false' to disable
  * - string **filterHint** -- title attribute for filter cell
- * - string **$format** -- set to 'raw' to display HTML content, otherwise htmlspecialchars filter is applied
+ * - string **$format** -- set to 'raw' to display HTML content, otherwise htmlspecialchars filter is applied. Also 'boolan' and 'checkbox' is supported.
  *
  * @package UMVC Simple Application Framework
  */
@@ -68,7 +68,7 @@ class Column extends Component
     public string|bool|null $emptyValue = null;
     /** @var string|null $filterHint -- title attribute for filter cell */
     public ?string $filterHint = null;
-    /** @var string $format -- currently only 'raw' is supported to suppress htmlspecialchar filtering */
+    /** @var string $format -- none, raw, boolean, chckbox. */
     public string $format = '';
     public ?string $sortIcon = null;
     public ?string $sortAscIcon = null;
@@ -220,13 +220,12 @@ class Column extends Component
             } else {
                 $content = $model->{$this->field};
             }
-            if ($content !== null) {
-                $content = $this->format == 'raw' ? $content : htmlspecialchars($content);
-            }
-        }
-        // Distinguish null value from empty string
-        if ($content === null) {
-            $content = $this->emptyValue;
+            $content = match($this->format) {
+                'raw' => $content,
+                'boolean' => $content===null ? $this->emptyValue : ($content ? 'Yes' : 'No'),
+                'checkbox' => $content===null ? '' : ($content ? '<i class="far fa-check-square"></i>' : '<i class="far fa-square"></i>'),
+                default => $content===null ? $this->emptyValue : htmlspecialchars($content),
+            };
         }
         if (!is_scalar($content)) {
             throw new Exception("Got " . gettype($content) . " at $this->field of " . get_class($model));

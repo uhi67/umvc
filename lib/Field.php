@@ -70,7 +70,7 @@ class Field extends Component
     public function init(): void
     {
         if ($this->model) {
-            if (!$this->modelName) {
+            if (!$this->modelName && $this->model instanceof Model) {
                 $this->modelName = $this->model->tableName();
             }
             if ($this->label == null) {
@@ -81,9 +81,9 @@ class Field extends Component
                     $this->id = 'field-' . $this->modelName . '-' . $this->fieldName;
                 }
                 if (!$this->value) {
-                    $this->value = $this->model->{$this->fieldName};
+                    $this->value = ArrayHelper::getValue($this->model, $this->fieldName);
                 }
-                if ($this->error === null && $this->model->hasError()) {
+                if ($this->error === null && $this->model instanceof Model && $this->model->hasError()) {
                     $this->error = implode(', ', $this->model->getErrors($this->fieldName)) ?: false;
                 }
             }
@@ -99,7 +99,7 @@ class Field extends Component
         }
 
         // Add validation rules to perform client-side validation (later...)
-        if ($this->model && $this->fieldName) {
+        if ($this->model instanceof Model && $this->fieldName) {
             $rules = $this->model->rules();
             // Applicable client-side validations (not implemented yet)
             $clientRules = ['mandatory', 'length', 'email', 'url', 'int', 'date', 'pattern'];
