@@ -6,8 +6,8 @@ namespace uhi67\umvc;
  * MailerInterface is implemented by mailer components, which can send an e-mail to the addressee.
  * You may configure a mailer component in your main config.
  *
- * @see MailerPhp
- * @see Fakemailer2
+ * @see {@see MailerPhp}
+ * @see {@see Fakemailer2}
  */
 interface MailerInterface
 {
