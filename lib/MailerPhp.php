@@ -1,4 +1,5 @@
-<?php /** @noinspection PhpIllegalPsrClassPathInspection */
+<?php
+/** @noinspection PhpIllegalPsrClassPathInspection */
 
 namespace uhi67\umvc;
 
@@ -9,6 +10,7 @@ use PHPMailer\PHPMailer\SMTP;
 /**
  * A MailerInterface wrapper for the well-known PHPMailer class
  *
+ * @property-read $status
  */
 class MailerPhp extends Component implements MailerInterface
 {
@@ -28,9 +30,12 @@ class MailerPhp extends Component implements MailerInterface
     /**
      * @throws Exception -- if PHPMailer is not installed
      */
-    public function init(): void {
-        if(!class_exists(PHPMailer::class)) {
-            throw new Exception('MailerPhp: The required PHPMailer is not installed. Run `composer require phpmailer/phpmailer` to install it.');
+    public function init(): void
+    {
+        if (!class_exists(PHPMailer::class)) {
+            throw new Exception(
+                'MailerPhp: The required PHPMailer is not installed. Run `composer require phpmailer/phpmailer` to install it.'
+            );
         }
     }
 
@@ -40,6 +45,7 @@ class MailerPhp extends Component implements MailerInterface
      * @param array|string $message -- html/plain or plain
      * @param array $options -- [from, replyto, timeout]
      * @return bool
+     * @throws \Exception
      */
     public function send($recipients, string $subject, array|string $message, array $options = []): bool
     {

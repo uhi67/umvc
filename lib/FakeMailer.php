@@ -1,4 +1,5 @@
-<?php
+<?php /** @noinspection PhpUnused */
+
 /** @noinspection PhpIllegalPsrClassPathInspection */
 
 /**
@@ -59,7 +60,7 @@ class FakeMailer extends Component implements MailerInterface
             fputs($f, "$key: $value\n");
         }
         if (is_array($message)) {
-            file_put_contents($filename.'.html', $message[0]);
+            file_put_contents($filename . '.html', $message[0]);
             $message = $message[1];
         }
         fputs($f, "To: " . json_encode($recipients) . "\n");

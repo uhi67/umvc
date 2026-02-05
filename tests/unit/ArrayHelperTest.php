@@ -1,8 +1,12 @@
 <?php
+
 namespace tests\unit;
+
+use Codeception\Test\Unit;
+use Exception;
 use uhi67\umvc\ArrayHelper;
 
-class ArrayHelperTest extends \Codeception\Test\Unit
+class ArrayHelperTest extends Unit
 {
 
     /**
@@ -18,9 +22,9 @@ class ArrayHelperTest extends \Codeception\Test\Unit
     public function testOrderByDependency(array $input, ?callable $getDependencies, array|int $expected)
     {
         if (is_int($expected)) {
-            $this->expectException(\Exception::class);
+            $this->expectException(Exception::class);
         }
-        $order = \uhi67\umvc\ArrayHelper::orderByDependency($input, $getDependencies);
+        $order = ArrayHelper::orderByDependency($input, $getDependencies);
         $this->assertEquals($expected, $order);
     }
 
@@ -35,7 +39,8 @@ class ArrayHelperTest extends \Codeception\Test\Unit
                     'D' => ['require' => 'E'], // E must precede D
                     'E' => ['require' => 'C'], // C must precede E
                     'F' => ['require' => 'A'],
-                ], null,
+                ],
+                null,
                 ['C', 'E', 'D', 'B', 'A', 'F'],
             ],
             2 => [
@@ -43,14 +48,16 @@ class ArrayHelperTest extends \Codeception\Test\Unit
                     'X' => ['require' => 'Y'],
                     'Y' => ['require' => 'Z'],
                     'Z' => ['require' => 'X'], // Z -> X, X -> Y,  Y -> Z
-                ], null,
+                ],
+                null,
                 ArrayHelper::ERROR_CYCLIC,
             ],
             3 => [
                 [
                     'P' => ['require' => 'Q'],
                     'Q' => ['require' => 'XXX'], // missing key
-                ], null,
+                ],
+                null,
                 ArrayHelper::ERROR_NONEXISTENT
             ],
             4 => [
@@ -61,7 +68,8 @@ class ArrayHelperTest extends \Codeception\Test\Unit
                     'D' => ['dependency' => 'E'], // E must precede D
                     'E' => ['dependency' => 'C'], // C must precede E
                     'F' => ['dependency' => 'A'],
-                ], fn($item) => $item['dependency'] ?? [],
+                ],
+                fn($item) => $item['dependency'] ?? [],
                 ['C', 'E', 'D', 'B', 'A', 'F'],
             ]
         ];

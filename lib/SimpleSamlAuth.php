@@ -1,4 +1,6 @@
 <?php
+/** @noinspection PhpUnused */
+
 /** @noinspection PhpIllegalPsrClassPathInspection */
 
 namespace uhi67\umvc;
@@ -35,7 +37,9 @@ class SimpleSamlAuth extends AuthManager
     {
         $this->userModel = null;
         if (!class_exists('\SimpleSAML\Auth\Simple') && !class_exists('\SimpleSAML_Auth_Simple')) {
-            throw new Exception("SimpleSamlAuth: The required SimpleSamlPHP is not installed. Run `composer require simplesamlphp/simplesamlphp:^2.0` to install it.");
+            throw new Exception(
+                "SimpleSamlAuth: The required SimpleSamlPHP is not installed. Run `composer require simplesamlphp/simplesamlphp:^2.0` to install it."
+            );
         }
         $this->auth = new Simple($this->authSource);
     }
@@ -44,7 +48,8 @@ class SimpleSamlAuth extends AuthManager
     {
     }
 
-    public function __get($name): mixed {
+    public function __get($name): mixed
+    {
         return $this->getAttribute($name) ?? parent::__get($name);
     }
 
@@ -61,7 +66,7 @@ class SimpleSamlAuth extends AuthManager
         if (!$this->isAuthenticated()) {
             return null;
         }
-        if ($value = $this->attributes[$attributeName]??null) {
+        if ($value = $this->attributes[$attributeName] ?? null) {
             return is_array($value) ? (($index !== null) ? $value[$index] : $value) : $value;
         }
         return null;
@@ -160,7 +165,7 @@ class SimpleSamlAuth extends AuthManager
         return null;
     }
 
-    public function getAttributes()
+    public function getAttributes(): ?array
     {
         if (!$this->_attributes && $this->auth && $this->auth->isAuthenticated()) {
             $this->_attributes = $this->auth->getAttributes();

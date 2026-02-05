@@ -1,4 +1,5 @@
-<?php
+<?php /** @noinspection PhpClassConstantAccessedViaChildClassInspection */
+
 /** @noinspection PhpIllegalPsrClassPathInspection */
 
 /** @noinspection PhpUnused */
@@ -6,7 +7,6 @@
 namespace uhi67\umvc;
 
 use app\models\User;
-use uhi67\umvc\LogLevel;
 use ErrorException;
 use Exception;
 use Psr\Log\LoggerInterface;
@@ -34,7 +34,7 @@ use Throwable;
  *
  * - auth: The user authentication object
  * - user: The logged-in user instance or null if no user logged in.
- * - cache: The configured cache instance or null if no cache defined
+ * - cache: The configured cache instance or null if no cache is defined
  *
  * ### The most important methods
  *
@@ -313,6 +313,7 @@ class App extends Component
 
     /**
      * Renders an error message
+     * @throws Exception
      */
     public
     function error(
@@ -320,7 +321,10 @@ class App extends Component
         string $message
     ): int|string {
         $this->setHttpStatus($status);
-        return $this->render('error', ['status' => $status, 'title' =>  HTTP::$statusTexts[$status] ?? '', 'message' => $message]);
+        return $this->render(
+            'error',
+            ['status' => $status, 'title' => HTTP::$statusTexts[$status] ?? '', 'message' => $message]
+        );
     }
 
     public function setHttpStatus(int $status): void
@@ -354,8 +358,8 @@ class App extends Component
                 ini_set('display_errors', 'On');
             }
 
-            set_error_handler(function ($severity, $errstr, $errfile, $errline) {
-                throw new ErrorException($errstr, 0, $severity, $errfile, $errline);
+            set_error_handler(function ($severity, $message, $fileName, $line) {
+                throw new ErrorException($message, 0, $severity, $fileName, $line);
             }, error_reporting());
             register_shutdown_function(function () {
                 $error = error_get_last();
@@ -365,7 +369,7 @@ class App extends Component
             });
 
             /** @var App $app */
-            // Default application class (uhi67\umvc\App) may be overriden in config
+            // Default application class (uhi67\umvc\App) may be overridden in config
             $class = $config['class'] ?? ($config[0] ?? App::class);
             $app = static::create(['class' => $class, 'config' => $config]);
             if (!$app->isCLI()) {
@@ -421,7 +425,7 @@ class App extends Component
                 // Find the actual controller class for this path and let it go
                 for ($i = 1; $i <= count($this->path); $i++) {
                     $this->classPath = array_slice($this->path, 0, $i);
-                    $xpath = implode('\\', array_slice($this->path, 0, $i-1));
+                    $xpath = implode('\\', array_slice($this->path, 0, $i - 1));
                     if ($xpath) {
                         $xpath .= '\\';
                     }
@@ -455,8 +459,9 @@ class App extends Component
      * @param Throwable $e
      * @return int
      */
-    public function showException(Throwable $e): int {
-        $this->responseStatus = (int)$e->getCode() ?: HTTP::HTTP_INTERNAL_SERVER_ERROR;
+    public function showException(Throwable $e): int
+    {
+        $this->responseStatus = $e->getCode() ?: HTTP::HTTP_INTERNAL_SERVER_ERROR;
         AppHelper::showException($e, $this->responseStatus);
         return $this->responseStatus;
     }
@@ -559,6 +564,7 @@ class App extends Component
      * @param bool|string|null $locale -- use localized layout selection (ISO 639-1 language / ISO 3166-1-a2 locale), see above
      *
      * @return int|string -- output
+     * @throws Exception
      */
     public
     function render(
@@ -665,6 +671,7 @@ class App extends Component
      * @param array|null $layoutParams -- optional parameters for the layout view
      *
      * @return int|string
+     * @throws Exception
      */
     public
     function renderFile(
@@ -741,6 +748,7 @@ class App extends Component
 
     /**
      * Renders a partial view without a layout
+     * @throws Exception
      */
     public
     function renderPartial(
@@ -795,6 +803,7 @@ class App extends Component
 
     /**
      * Gets and renders all flash messages from the session
+     * @throws Exception
      */
     public function renderFlashMessages(): string
     {
@@ -887,8 +896,12 @@ class App extends Component
     {
         if (!$this->loggedIn()) {
             if ($force && !array_key_exists('login', $_REQUEST) && $this->auth->uid != AuthManager::INVALID_USER) {
-                if(is_string($loginUrl)) $loginUrl =  [$loginUrl, 'ReturnTo' => $this->url];
-                if(!$loginUrl) $loginUrl = ['login' => true, 'ReturnTo' => $this->url];
+                if (is_string($loginUrl)) {
+                    $loginUrl = [$loginUrl, 'ReturnTo' => $this->url];
+                }
+                if (!$loginUrl) {
+                    $loginUrl = ['login' => true, 'ReturnTo' => $this->url];
+                }
                 return $this->redirect($loginUrl);
             } else {
                 throw new Exception('Must be logged in', HTTP::HTTP_FORBIDDEN);
@@ -992,6 +1005,9 @@ class App extends Component
         ) : $compute();
     }
 
+    /**
+     * @throws Exception
+     */
     public static function logInner(string $level, string|array|object $message, array $params = []): void
     {
         if (LogLevel::isHigherOrEqual($level, App::$app->logLevel)) {
@@ -1042,14 +1058,14 @@ class App extends Component
                 $this->path = explode('/', array_shift($this->query));
             }
 
-            $pathinfo = '';
+            $pathInfo = '';
             $controllerClass = '';
             // Find the actual controller class for this path and let it go
             for ($i = 1; $i <= count($this->path); $i++) {
                 $classPath = array_slice($this->path, 0, $i);
                 $classPath[$i - 1] = AppHelper::camelize($classPath[$i - 1]);
                 // Case 1: Command class is in the current application
-                $controllerClass = 'app\commands\\' . ($pathinfo = implode('\\', $classPath)) . 'Controller';
+                $controllerClass = 'app\commands\\' . ($pathInfo = implode('\\', $classPath)) . 'Controller';
                 if (class_exists($controllerClass)) {
                     return $this->runController($controllerClass, array_slice($this->path, $i), $this->query);
                 }
@@ -1066,7 +1082,7 @@ class App extends Component
                     return $this->runController($controllerClass, array_slice($this->path, $i), $this->query);
                 }
             }
-            throw new Exception("Command not found ($pathinfo, $controllerClass)", HTTP::HTTP_NOT_FOUND);
+            throw new Exception("Command not found ($pathInfo, $controllerClass)", HTTP::HTTP_NOT_FOUND);
         } catch (Throwable $e) {
             $this->responseStatus = $e->getCode() ?: HTTP::HTTP_INTERNAL_SERVER_ERROR;
             AppHelper::showException($e, (int)$this->responseStatus);
@@ -1132,7 +1148,7 @@ class App extends Component
     }
 
     /**
-     * Needed for correct working of ?? operator on component names.
+     * Needed for correct working of the `??` operator on component names.
      *
      * @param string $name
      * @return bool
@@ -1178,8 +1194,8 @@ class App extends Component
                 ini_set('display_errors', 'On');
             }
 
-            set_error_handler(function ($severity, $errstr, $errfile, $errline) {
-                $err = new ErrorException($errstr, 0, $severity, $errfile, $errline);
+            set_error_handler(function ($severity, $message, $fileName, $line) {
+                $err = new ErrorException($message, 0, $severity, $fileName, $line);
                 AppHelper::showException($err);
                 exit(HTTP::HTTP_INTERNAL_SERVER_ERROR);
             }, error_reporting());
@@ -1293,7 +1309,9 @@ class App extends Component
     {
         defined('ENV') || define('ENV', getenv('APPLICATION_ENV') ?: 'production');
         defined('ENV_DEV') || define('ENV_DEV', ENV != 'production');
-        if(!ENV_DEV) return;
+        if (!ENV_DEV) {
+            return;
+        }
         $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
         $location = $backtrace[0]['file'] . ':' . $backtrace[0]['line'];
         if (!App::isCLI()) {
@@ -1346,7 +1364,7 @@ class App extends Component
     /**
      * Send an e-mail message. A wrapper for the miler component.
      *
-     * @param string|array[]|string[] $recipients -- e-mail cím (mailto: prefix NEM lehetséges)
+     * @param string|array[]|string[] $recipients -- e-mail cím (mailto: prefix not permitted)
      * @param string $subject
      * @param array|string $message -- html/plain or plain
      * @param array $options -- [from, replyto, timeout]
@@ -1354,8 +1372,13 @@ class App extends Component
      * @return bool
      * @throws Exception
      */
-    public static function sendMail(array|string $recipients, string $subject, array|string $message, array $options = [], ?string &$error = ''): bool
-    {
+    public static function sendMail(
+        array|string $recipients,
+        string $subject,
+        array|string $message,
+        array $options = [],
+        ?string &$error = ''
+    ): bool {
         if (!is_array($recipients)) {
             $recipients = [$recipients];
         }
@@ -1383,7 +1406,9 @@ class App extends Component
         }
         App::dump($recipients);
         $ok = $mailer->send($recipients, $subject, $message, $options);
-        if(!$ok) $error = $mailer->status;
+        if (!$ok) {
+            $error = $mailer->status;
+        }
         return $ok;
     }
 }
