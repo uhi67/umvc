@@ -1,8 +1,8 @@
 <?php
 
-namespace app\vendor\uhi67\umvc\tests\unit;
+namespace app\vendor\educalliance\umvc\tests\unit;
 
-use uhi67\umvc\ArrayHelper;
+use educalliance\umvc\ArrayHelper;
 
 class ArrayHelperTest extends \Codeception\Test\Unit
 {
@@ -22,7 +22,7 @@ class ArrayHelperTest extends \Codeception\Test\Unit
         if (is_int($expected)) {
             $this->expectException(\Exception::class);
         }
-        $order = \uhi67\umvc\ArrayHelper::orderByDependency($input, $getDependencies);
+        $order = \educalliance\umvc\ArrayHelper::orderByDependency($input, $getDependencies);
         $this->assertEquals($expected, $order);
     }
 

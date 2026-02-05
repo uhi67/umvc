@@ -3,7 +3,7 @@
 
 /** @noinspection PhpUnused */
 
-namespace uhi67\umvc;
+namespace educalliance\umvc;
 
 use Closure;
 use DateTime;
@@ -189,7 +189,7 @@ class AppHelper
             echo preg_replace(
                 [
                     '~' . str_replace(['\\', '~'], ['\\\\', '\~'], $basePath) . '~',
-                    '/^(#\\d+ [^(]+)(' . $s . 'vendor' . $s . 'uhi67' . $s . ')(umvc)(' . $s . '[^(]+)(.*)$/m',
+                    '/^(#\\d+ [^(]+)(' . $s . 'vendor' . $s . 'educalliance' . $s . ')(umvc)(' . $s . '[^(]+)(.*)$/m',
                     '/^(#\\d+ [^(]+)(' . $s . 'views' . $s . '[^(]+)(.*)$/m',
                     '/^(#\\d+ [^(]+)(' . $s . 'controllers' . $s . '[^(]+)(.*)$/m',
                     '/^(#\\d+ [^(]+)(' . $s . 'models' . $s . '[^(]+)(.*)$/m',

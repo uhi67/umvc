@@ -8,4 +8,4 @@ $autoload = dirname(__DIR__,3) . '/vendor/autoload.php';
 if(!file_exists($autoload)) throw new Exception('Missing vendor library. Please run `composer install` first.');
 require_once $autoload;
 $configFile = dirname(__DIR__) . '/test-config.php';
-return \uhi67\umvc\App::cli($configFile);
+return \educalliance\umvc\App::cli($configFile);

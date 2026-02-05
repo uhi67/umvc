@@ -24,7 +24,7 @@ class ControllerTest extends \Codeception\Test\Unit
 	 */
 //    public function testLocalizedViewName($view, $locale, $localizedView)
 //    {
-//	    $this->assertEquals($localizedView, \uhi67\umvc\Controller::localizedViewName($view, $locale));
+//	    $this->assertEquals($localizedView, \educalliance\umvc\Controller::localizedViewName($view, $locale));
 //    }
 //	public function provLocalizedViewName() {
 //		return [

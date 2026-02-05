@@ -1,6 +1,6 @@
 <?php /** @noinspection PhpIllegalPsrClassPathInspection */
 
-namespace uhi67\umvc;
+namespace educalliance\umvc;
 
 use PHPMailer\PHPMailer\Exception;
 use PHPMailer\PHPMailer\PHPMailer;
@@ -24,6 +24,15 @@ class MailerPhp extends Component implements MailerInterface
     public array|string $from;
     public int $debug = SMTP::DEBUG_OFF; // SMTP::DEBUG_SERVER
     private ?string $_status;
+
+    /**
+     * @throws Exception -- if PHPMailer is not installed
+     */
+    public function init(): void {
+        if(!class_exists(PHPMailer::class)) {
+            throw new Exception('MailerPhp: The required PHPMailer is not installed. Run `composer require phpmailer/phpmailer` to install it.');
+        }
+    }
 
     /**
      * @param string[]|string $recipients -- [[address, name], ...] -- or a single recipient

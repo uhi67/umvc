@@ -7,8 +7,8 @@
 
 /** @var App $this */
 
-use uhi67\umvc\App;
-use uhi67\umvc\Field;
+use educalliance\umvc\App;
+use educalliance\umvc\Field;
 
 $hasErrors = $field->error ? 'has-error' : '';
 ?>

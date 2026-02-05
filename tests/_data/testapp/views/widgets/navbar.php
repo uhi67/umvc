@@ -4,7 +4,7 @@
 /** @var array $options */
 /** @var string $content */
 
-use uhi67\umvc\Html;
+use educalliance\umvc\Html;
 
 if(!isset($options['id'])) $options['id'] = Html::nextId();
 ?>

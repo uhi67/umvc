@@ -4,9 +4,9 @@ namespace unit;
 use app\models\User;
 use Codeception\Test\Unit;
 use Exception;
-use uhi67\umvc\App;
-use uhi67\umvc\commands\MigrateController;
-use uhi67\umvc\MysqlConnection;
+use educalliance\umvc\App;
+use educalliance\umvc\commands\MigrateController;
+use educalliance\umvc\MysqlConnection;
 use UnitTester;
 
 class MigrateTest extends Unit

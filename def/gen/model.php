@@ -19,7 +19,7 @@
  */
 
 namespace app\models;
-use uhi67\umvc\Model;
+use educalliance\umvc\Model;
 
 /**
  * Class <?= $modelName ?>

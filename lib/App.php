@@ -3,7 +3,7 @@
 
 /** @noinspection PhpUnused */
 
-namespace uhi67\umvc;
+namespace educalliance\umvc;
 
 use app\models\User;
 use ErrorException;
@@ -352,7 +352,7 @@ class App extends Component
             });
 
             /** @var App $app */
-            // Default application class (uhi67\umvc\App) may be overriden in config
+            // Default application class (educalliance\umvc\App) may be overriden in config
             $class = $config['class'] ?? ($config[0] ?? App::class);
             $app = static::create(['class' => $class, 'config' => $config]);
             if (!$app->isCLI()) {
@@ -1045,7 +1045,7 @@ class App extends Component
                     return $this->runController($controllerClass, array_slice($this->path, $i), $this->query);
                 }
                 // Case 2: Command class is in the framework
-                $controllerClass = 'uhi67\umvc\commands\\' . implode('\\', $classPath) . 'Controller';
+                $controllerClass = 'educalliance\umvc\commands\\' . implode('\\', $classPath) . 'Controller';
                 if (class_exists($controllerClass)) {
                     return $this->runController($controllerClass, array_slice($this->path, $i), $this->query);
                 }
@@ -1227,7 +1227,7 @@ class App extends Component
      * Localizes a message text using the configured localization (l10n) class.
      *
      * Category syntax
-     * - umvc -- framework messages, located in the /vendor/uhi67/umvc/messages dir
+     * - umvc -- framework messages, located in the /vendor/educalliance/umvc/messages dir
      * - avendor/alib -- library texts, located in the /vendor/avendor/alib/messages dir
      * - avendor/alib/acat -- library category, located in the /vendor/avendor/alib/messages/acat dir
      * - any/other -- application categories, depending on current l10n class (e.g. located in the /messages/any/other dir of the application)

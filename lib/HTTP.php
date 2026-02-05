@@ -1,6 +1,6 @@
 <?php
 
-namespace uhi67\umvc;
+namespace educalliance\umvc;
 
 use Exception;
 
@@ -283,7 +283,7 @@ class HTTP
             if ($throw) {
                 throw new Exception('Cannot set cookie: headers already sent.');
             }
-            App::log('error', 'Error setting cookie: headers already sent.', 'umvc');
+            App::log('error', 'Error setting cookie: headers already sent.');
         }
         return $success;
     }

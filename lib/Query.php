@@ -1,8 +1,8 @@
-<?php /** @noinspection PhpUnused */
-
+<?php
+/** @noinspection PhpUnused */
 /** @noinspection PhpIllegalPsrClassPathInspection */
 
-namespace uhi67\umvc;
+namespace educalliance\umvc;
 
 use DateTime;
 use Exception;
@@ -964,16 +964,16 @@ class Query extends Component
      * Returns the number of the rows in the dataset of the query.
      * The full version creates an outer query: `SELECT count(*) FROM <original query>`
      *
-     * @var bool $full -- if true, all fields of the query are preserved; otherwise only the count(*) is returned (default).
      * @return int
      * @throws Exception
+     * @var bool $full -- if true, all fields of the query are preserved; otherwise only the count(*) is returned (default).
      */
     public function getCount(bool $full = false): int
     {
         if ($this->sql && $this->_count !== null) {
             return $this->_count;
         }
-        if($full) {
+        if ($full) {
             $query = new Query([
                 'connection' => $this->connection,
                 'modelClass' => $this->modelClass,
@@ -2739,7 +2739,8 @@ class Query extends Component
      * @return $this
      * @throws Exception
      */
-    public function filterDateRange(string $value, string|Query|array $field): static {
+    public function filterDateRange(string $value, string|Query|array $field): static
+    {
         if ($value !== '') {
             $this->andWhere($this->dateRangeCondition($field, $value));
         }
@@ -2765,7 +2766,8 @@ class Query extends Component
      * @return array
      * @throws Exception
      */
-    public function dateRangeCondition(string|Query|array $field, string $value) {
+    public function dateRangeCondition(string|Query|array $field, string $value)
+    {
         $d = null;
         $dp = '\d{4}-\d{2}-\d{2}';
         $value = trim($value);
@@ -2796,21 +2798,32 @@ class Query extends Component
             $value = preg_replace($shortcut, $replacement, $value);
         }
         // "<, <=, >= date" formats.
-        if(preg_match('~^(<=?|>=)\s*('.$dp.')$~', $value, $mm)) {
+        if (preg_match('~^(<=?|>=)\s*(' . $dp . ')$~', $value, $mm)) {
             $d = trim($mm[2]);
-            if($d) return [$mm[1], $field, $this->connection->quoteValue($d)];
-        }
-        // "> date" formats
-        elseif(preg_match('~^>\s*('.$dp.')$~', $value, $mm) || preg_match('~^('.$dp.')(\s*<|\s+-|\s*--)$~', $value, $mm)) {
+            if ($d) {
+                return [$mm[1], $field, $this->connection->quoteValue($d)];
+            }
+        } // "> date" formats
+        elseif (preg_match('~^>\s*(' . $dp . ')$~', $value, $mm) || preg_match(
+                '~^(' . $dp . ')(\s*<|\s+-|\s*--)$~',
+                $value,
+                $mm
+            )) {
             $d = trim($mm[1]);
-            if($d) return ['>', $field, $this->connection->quoteValue($d)];
-        }
-        // "date -- date" formats
-        elseif(preg_match('~^('.$dp.')(\s*<\s*|\s+-\s+|\s*--\s*)('.$dp.')$~', $value, $mm)) {
+            if ($d) {
+                return ['>', $field, $this->connection->quoteValue($d)];
+            }
+        } // "date -- date" formats
+        elseif (preg_match('~^(' . $dp . ')(\s*<\s*|\s+-\s+|\s*--\s*)(' . $dp . ')$~', $value, $mm)) {
             $d1 = trim($mm[1]);
             $d2 = trim($mm[3]);
-            if($d1 && $d2)
-                return ['and', ['>', $field, $this->connection->quoteValue($d1)], ['<', $field, $this->connection->quoteValue($d2)]];
+            if ($d1 && $d2) {
+                return [
+                    'and',
+                    ['>', $field, $this->connection->quoteValue($d1)],
+                    ['<', $field, $this->connection->quoteValue($d2)]
+                ];
+            }
         }
 
         // Default: pattern ~ formatted date
@@ -2844,12 +2857,23 @@ class Query extends Component
      */
     public function filterCompare(string $value, string|Query|array $field): static
     {
-        if($value === '') return $this;
+        if ($value === '') {
+            return $this;
+        }
         if (preg_match('~^\s*(\d+)\s*--?\s*(\d+)\s*$~', $value, $matches)) {
-            return $this->andWhere(['between', $field, $this->connection->quoteValue($matches[1]), $this->connection->quoteValue($matches[2])]);
+            return $this->andWhere(
+                [
+                    'between',
+                    $field,
+                    $this->connection->quoteValue($matches[1]),
+                    $this->connection->quoteValue($matches[2])
+                ]
+            );
         }
         if (preg_match('~^\s*(\d+)\s*<\s*(\d+)\s*$~', $value, $matches)) {
-            return $this->andWhere(['>', $field, $this->connection->quoteValue($matches[1])])->andWhere(['<', $field, $this->connection->quoteValue($matches[2])]);
+            return $this->andWhere(['>', $field, $this->connection->quoteValue($matches[1])])->andWhere(
+                ['<', $field, $this->connection->quoteValue($matches[2])]
+            );
         }
         if (preg_match('/^(<>|>=|>|<=|<|=)/', $value, $matches)) {
             $operator = $matches[1];

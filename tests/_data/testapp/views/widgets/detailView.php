@@ -11,11 +11,11 @@
  * - value: value to display, default is model value. Can be a callable function($name, $model)
  */
 
-use uhi67\umvc\App;
-use uhi67\umvc\AppHelper;
-use uhi67\umvc\ArrayHelper;
-use uhi67\umvc\BaseModel;
-use uhi67\umvc\Html;
+use educalliance\umvc\App;
+use educalliance\umvc\AppHelper;
+use educalliance\umvc\ArrayHelper;
+use educalliance\umvc\BaseModel;
+use educalliance\umvc\Html;
 
 if(isset($attributes) && !is_array($attributes) && !($model instanceof BaseModel)) throw new Exception('$model must be an array or a BaseModel');
 $attributeNames = is_array($model) ? array_keys($attributes) : $model->attributes();

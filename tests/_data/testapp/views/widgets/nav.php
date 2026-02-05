@@ -16,7 +16,7 @@
  		- badge:	badge caption (optional)
  */
 
-use uhi67\umvc\Html;
+use educalliance\umvc\Html;
 
 ?>
 <ul <?= Html::attributes($options) ?>>

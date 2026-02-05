@@ -7,8 +7,8 @@ use Codeception\Lib\Framework;
 use Codeception\Lib\ModuleContainer;
 use Symfony\Component\BrowserKit\Response;
 use Symfony\Component\DomCrawler\Crawler;
-use uhi67\umvc\App;
-use uhi67\umvc\Model;
+use educalliance\umvc\App;
+use educalliance\umvc\Model;
 use Codeception\Configuration;
 use Codeception\Exception\ModuleConfigException;
 use Codeception\Exception\ModuleException;
@@ -27,7 +27,7 @@ use ReflectionException;
  *
  * 1. Create a file named 'AppHelper.php' in your project's tests/_support/Helper folder referring to this:
  *
- * `require_once dirname(__DIR__, 3) . '/vendor/uhi67/umvc/testhelper/AppTestHelper.php';`
+ * `require_once dirname(__DIR__, 3) . '/vendor/educalliance/umvc/testhelper/AppTestHelper.php';`
  *
  * 2. Include in your `...suite.yml` as:
  *

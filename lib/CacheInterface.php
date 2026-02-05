@@ -1,6 +1,6 @@
 <?php /** @noinspection PhpIllegalPsrClassPathInspection */
 
-namespace uhi67\umvc;
+namespace educalliance\umvc;
 
 /**
  * # Cache interface

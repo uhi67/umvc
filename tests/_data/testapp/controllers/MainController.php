@@ -5,7 +5,7 @@
 
 namespace testapp\controllers;
 
-use uhi67\umvc\Controller;
+use educalliance\umvc\Controller;
 
 class MainController extends Controller
 {

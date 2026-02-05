@@ -36,8 +36,8 @@ Run `php app` to get the list of available commands, including the built-in and 
 
 Installation
 ------------
-The framework can be included into your project with composer. Run `composer require uhi67/umvc:dev-master`.
-New, empty project can be created using `composer create-project --prefer-dist uhi67/umvc-app name`. This will deliver you a new empty application using UMVC framework into the named directory. Choose any name you prefer.
+The framework can be included into your project with composer. Run `composer require educalliance/umvc:*`.
+New, empty project can be created using `composer create-project --prefer-dist educalliance/umvc-app name`. This will deliver you a new empty application using UMVC framework into the named directory. Choose any name you prefer.
 
 First steps to build your application using UMVC
 ------------------------------------------------
@@ -45,7 +45,7 @@ First steps to build your application using UMVC
 **Warning: This part is under construction.**
 Learn more about the mentioned classes in the docblock of the class definition.
 
-1. Create `composer.json` of your application, and include `uh67/umvc`, e.g `composer init --name myname/myapp --require uhi67/umvc:*`.
+1. Create `composer.json` of your application, and include `uh67/umvc`, e.g `composer init --name myname/myapp --require educalliance/umvc:*`.
 2. Run `composer update`.
 3. Copy `vendor/uh67/umvc/app` to your application's root. This is the launcher of the CLI commands. 
 4. Copy `vendor/uh67/umvc/www/index.php` and `.htaccess` to your application's www directory. This is the router of the web interface. 
@@ -55,20 +55,20 @@ Learn more about the mentioned classes in the docblock of the class definition.
 
 #### Build your application using MVC pattern
 
-1. Create your controllers in the `controllers` dir, using `\app\controllers` namespace, and derive them from `uhi67\umvc\Controller`.
+1. Create your controllers in the `controllers` dir, using `\app\controllers` namespace, and derive them from `educalliance\umvc\Controller`.
 2. Create the views in the `views` dir, in simple PHTML format, and organize them according to `views/controller/action.php` structure.
-3. Create your models in the `models` directory. Database models are `\uhi67\umvc\Model`, database-less models are `\uhi67\umvc\BaseModel`.
+3. Create your models in the `models` directory. Database models are `\educalliance\umvc\Model`, database-less models are `\educalliance\umvc\BaseModel`.
                                          
 #### Other basic principles
 
 1. Migrations are for versioning and recording database changes in source code. Place migration steps into `migrations` directory.
 2. Layout is a special view to embed all other views within. Place layouts in `views/layouts` directory. Views can call other partial views.
-3. You can define CLI commands in `commands` directory, deriving from `\uhi67\umvc\Command` class. There are some built-in command in the framework. `php app` command lists all available commands, both built-in and custom ones.
+3. You can define CLI commands in `commands` directory, deriving from `\educalliance\umvc\Command` class. There are some built-in command in the framework. `php app` command lists all available commands, both built-in and custom ones.
 4. A simple file-based localization support is built-in. Place your translations into `messges/la.php` files where "la" is the language you want to translate to.
 
 #### Component configurations and properties
 
-All components,most of UMVC classes, including the main App class itself, is a `\uhi67\umvc\Component`.
+All components,most of UMVC classes, including the main App class itself, is a `\educalliance\umvc\Component`.
 `Component` implements **property** features: magic getter and setter uses getProperty and setProperty methods.
 `Component` is **configurable**: constructor accepts a configuration array containing values for public properties.
 
@@ -92,20 +92,20 @@ All components,most of UMVC classes, including the main App class itself, is a `
 
 The single entry script for the web application is the `www/index.php`.
 Respectively, the single entry script for the CLI application is the `app` file.
-Both of them must be copied into your application directory from the `vendor/uhi67/umvc/` directory.
+Both of them must be copied into your application directory from the `vendor/educalliance/umvc/` directory.
 
 The `www/.htaccess` rules redirect all not-found requests to the `www/index.php`.
 However, static assets are served directly from the www directory. Learn more about serving library assets later.
 
 The `index.php` initializes the autoloader, load the main configuration, creates the main object 
-(class defined in the configuration, usually `uhi67/umvc/App` or its descendant).
+(class defined in the configuration, usually `educalliance/umvc/App` or its descendant).
 The main configuration follows the rules of the configurable `Component`.
 
 ##### Routing
 
 All URL formed as https://myapp/acontroller/anaction is processed the following way:
 
-`uhi67/umvc/App` parses the request, computes the actual controller class (derived from `uhi67/umvc/Controller`) to use, 
+`educalliance/umvc/App` parses the request, computes the actual controller class (derived from `educalliance/umvc/Controller`) to use, 
 creates the controller and runs the requested action method. As in the example above, **acontroller** refers to your controller 
 class in your `controllers` directory as _AcontrollerController_, and **anaction** refers to the action method (as _actionAnaction_).
 
@@ -115,7 +115,7 @@ default controller without specifying the controller name - the only restriction
 
 Al CLI command formed as `php app acontroller/anaction` is processed the following way:
 
-`uhi67/umvc/App` parses the request, computes the actual controller class (derived from `uhi67/umvc/Command`) to use,
+`educalliance/umvc/App` parses the request, computes the actual controller class (derived from `educalliance/umvc/Command`) to use,
 creates the controller and runs the requested action method. As in the example above, **acontroller** refers to your controller
 class in your `commands` directory as _AcontrollerController_, and **anaction** refers to the action method (as _actionAnaction_).
 Built-in commands can be run the same way. A command with the same name in our application overrides the built-in command.

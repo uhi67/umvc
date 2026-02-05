@@ -3,18 +3,18 @@
 
 /** @noinspection PhpUnused */
 
-namespace uhi67\umvc\commands;
+namespace educalliance\umvc\commands;
 
 use Exception;
 use Throwable;
-use uhi67\umvc\App;
-use uhi67\umvc\AppHelper;
-use uhi67\umvc\ArrayHelper;
-use uhi67\umvc\CliHelper;
-use uhi67\umvc\Command;
-use uhi67\umvc\Connection;
-use uhi67\umvc\Migration;
-use uhi67\umvc\SqlMigration;
+use educalliance\umvc\App;
+use educalliance\umvc\AppHelper;
+use educalliance\umvc\ArrayHelper;
+use educalliance\umvc\CliHelper;
+use educalliance\umvc\Command;
+use educalliance\umvc\Connection;
+use educalliance\umvc\Migration;
+use educalliance\umvc\SqlMigration;
 
 /**
  * Migration command
@@ -108,7 +108,7 @@ class MigrateController extends Command
                 )) {
                 // Check in the database
                 $name = pathinfo($file, PATHINFO_FILENAME);
-                $applied = \uhi67\umvc\models\Migration::getOne(['name' => $name]);
+                $applied = \educalliance\umvc\models\Migration::getOne(['name' => $name]);
                 if (!$applied) {
                     $new[] = $file;
                 }
@@ -174,7 +174,7 @@ class MigrateController extends Command
                     }
                     if ($success) {
                         // Insert into database
-                        $migrationDone = new \uhi67\umvc\models\Migration([
+                        $migrationDone = new \educalliance\umvc\models\Migration([
                             'name' => $name,
                             'applied' => time(),
                         ]);
@@ -204,7 +204,7 @@ class MigrateController extends Command
                         }
 
                         // Insert into database
-                        $migrationDone = new \uhi67\umvc\models\Migration([
+                        $migrationDone = new \educalliance\umvc\models\Migration([
                             'name' => $name,
                             'applied' => time(),
                         ]);
@@ -378,7 +378,7 @@ class MigrateController extends Command
         $content = <<<EOT
 <?php
 namespace app\migrations;
-use uhi67\umvc\Migration;
+use educalliance\umvc\Migration;
 
 class %className% extends Migration {
 	/**

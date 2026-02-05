@@ -1,6 +1,6 @@
 <?php
 
-use uhi67\umvc\Ansi;
+use educalliance\umvc\Ansi;
 
 class AnsiTest extends \Codeception\Test\Unit
 {

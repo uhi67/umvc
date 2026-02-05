@@ -1,7 +1,7 @@
 <?php
 /** @noinspection PhpUnused */
 
-namespace uhi67\umvc;
+namespace educalliance\umvc;
 
 use DateTime;
 use Exception;

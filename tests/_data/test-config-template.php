@@ -8,8 +8,8 @@ Must not depend on any external condition.
 Don't put in any statement causing side effects.
 */
 
-use uhi67\umvc\FileCache;
-use uhi67\umvc\L10nFile;
+use educalliance\umvc\FileCache;
+use educalliance\umvc\L10nFile;
 
 require __DIR__.'/testapp/models/User.php';
 
@@ -30,7 +30,7 @@ return [
 
     'components' => [
         'db' => [
-            \uhi67\umvc\MysqlConnection::class,
+            \educalliance\umvc\MysqlConnection::class,
             // ---- DATABASE CONFIGURATION
             'name' => $dbName = getenv('DB_NAME') ?: "umvc-test",
             'dsn' => getenv('DB_DSN') ?: "mysql:host=localhost;dbname=$dbName",

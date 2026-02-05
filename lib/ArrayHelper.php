@@ -3,7 +3,7 @@
 
 /** @noinspection PhpIllegalPsrClassPathInspection */
 
-namespace uhi67\umvc;
+namespace educalliance\umvc;
 
 use Closure;
 use Exception;

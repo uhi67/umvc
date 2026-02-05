@@ -1,9 +1,9 @@
 <?php
 /** @noinspection PhpIllegalPsrClassPathInspection */
 
-namespace uhi67\umvc\models;
+namespace educalliance\umvc\models;
 
-use uhi67\umvc\Model;
+use educalliance\umvc\Model;
 
 /**
  * @property string $name

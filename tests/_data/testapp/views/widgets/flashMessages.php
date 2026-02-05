@@ -1,5 +1,5 @@
 <?php
-	/** @var \uhi67\umvc\App $this */
+	/** @var \educalliance\umvc\App $this */
 	/** @var array $messages -- [[severity, message],...] */
 
 	$content = '';
