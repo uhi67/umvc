@@ -26,6 +26,15 @@ class MailerPhp extends Component implements MailerInterface
     private ?string $_status;
 
     /**
+     * @throws Exception -- if PHPMailer is not installed
+     */
+    public function init(): void {
+        if(!class_exists(PHPMailer::class)) {
+            throw new Exception('MailerPhp: The required PHPMailer is not installed. Run `composer require phpmailer/phpmailer` to install it.');
+        }
+    }
+
+    /**
      * @param string[]|string $recipients -- [[address, name], ...] -- or a single recipient
      * @param string $subject
      * @param array|string $message -- html/plain or plain

@@ -31,7 +31,13 @@
     "php-webdriver/webdriver": "^1.0",
     "codeception/module-filesystem": "^3.0.1",
     "codeception/lib-innerbrowser": "^4.0.6",
-    "codeception/module-rest": "^3.4.1"
+    "codeception/module-rest": "^3.4.1",
+    "phpmailer/phpmailer": "*",
+    "simplesamlphp/simplesamlphp": "*"
+  },
+  "suggest": {
+    "phpmailer/phpmailer": "*",
+    "simplesamlphp/simplesamlphp": "*"
   },
   "scripts": {
   },
