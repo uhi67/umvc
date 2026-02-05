@@ -6,8 +6,10 @@
 namespace uhi67\umvc;
 
 use app\models\User;
+use uhi67\umvc\LogLevel;
 use ErrorException;
 use Exception;
+use Psr\Log\LoggerInterface;
 use Throwable;
 
 /**
@@ -54,6 +56,7 @@ use Throwable;
  * @property-read AuthManager $auth -- the actual auth manager
  * @property-read Connection $connection -- the default database connection defined in 'db' component
  * @property-read L10n $l10n
+ * @property-read LoggerInterface $logger
  * @property-read Session $session
  * @property User $user {@see static::getUser()}
  * @package UMVC Simple Application Framework
@@ -115,6 +118,8 @@ class App extends Component
     public string $locale = 'en-GB';
     /** @var string[] $classPath -- The path of the actually executed Controller including controller name, see also {@see Controller::$classPath} */
     public ?array $classPath = null;
+    /** @var string $logLevel -- UMVC internal log level. UMVC logs below this level will not be sent to the logger, except at some error events. Also, the logLevel for the default logger if no logger is declared in the config. */
+    public string $logLevel = LogLevel::DEBUG;
 
     /** @var Component[]|null $_components -- the configured components */
     private ?array $_components = null;
@@ -213,6 +218,14 @@ class App extends Component
         }
 
         // Initialize component objects
+        if (!isset($components['logger'])) {
+            $components['logger'] = [
+                'class' => SimpleLogger::class,
+                'logFile' => $this->runtimePath . '/logs/app.log',
+                'logLevel' => $this->logLevel,
+            ];
+        }
+
         $this->_components = [];
         if (!is_array($components)) {
             throw new Exception("Components configuration must be an array");
@@ -979,30 +992,26 @@ class App extends Component
         ) : $compute();
     }
 
+    public static function logInner(string $level, string|array|object $message, array $params = []): void
+    {
+        if (LogLevel::isHigherOrEqual($level, App::$app->logLevel)) {
+            static::log($level, $message, $params);
+        }
+    }
+
     /**
      * A very basic logger
      *
      * The PSR-3 standard levels are used (@param string $level -- emergency/alert/critical/error/warning/notice/info/debug
      * @param string|array|object $message -- string only. If not a string, used as a json-encoded string.
-     * @param string[] $params
+     * @param string[] $context
+     * @throws Exception
      * @see \Psr\Log\LogLevel)
      *
      */
-    public static function log(string $level, string|array|object $message, array $params = []): void
+    public static function log(string $level, string|array|object $message, array $context = []): void
     {
-        $logfile = self::$app->runtimePath . '/logs/app.log';
-        $sid = session_id();
-        $uid = App::$app->getUserId();
-        if (!is_string($message)) {
-            $message = json_encode($message);
-        }
-        if ($params) {
-            foreach ($params as $k => $v) {
-                $message = str_replace("\{$k\}", $v, $message);
-            }
-        }
-        $data_to_log = date(DATE_ATOM) . ' ' . $level . ' (' . $uid . ') [' . $sid . '] ' . $message . PHP_EOL;
-        file_put_contents($logfile, $data_to_log, FILE_APPEND + LOCK_EX);
+        App::$app->logger->log($level, $message, $context);
     }
 
     /**

@@ -1,7 +1,5 @@
 <?php
-
-namespace app\vendor\uhi67\umvc\tests\unit;
-
+namespace tests\unit;
 use uhi67\umvc\ArrayHelper;
 
 class ArrayHelperTest extends \Codeception\Test\Unit

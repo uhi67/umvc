@@ -45,9 +45,14 @@
     "psr-4": {
       "uhi67\\umvc\\commands\\": "commands",
       "uhi67\\umvc\\models\\": "models",
-      "uhi67\\umvc\\": "lib",
+      "uhi67\\umvc\\": "lib"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
       "Helper\\": "lib/testhelper",
-      "testapp\\": "tests/_data/testapp"
+      "testapp\\": "tests/_data/testapp",
+      "tests\\": "tests/"
     }
   },
   "config": {

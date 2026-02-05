@@ -1,6 +1,5 @@
 <?php
 /** @noinspection PhpIllegalPsrClassPathInspection */
-
 /** @noinspection PhpUnused */
 
 namespace uhi67\umvc;

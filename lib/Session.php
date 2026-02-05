@@ -1,8 +1,9 @@
 <?php
-/** Session class -- a simple basic session handler */
-
+/** @noinspection PhpIllegalPsrClassPathInspection */
 /** @noinspection PhpIllegalPsrClassPathInspection */
 /** @noinspection PhpUnused */
+
+/** Session class -- a simple basic session handler */
 
 namespace uhi67\umvc;
 
@@ -62,9 +63,9 @@ class Session extends Component
         }
 
         if (!static::is_started() && !session_start()) {
-            static::log('Error starting session');
+            App::log(LogLevel::ERROR, 'Error starting session');
         } else {
-            static::log('Session is started');
+            App::logInner(LogLevel::DEBUG, 'Session is started');
         }
     }
 

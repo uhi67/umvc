@@ -771,9 +771,7 @@ class Query extends Component
             $this->stmt = $this->prepareStatement();
             $this->stmt->execute();
             $result = $this->stmt->fetchAll(PDO::FETCH_ASSOC);
-            if (ENV_DEV) {
-                App::log(LogLevel::DEBUG, sprintf('Elapsed=%.3f SQL = %s', microtime(true) - $start, $this->sql));
-            }
+            App::logInner(LogLevel::DEBUG, sprintf('Elapsed=%.3f SQL = %s', microtime(true) - $start, $this->sql));
         } catch (Exception $e) {
             App::log(LogLevel::ERROR, $e->getMessage() . ' while executing SQL: ' . $this->sql);
             if (ENV_DEV) {
@@ -831,7 +829,7 @@ class Query extends Component
             return $this->_one = null;
         } // Note: Null value is not stored effectively...
         if (ENV_DEV) {
-            App::log(LogLevel::DEBUG, sprintf('Elapsed=%.3f SQL = %s', microtime(true) - $start, $this->sql));
+            App::logInner(LogLevel::DEBUG, sprintf('Elapsed=%.3f SQL = %s', microtime(true) - $start, $this->sql));
         }
 
         // Populate model
@@ -910,7 +908,7 @@ class Query extends Component
             }
         }
         if (ENV_DEV) {
-            App::log(LogLevel::DEBUG, sprintf('Elapsed=%.3f SQL = %s', microtime(true) - $start, $this->sql));
+            App::logInner(LogLevel::DEBUG, sprintf('Elapsed=%.3f SQL = %s', microtime(true) - $start, $this->sql));
         }
 
         if ($column === 0) {
