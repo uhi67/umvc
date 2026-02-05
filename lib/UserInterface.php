@@ -1,4 +1,4 @@
-<?php
+<?php /** @noinspection PhpIllegalPsrClassPathInspection */
 
 namespace uhi67\umvc;
 
@@ -13,38 +13,39 @@ namespace uhi67\umvc;
  * }
  * ```
  *
+ * @property-read string $userId
  */
 interface UserInterface
 {
     /**
-     * Must update the User object using the attributes provided by login process
+     * Must update the User object using the attributes provided by the login process
      *
      * @param array $attributes
      * @return mixed|false -- uid on success, false on failure
      */
-    public function updateUser($attributes);
+    public function updateUser(array $attributes): mixed;
 
     /**
-     * Must return the user object associated to the given uid (e.g. a model instance)
+     * Must return the user object associated with the given uid (e.g. a model instance)
      *
      * @param mixed $uid
-     * @return UserInterface
+     * @return UserInterface|null
      */
-    public static function findUser($uid);
+    public static function findUser(mixed $uid): ?UserInterface;
 
     /**
-     * Must create (and save) a new user object associated to the given uid and using the attributes provided
+     * Must create (and save) a new user object associated with the given uid and using the attributes provided
      *
      * @param mixed $uid
      * @param array $attributes
-     * @return UserInterface
+     * @return UserInterface|null -- null if the user cannot be created
      */
-    public static function createUser($uid, $attributes);
+    public static function createUser(mixed $uid, array $attributes): UserInterface|null;
 
     /**
      * Must return the uid of the user object (used in session)
      *
      * @return mixed
      */
-    public function getUserId();
+    public function getUserId(): mixed;
 }

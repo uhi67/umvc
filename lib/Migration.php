@@ -1,9 +1,8 @@
-<?php
+<?php /** @noinspection PhpIllegalPsrClassPathInspection */
 /** @noinspection PhpUnused */
 
 namespace uhi67\umvc;
 
-use Codeception\Util\Debug;
 use Exception;
 use Throwable;
 
@@ -16,15 +15,15 @@ use Throwable;
  *
  *        php app migrate create <name>
  *
- * Then, fill in the 'up()' method with the migration job. You may access the database through $this->connection property.
+ * Then, fill in the 'up()' method with the migration job. You may access the database through `$this->connection` property.
  *
- * ### Migrate database up to current state:
+ * ### Migrate the database up to the current state:
  *
  *        php command/migrate.php
  *
  * ### Migrate down to any commit:
  *
- *        1. Delete database completely (all data will be lost)
+ *        1. Delete the database completely (all data will be lost)
  *        2. Migrate up to the current statue `php command/migrate.php`
  *
  * ## Options:
@@ -36,19 +35,19 @@ use Throwable;
  *
  * ## Migration file formats
  *
- * Migration files in migrations directory are executed by name order. The standard name convention is `mYMD_His_name.ext`
+ * Migration files in the migrations directory are executed by name order. The standard name convention is `mYMD_His_name.ext`
  *
  * ### 1. SQL format
  *
- * A plain text file containing a single SQL command. The command may be terminated by ;
+ * A plain text file containing a single SQL command. The command may be terminated by ';'
  * Lines beginning with -- and sections between /* and _*_/ are comments
  * The SQL command is executed via `PDO::query()`
  *
  * ### 2. php format
  *
- * A php class extending Migration. May be created by `php app migrate create name` command.
- * The class must have a public function `up()`. This function performs a migration to current state.
- * The migration is enclosed in a mySQL transaction, therefore if any part of it fails, the entire migration step will be rolled back.
+ * A php class extending Migration. May be created by the `php app migrate/create name` command.
+ * The class must have a public function `up()`. This function performs a migration to the current state.
+ * The migration is enclosed in a mySQL transaction, therefore, if any part of it fails, the entire migration step will be rolled back.
  *
  * In the method you may use:
  * - `$this->executeSqlFile()` to execute an SQL file containing multiple SQL commands.
@@ -61,11 +60,11 @@ use Throwable;
 abstract class Migration extends Component
 {
     /** @var Connection $connection */
-    public $connection;
-    public $verbose;
+    public Connection $connection;
+    public int $verbose = 0;
 
     /** @var App $app */
-    public $app;
+    public App $app;
 
     /**
      * This method must do the migration up job in the migration class.
@@ -73,7 +72,7 @@ abstract class Migration extends Component
      * @return bool -- must return true on success, false on failure
      * @throws Exception -- may throw an Exception on failure
      */
-    abstract public function up();
+    abstract public function up(): bool;
 
     /**
      * @param string $cmd -- the SQL command to execute
@@ -84,9 +83,9 @@ abstract class Migration extends Component
      * @throws Exception
      * @throws Throwable
      */
-    private function execSingle($cmd, $replacements, $filename, $line)
+    private function execSingle(string $cmd, array $replacements, string $filename, int $line): bool
     {
-        if (!empty($replacements) && is_array($replacements)) {
+        if (!empty($replacements)) {
             foreach ($replacements as $pair) {
                 if (is_array($pair) && isset($pair[0]) && isset($pair[1])) {
                     $cmd = str_replace($pair[0], $pair[1], $cmd);
@@ -98,23 +97,28 @@ abstract class Migration extends Component
             '/^CREATE\s+DATABASE/',
             // database must be created manually
             '/^USE\s/',
-            // not supported in prepared statement (not needed anyway)
+            // not supported in a prepared statement (not needed anyway)
             '/^START TRANSACTION/',
-            // not supported in prepared statement (migration step is wrapped in a transaction anyway)
+            // not supported in a prepared statement (a migration step is wrapped in a transaction anyway)
         ];
         foreach ($skipPatterns as $skipPattern) {
             if (preg_match($skipPattern, $cmd)) {
                 if ($this->verbose) {
                     echo "SQL statement at line  $line is skipped:", PHP_EOL, $cmd, PHP_EOL;
                 }
-                return true; // Not considered as failure
+                return true; // Not considered as a failure
             }
         }
         if ($this->verbose > 2) {
             echo "--- Executing SQL command at line $line:", PHP_EOL, $cmd, PHP_EOL;
         }
         try {
-            $stmt = $this->connection->pdo->query($cmd);
+            $params = $this->connection->params ?? [];
+            foreach ($params as $key => $value) {
+                if(!str_contains($cmd, sprintf(':%s', $key))) unset($params[$key]);
+            }
+            $stmt = $this->connection->pdo->prepare($cmd);
+            $result = $stmt && $stmt->execute($params);
         } catch (Throwable $e) {
             App::log(
                 'error',
@@ -130,7 +134,7 @@ abstract class Migration extends Component
             );
             throw $e;
         }
-        if ($stmt === false) {
+        if ($result === false) {
             $error = $this->connection->lastError;
             echo "SQL Command: $cmd", PHP_EOL;
             echo "Query failed at line $line in file $filename", PHP_EOL;
@@ -143,18 +147,18 @@ abstract class Migration extends Component
     /**
      * Executes an external SQL file
      *
-     * If file does not exist, an error message will be written out, and false will be returned.
+     * If the file does not exist, an error message will be written out, and false will be returned.
      *
-     * Executes SQL commands separated by ;
+     * Executes SQL commands separated by ';'
      * Multiline comments are not supported! (parser will fail)
      *
      * @param string $filename
      * @param array $replacements [[pattern, replace], ...]
      *
      * @return bool
-     * @throws Exception
+     * @throws Throwable
      */
-    public function executeSqlFile($filename, $replacements = [])
+    public function executeSqlFile(string $filename, array $replacements = []): bool
     {
         if (!file_exists($filename)) {
             echo "Migration SQL file '$filename' is missing", PHP_EOL;
@@ -164,17 +168,17 @@ abstract class Migration extends Component
             echo "Executing SQL file '$filename", PHP_EOL;
         }
 
-        // Executing separated by ;
+        // Executing separated by ';'
         // Multiline comments are not supported!
         $command = file($filename);
         $cmd = '';
         $i = 0;
         foreach ($command as $i => $line) {
-            if (substr(trim($line), 0, 2) == '--') {
+            if (str_starts_with(trim($line), '--')) {
                 continue;
             }
             $cmd .= $line;
-            if (substr(trim($line), -1) == ';') {
+            if (str_ends_with(trim($line), ';')) {
                 if (!static::execSingle($cmd, $replacements, $filename, $i)) {
                     return false;
                 }

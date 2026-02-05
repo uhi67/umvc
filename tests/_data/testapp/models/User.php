@@ -1,4 +1,6 @@
 <?php
+/** @noinspection PhpIllegalPsrClassPathInspection */
+
 namespace app\models;
 
 use uhi67\umvc\UserInterface;
@@ -14,14 +16,16 @@ use Exception;
  * @property string $name           varchar(255)
  * @property string $created_at     timestamp
  */
-class User extends Model implements UserInterface {
+class User extends Model implements UserInterface
+{
     /**
      * Must return the name of the table.
      * Defined explicitly, the default rule is not working on derived classes :-(
      *
      * @return string
      */
-    public static function tableName() {
+    public static function tableName(): string
+    {
         return 'user';
     }
 
@@ -33,13 +37,15 @@ class User extends Model implements UserInterface {
      *
      * @return array[]
      */
-    public static function rules() {
+    public static function rules(): array
+    {
         return [
             'uid' => ['unique', ['pattern', '/^[\w.-]+@[\w.-]+$/']],
         ];
     }
 
-    public static function attributeLabels() {
+    public static function attributeLabels(): array
+    {
         return [
             'id' => 'ID',
             'uid' => 'UID (EPPN)',
@@ -54,37 +60,38 @@ class User extends Model implements UserInterface {
      * @return string
      * @throws Exception
      */
-    public function getScope() {
+    public function getScope(): string
+    {
         return AppHelper::substring_after($this->uid, '@');
     }
 
     /**
-     * Return the user object associated to the given uid (e.g. a model instance)
+     * Return the user object associated with the given uid (e.g. a model instance)
      *
      * @throws Exception
      */
-    public static function findUser($uid)
+    public static function findUser(mixed $uid): ?UserInterface
     {
-        return static::getOne(['uid'=>$uid]);
+        return static::getOne(['uid' => $uid]);
     }
 
     /**
-     * Create (and save) a new user object associated to the given uid and using the attributes provided
+     * Create (and save) a new user object associated with the given uid and using the attributes provided
      *
      * @throws ReflectionException
      * @throws Exception
      */
-    public static function createUser($uid, $attributes)
+    public static function createUser(mixed $uid, array $attributes): UserInterface|null
     {
         $data = [
             'uid' => $uid,
             'name' => isset($attributes['displayName']) ? $attributes['displayName'][0] : $uid,
         ];
         $user = new User($data);
-        if(!$user->save()) {
-            App::log('error', "Insert of user '$uid' failed during login. ".$user->connection->lastError);
-            // -1 indicates that SAML login is successful, but the application login failed. Prevents endless loop.
-            App::addFlash("Login failed: user record cannot be created for ".$uid, 'error');
+        if (!$user->save()) {
+            App::log('error', "Insert of user '$uid' failed during login. " . $user->connection->lastError);
+            // -1 indicates that SAML login is successful, but the application login failed. Prevents endless floops.
+            App::addFlash("Login failed: user record cannot be created for " . $uid, 'error');
             return null;
         }
         return $user;
@@ -93,14 +100,15 @@ class User extends Model implements UserInterface {
     /**
      * Return the uid of the user object (used in session)
      *
-     * @return mixed
+     * @return string
      */
-    public function getUserId()
+    public function getUserId(): string
     {
         return $this->uid;
     }
 
-	public function updateUser($attributes) {
-		return $this->uid;
-	}
+    public function updateUser(array $attributes): string
+    {
+        return $this->uid;
+    }
 }

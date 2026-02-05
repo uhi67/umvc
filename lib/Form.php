@@ -1,4 +1,5 @@
 <?php
+/** @noinspection PhpIllegalPsrClassPathInspection */
 
 namespace uhi67\umvc;
 
@@ -6,6 +7,8 @@ use Exception;
 
 /**
  * Form class is a simple widget, currently a simple wrapper for the field method.
+ *
+ * Form visual elements are compatible with Bootstrap 3
  *
  * **Example**
  *
@@ -30,23 +33,24 @@ use Exception;
  */
 class Form extends Component
 {
-    /** @var $model -- The model instance to display fields of, or null if the form is model-independent or model is specified at fields */
-    public $model;
-    /** @var string $layout -- null (default, a simple layout), or horizontal (label and value is in the same line) */
-    public $layout;
-    /** @var string $template -- The partial view file for the fields, may be computed from layout. Default is '_form/_field' */
-    public $template;
+    /** @var array|BaseModel|null $model -- The model instance to display fields of, or null if the form is model-independent or model is specified at fields */
+    public array|null|BaseModel $model = null;
+    /** @var string|null $layout -- null (default, a simple layout), or horizontal (label and value are in the same line) */
+    public ?string $layout = null;
+    /** @var string $template -- The partial view file for the fields. Can be computed from layout. The default is '_form/_field' */
+    public string $template = '_form/_field';
     /** @var string|array $labelClass -- additional classname(s) for all field labels */
-    public $labelClass = '';
+    public string|array $labelClass = '';
     /** @var string|array $noticeClass -- additional classname(s) for all field notices */
-    public $noticeClass = '';
+    public string|array $noticeClass = '';
     /** @var string|array $wrapperClass -- classname(s) for the wrapper div around the input part (needed for horizontal) */
-    public $wrapperClass = '';
+    public string|array $wrapperClass = '';
+    public bool $disabled = false;
 
     /**
      * @throws Exception
      */
-    public function init()
+    public function init(): void
     {
         if ($this->layout) {
             $this->template = '_form/_field_' . $this->layout;
@@ -70,7 +74,7 @@ class Form extends Component
      *  - id -- the id attribute of the input tag, default is 'field-tablename-fieldName'
      *  - label -- the label text, default is the attribute label defined in the Model class
      *  - layout -- null for default, or 'horizontal' or any other layout defined as partial view named '_form/_field_layout'
-     *  - template: the partial view to use, default is '_form/_field'. Effective only if layout is not defined.
+     *  - template: the partial view to use, default is '_form/_field'. Effective only if the layout is not defined.
      *  - class -- the additional classnames for the input tag
      *  - divClass -- the additional classnames for the enclosing div
      *  - icon -- 'glyphicon glyphicon-xxx' or 'fa fa-xxx' -- icon prepended to the label
@@ -82,19 +86,22 @@ class Form extends Component
      *
      * 'select' and 'radiolist' field types are rendered considering 'required' and 'placeholder' options. If the field is not required, an empty selection option is included.
      *
-     * @param string|null $fieldName -- the fieldname of the model (property) or name of the standalone field. May be null for button type
+     * @param string|null $fieldName -- the fieldname of the model (property) or name of the standalone field. Can be null for a button type
      * @param array $options -- other options, see above
-     * @param Model|null $model -- the model instance to display a field of, or false (standalone field)
+     * @param Model|array|bool|null $model -- the model instance to display a field of, or false (standalone field)
      *
      * @throws Exception
      */
-    public function field($fieldName, array $options = [], $model = null)
+    public function field(?string $fieldName, array $options = [], Model|array|bool $model = null): string
     {
         if ($model === null) {
             $model = $this->model;
         }
+        if($this->disabled) {
+            $options['options']['disabled'] = true;
+        }
         $field = new Field(array_merge([
-            'model' => $model,
+            'model' => $model?:null,
             'fieldName' => $fieldName,
             'form' => $this,
             'template' => $this->template,

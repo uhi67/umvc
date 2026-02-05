@@ -4,19 +4,20 @@
 namespace uhi67\umvc;
 
 use Exception;
+use ReflectionException;
 use ReflectionMethod;
 
 /**
  * Represents a function in the application.
  * The App dispatcher will run the proper action of the selected Controller class.
  *
- * All main function's path in the application must be mapped to a Controller class named `<function>Controller`.
+ * All main function's paths in the application must be mapped to a Controller class named `<function>Controller`.
  * The `action<Action>` methods are mapped to the function action, e.g. CRUD action names.
  *
  * **Example:**
  * - Suppose the HTTP request is /user/create
  * - The dispatcher finds the UserController class, creates an instance of it, and invokes its go() method
- * - The UserController finds the actionCreate() method, based on the remainder of the path ('/create')
+ * - The UserController finds the actionCreate() method, based on the remainder of the path (`/create`)
  * - The actionCreate() method performs the desired function
  *
  * ### Most important properties and methods:
@@ -30,24 +31,37 @@ use ReflectionMethod;
  * - render(): same as ->app->render();
  *
  * @package UMVC Simple Application Framework
+ * @property-read string $actionPath -- controller/action, e.g. 'course/update' {@see Controller::getActionPath()}
  */
-class Controller extends Component
+class Controller extends BaseController
 {
-    /** @var App $app -- the parent application object */
-    public $app;
-    /** @var string[] $path -- unused path elements after controller (or action) name */
-    public $path;
-    /** @var array -- query parameters to use */
-    public $query;
-    /** @var string|null -- name of the currently executed action (without 'action' prefix) */
-    public $action;
-
     /** @var Asset[] $assets -- registered assets indexed by name */
-    public $assets = [];
+    public array $assets = [];
+    /** @var string|null $classPath -- the controller id path for controller Id property */
+    public ?string $classPath = null;
 
-    public function init()
+    public function init(): void
     {
+        if (!$this->classPath) {
+            $this->classPath = static::getClasspath();
+        }
         $this->registerAssets();
+    }
+
+    public static function getClassPath(): ?string
+    {
+        return AppHelper::underscore(preg_replace('/Controller$/', '', static::shortName()), '-');
+    }
+
+    /**
+     * The full qualified identifier of the action (`"path"/"controller"/"action"`, eg. 'admin/teacher/create')
+     * to use as a permission name in access control
+     *
+     * @return string
+     */
+    public function getActionPath(): string
+    {
+        return $this->classPath . '/' . $this->action;
     }
 
     /**
@@ -60,15 +74,18 @@ class Controller extends Component
         // This function is intentionally empty. Descendants need not call it.
     }
 
+    // TODO: compare with BaseController!
+
     /**
      * Determines and performs the requested action using $this controller
      *
-     * @return int -- HTTP response status
-     * @throws Exception if no matching action
+     * @return int|string -- output string or exit status
+     * @throws ReflectionException
+     * @throws Exception
      */
-    public function go()
+    public function go(): int|string
     {
-        // Search for action method to call
+        // Search for the action method to call
         $methodName = null;
         $this->action = null;
         $func = 'action' . AppHelper::camelize($this->path[0] ?? 'default');
@@ -85,8 +102,8 @@ class Controller extends Component
         // Call the action method with the required parameters from the request
         if ($methodName) {
             if (!$this->beforeAction()) {
-                return 0;
-            }
+                return HTTP::HTTP_FORBIDDEN;
+            } // Silently failed
             $args = [];
             $ref = new ReflectionMethod($this, $methodName);
             foreach ($ref->getParameters() as $param) {
@@ -105,7 +122,7 @@ class Controller extends Component
                 }
             }
             $status = call_user_func_array([$this, $methodName], $args);
-            return $status ?: ($this->app->responseStatus ?: 200);
+            return $status ?: $this->app->responseStatus;
         }
 
         // We are here if no action method was found for the request
@@ -118,7 +135,7 @@ class Controller extends Component
      * The default behavior is true (enable the action).
      * Called only if the action method exists.
      */
-    public function beforeAction()
+    public function beforeAction(): bool
     {
         return true;
     }
@@ -139,10 +156,10 @@ class Controller extends Component
      *
      * @param array|object $data -- array or object containing the output data. Null is not permitted, use empty array for empty data
      * @param array $headers -- more custom headers to send
-     * @return int
+     * @return string
      * @throws Exception -- if the response is not a valid data to convert to JSON.
      */
-    public function jsonResponse($data, $headers = [])
+    public function jsonResponse(object|array $data, array $headers = []): string
     {
         foreach ($headers as $header) {
             $this->app->sendHeader($header);
@@ -152,8 +169,7 @@ class Controller extends Component
         if (!$result) {
             throw new Exception('Invalid data');
         }
-        echo $result;
-        return 0;
+        return $result;
     }
 
     /**
@@ -163,10 +179,10 @@ class Controller extends Component
      *
      * @param array[] $models -- array containing the output data. Null is not permitted, use empty array for empty data
      * @param array $headers -- more custom headers to send
-     * @return int
+     * @return int -- exit status
      * @throws Exception -- if the response is not a valid data to convert to JSON.
      */
-    public function csvResponse($models, $headers = [])
+    public function csvResponse(array $models, array $headers = []): int
     {
         foreach ($headers as $header) {
             $this->app->sendHeader($header);
@@ -184,7 +200,7 @@ class Controller extends Component
             }
             fclose($s);
         }
-        return 0;
+        return App::EXIT_STATUS_OK;
     }
 
     /**
@@ -192,10 +208,10 @@ class Controller extends Component
      *
      * @param string|mixed $message -- The error message (can be another structure)
      * @param int $status
-     * @return int
+     * @return string
      * @throws Exception
      */
-    public function jsonErrorResponse($message, $status = 500): int
+    public function jsonErrorResponse(mixed $message, int $status = HTTP::HTTP_INTERNAL_SERVER_ERROR): string
     {
         $protocol = ($_SERVER['SERVER_PROTOCOL'] ?? 'HTTP/1.0');
         $title = HTTP::$statusTexts[$status] ?? '';
@@ -213,10 +229,13 @@ class Controller extends Component
      * @param string $format -- HTML: displays a HTML error page; JSON: returns a JSON error response
      * @param int $status
      * @return int
-     * @throws Exception -- in case of HTML (Exception will be caught and displayed as HTML)
+     * @throws Exception -- in the case of HTML (Exception will be caught and displayed as HTML)
      */
-    public function errorResponse($error, $format = 'HTML', $status  = 500): int
-    {
+    public function errorResponse(
+        string $error,
+        string $format = 'HTML',
+        int $status = HTTP::HTTP_INTERNAL_SERVER_ERROR
+    ): int {
         if ($format == 'JSON') {
             return $this->jsonErrorResponse($error, $status);
         }
@@ -233,7 +252,7 @@ class Controller extends Component
      *
      * **Rules for locale and language codes**
      * - If current locale is 'en-GB', the path with 'en-GB' is preferred, otherwise 'en' is used.
-     * - If current locale is 'en', the path with 'en' is used, no any 'en-*' is recognised.
+     * - If current locale is 'en', the path with 'en' is used, no any 'en-*' is recognized.
      * - If current locale is 'en-US', the path with 'en-US' is preferred, but no other 'en-*' is used.
      *
      * **Locale selection:**
@@ -243,15 +262,20 @@ class Controller extends Component
      *
      * @param string $viewName -- basename of a php view-file in the `views` directory, without extension and without localization code
      * @param array $params -- parameters to assign to variables used in the view
-     * @param string $layout -- the layout applied to this render after the view rendered. If false, no layout will be applied.
+     * @param string|null $layout -- the layout applied to this render after the view rendered. If false, no layout will be applied.
      * @param array $layoutParams -- optional parameters for the layout view
-     * @param string|bool|null $locale -- use localized layout selection (ISO 639-1 language / ISO 3166-1-a2 locale), see above
+     * @param bool|string|null $locale -- use localized layout selection (ISO 639-1 language / ISO 3166-1-a2 locale), see above
      *
-     * @return false|string
+     * @return int|string
      * @throws Exception
      */
-    public function render($viewName, $params = [], $layout = null, $layoutParams = [], $locale = null)
-    {
+    public function render(
+        string $viewName,
+        array $params = [],
+        string $layout = null,
+        array $layoutParams = [],
+        bool|string $locale = null
+    ): int|string {
         if ($locale === null || $locale === true) {
             $locale = $this->app->locale;
         }
@@ -269,7 +293,7 @@ class Controller extends Component
     }
 
     /**
-     * Returns localized view name using long or short locale. Checks if the view file exists.
+     * Returns a localized view name using long or short locale. Checks if the view file exists.
      * Returns null if none of them exists.
      *
      * @param string $viewName
@@ -277,14 +301,14 @@ class Controller extends Component
      * @return string|null
      * @throws Exception
      */
-    private function localizedView($viewName, $locale)
+    private function localizedView(string $viewName, string $locale): ?string
     {
-        // Look up view file using full locale
+        // Look up a view file using full locale
         $lv = $this->localizedViewName($viewName, $locale);
         if ($this->app->viewFile($lv) && file_exists($this->app->viewFile($lv))) {
             return $lv;
         }
-        // Look up view file using short language code
+        // Look up a view file using short language code
         $lv = $this->localizedViewName($viewName, substr($locale, 0, 2));
         if ($this->app->viewFile($lv) && file_exists($this->app->viewFile($lv))) {
             return $lv;
@@ -292,7 +316,7 @@ class Controller extends Component
         return null;
     }
 
-    private function localizedViewName($viewName, $locale)
+    private function localizedViewName(string $viewName, string $locale): string
     {
         $p = strrpos($viewName, '/');
         if ($p === false) {
@@ -305,7 +329,7 @@ class Controller extends Component
      * @param Asset $asset
      * @return void
      */
-    public function registerAsset(Asset $asset)
+    public function registerAsset(Asset $asset): void
     {
         $this->assets[$asset->name] = $asset;
     }
@@ -313,41 +337,33 @@ class Controller extends Component
     /**
      * Link registered assets (optionally filtered by extensions)
      *
-     * @param string|string[] $extensions -- extension name(s), e.g. 'css', default is null == all extensions
-     * @return string -- the generated html code
+     * @param string|string[]|null $extensions -- extension name(s), e.g. 'css', default is null == all extensions
+     * @return string -- the generated HTML code
      * @throws Exception
      */
-    public function linkAssets($extensions = null)
+    public function linkAssets(array|string $extensions = null): string
     {
         $html = '';
         foreach ($this->assets as $asset) {
-            foreach ((array)$asset->files as $file) {
-                // Iterate file pattern in the cache (use extension filter)
+            foreach ($asset->files as $file) {
+                // Iterate a file pattern in the cache (use extension filter)
                 Asset::matchPattern($asset->dir, '', $file, function ($file) use ($asset, $extensions, &$html) {
                     $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
                     if (!$extensions || in_array($ext, (array)$extensions)) {
-                        switch ($ext) {
-                            // Create link based on extension
-                            case 'css':
-                                $html .= Html::link([
-                                    'rel' => 'stylesheet',
-                                    'href' => $asset->url($file)
-                                ]);
-                                break;
-                            case 'js':
-                                $html .= Html::tag('script', '', [
-                                    'src' => $asset->url($file)
-                                ]);
-                                break;
-                            default:
-                                throw new Exception("Unknown asset extension `$ext`");
-                        }
+                        $html .= match ($ext) {
+                            'css' => Html::link([
+                                'rel' => 'stylesheet',
+                                'href' => $asset->url($file)
+                            ]),
+                            'js' => Html::tag('script', '', [
+                                'src' => $asset->url($file)
+                            ]),
+                            default => throw new Exception("Unknown asset extension `$ext`"),
+                        };
                     }
                 });
             }
         }
-
         return $html;
     }
-
 }

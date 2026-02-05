@@ -16,6 +16,4 @@ WORKDIR /app
 
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod a+x /usr/local/bin/entrypoint.sh
-CMD printenv | sed 's/^\([a-zA-Z0-9_]*\)=\(.*\)$/export \1="\2"/g' > /root/env.sh \
-    && /usr/local/bin/entrypoint.sh || true \
-    && exec apache2-foreground
+ENTRYPOINT ["entrypoint.sh"]

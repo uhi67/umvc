@@ -31,13 +31,13 @@ class Html
     /**
      * Returns the HTML string of an `<tag>` element
      *
-     * @param $tag -- cleaned
-     * @param $content -- not cleaned to allow embed HTML structures
-     * @param $options -- cleaned. Options without value (null or false) will be omitted. Boolean `true` results an attribute present without value.
+     * @param string $tag -- cleaned
+     * @param string $content -- not cleaned to allow embed HTML structures
+     * @param scalar[] $options -- cleaned. Options without value (null or false) will be omitted. Boolean `true` results an attribute present without value.
      * @return string
      * @throws Exception -- if an attribute (option) value is not scalar
      */
-    public static function tag($tag, $content, $options = [])
+    public static function tag(string $tag, string $content, array $options = []): string
     {
         $tag = AppHelper::toNameID($tag);
         $parts = [$tag];
@@ -49,7 +49,15 @@ class Html
                 }
                 if ($value !== null && $value !== false) {
                     if (!is_scalar($value)) {
-                        throw new Exception('Attribute value must be scalar');
+                        App::$app->log(
+                            'error',
+                            sprintf(
+                                "Attribute value must be scalar at tag %s; value: %s",
+                                $tag,
+                                json_encode($value)
+                            )
+                        );
+                        continue;
                     }
                     $parts[] = $name . '="' . AppHelper::xss_clean($value) . '"';
                 }

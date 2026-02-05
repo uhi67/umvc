@@ -1,8 +1,10 @@
 <?php
+/** @noinspection PhpIllegalPsrClassPathInspection */
 
 namespace uhi67\umvc;
 
 use Exception;
+use Throwable;
 
 /**
  * Component to handle user login and logout.
@@ -19,7 +21,7 @@ use Exception;
  *      ...
  * ],
  * ```
- * @property-read array $attributes
+ * @property-read array $attributes -- cached value of the external attributes
  */
 abstract class AuthManager extends Component
 {
@@ -27,11 +29,13 @@ abstract class AuthManager extends Component
     const INVALID_USER = -1;
 
     /** @var string|null $uid -- The uid of the logged-in user or null (EPPN) */
-    public $uid;
-    /** @var string|UserInterface $userModel -- the model identifies a user */
-    public $userModel;
+    public ?string $uid = null;
+    /** @var string|UserInterface|null $userModel -- the model identifies a user */
+    public string|UserInterface|null $userModel;
     /** @var bool $autoUrl -- true to detect and perform ?login and ?logout in the REQUEST URL automatically */
-    public $autoUrl = true;
+    public bool $autoUrl = true;
+    /** @var string $sessionUid -- the session key to store the uid */
+    public string $sessionUid = 'uid';
 
     /**
      * Initializes the auth module.
@@ -39,7 +43,7 @@ abstract class AuthManager extends Component
      * @return void
      * @throws Exception
      */
-    public function init()
+    public function init(): void
     {
         if (!$this->userModel || !is_a($this->userModel, UserInterface::class, true)) {
             throw new Exception(
@@ -55,7 +59,7 @@ abstract class AuthManager extends Component
      * @return void
      * @throws Exception
      */
-    public function prepare()
+    public function prepare(): void
     {
         if ($this->autoUrl) {
             // Manage logout request
@@ -72,19 +76,24 @@ abstract class AuthManager extends Component
         $this->prepareUser();
     }
 
+    static public function requiredComponents(): array
+    {
+        return ['db', 'session'];
+    }
+
     /**
      * Manage already logged-in user
      *
      * @return UserInterface|null
      * @throws Exception
      */
-    public function prepareUser()
+    public function prepareUser(): ?UserInterface
     {
-        $this->uid = $_SESSION['uid'] ?? null;
+        $this->uid = App::$app->session->get($this->sessionUid) ?? null;
         if ($this->uid && $this->uid != static::INVALID_USER) {
             $user = $this->userModel::findUser($this->uid);
             if ($user) {
-                return $this->login($user);
+                return $this->_login($user);
             }
         }
         return null;
@@ -101,35 +110,84 @@ abstract class AuthManager extends Component
      * }
      * ```
      *
-     * @param string|null $returnTo -- return URL after login or null if none
+     * Valid parameters:
+     * 'ErrorURL': A URL that should receive errors from the authentication.
+     * 'KeepPost': If the current request is a POST request, keep the POST data until after the authentication.
+     * 'ReturnTo': The URL the user should be returned to after authentication.
+     * 'ReturnCallback': The function we should call after the user has finished authentication.
+     *
+     * @param array|string|null $params -- params or return URL after login or null if none
      * @return UserInterface|null
      * @throws Exception
      */
-    public function actionLogin($returnTo = null)
+    public function actionLogin(array|string $params = null): ?UserInterface
     {
-        if ($returnTo === null) {
+        if ($params === null) {
+            $params = [];
+        }
+        if (!array_key_exists('ReturnTo', $params)) {
             if (isset($_REQUEST['ReturnTo'])) {
-                $returnTo = $_REQUEST['ReturnTo'];
+                $params['ReturnTo'] = $_REQUEST['ReturnTo'];
             } else {
                 $request = $_GET;
                 unset($request['login']);
-                $returnTo = $this->parent->createUrl($request);
+                $params['ReturnTo'] = $this->parent->createUrl($request);
             }
         }
-        $this->parent->user = $this->requireLogin($returnTo);
-
+        $this->parent->user = $this->requireLogin($params);
         return $this->prepareUser();
+    }
+
+    /**
+     * Logs in the user into the application.
+     *
+     * @param UserInterface|string $uid -- A user object or a login id
+     * @param array $attributes -- login attributes
+     * @param bool $canCreate
+     * @return ?UserInterface
+     * @throws Exception
+     * @noinspection PhpUnusedParameterInspection
+     */
+    public function login(UserInterface|string $uid, array $attributes = [], bool $canCreate = true): ?UserInterface
+    {
+        if ($uid instanceof UserInterface) {
+            return $this->_login($uid);
+        }
+        $user = $this->userModel::findUser($uid);
+        if ($user) {
+            if (App::$app->session->get($this->sessionUid) != $user->getUserId()) {
+                if (!$user->updateUser($attributes)) {
+                    throw new Exception("User record cannot be saved ($uid)");
+                }
+            }
+            return $this->_login($user);
+        } else {
+            try {
+                $user = $this->userModel::createUser($uid, $attributes);
+                if (!$user) {
+                    throw new Exception("User not created");
+                }
+                return $this->_login($user);
+            } catch (Throwable $e) {
+                // -1 indicates that SAML login is successful, but the application login failed. Prevents endless loops.
+                $this->uid = static::INVALID_USER;
+                App::$app->session->set($this->sessionUid, $this->uid);
+                throw new Exception(
+                    "User record cannot be created ($uid)", HTTP::HTTP_INTERNAL_SERVER_ERROR, $e
+                );
+            }
+        }
     }
 
     /**
      * Makes the user logged in within the application.
      * Called automatically
      *
-     * @param UserInterface|string $user -- user ID or User model
+     * @param string|UserInterface $user -- user ID or User model
      * @return UserInterface|null -- the user object logged in on success or null on failure
      * @throws Exception
      */
-    public function login($user)
+    protected function _login(UserInterface|string $user): ?UserInterface
     {
         if (is_string($user)) {
             if (!$this->userModel || !is_a($this->userModel, UserInterface::class, true)) {
@@ -148,27 +206,26 @@ abstract class AuthManager extends Component
         if (!$this->parent instanceof App) {
             throw new Exception('AuthManager must be a component of the App');
         }
-        $this->parent->user = $userModel;
-        if (!$userModel) {
-            return null;
-        }
-        $_SESSION['uid'] = $userModel->getUserId();
-        return $userModel;
+        $this->uid = $userModel->getUserId();
+        return $this->parent->login($userModel);
     }
 
     /**
      * Must log out the user by the external authenticator.
      * May never return.
      *
+     * This implementation can be used to log out the user internally from the application.
+     *
      * Return false on error
      *
+     * @param array|string|null $params -- used only in descendants
      * @return bool
      */
-    public function logout()
+    public function logout(array|string $params = null): bool
     {
         $this->parent->user = null;
-        $_SESSION['uid'] = null;
-        $_SESSION = [];
+        App::$app->session->set($this->sessionUid, null);
+        App::$app->session->empty();
         return true;
     }
 
@@ -177,15 +234,21 @@ abstract class AuthManager extends Component
      *
      * @return bool
      */
-    abstract public function isAuthenticated();
+    abstract public function isAuthenticated(): bool;
 
     /**
      * Must manage the login process
      *
-     * @param string|null $returnTo
+     * Valid parameters:
+     * 'ErrorURL': A URL that should receive errors from the authentication.
+     * 'KeepPost': If the current request is a POST request, keep the POST data until after the authentication.
+     * 'ReturnTo': The URL the user should be returned to after authentication.
+     * 'ReturnCallback': The function we should call after the user has finished authentication.
+     *
+     * @param array|string|null $params -- return URL or parameter array
      * @return UserInterface|null
      */
-    abstract public function requireLogin($returnTo = null);
+    abstract public function requireLogin(array|string $params = null): ?UserInterface;
 
     abstract public function getAttributes();
 }

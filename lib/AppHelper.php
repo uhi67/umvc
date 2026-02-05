@@ -1,11 +1,15 @@
 <?php
+/** @noinspection PhpIllegalPsrClassPathInspection */
+
 /** @noinspection PhpUnused */
 
 namespace uhi67\umvc;
 
 use Closure;
 use DateTime;
+use Error;
 use Exception;
+use Throwable;
 use IntlDateFormatter;
 
 /**
@@ -19,14 +23,11 @@ class AppHelper
     /**
      * Function to generate random string.
      */
-    public static function randomString($n)
+    public static function randomString(int $n): string
     {
         $generated_string = "";
-
         $domain = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
-
         $len = strlen($domain);
-
         // Loop to create random string
         for ($i = 0; $i < $n; $i++) {
             // Generate a random index to pick characters
@@ -36,14 +37,13 @@ class AppHelper
             // in resultant string
             $generated_string = $generated_string . $domain[$index];
         }
-
         return $generated_string;
     }
 
     /**
      *
      */
-    public static function getSecureRandomToken()
+    public static function getSecureRandomToken(): string
     {
         return bin2hex(openssl_random_pseudo_bytes(16));
     }
@@ -51,7 +51,7 @@ class AppHelper
     /**
      *
      */
-    public static function clean_input($data)
+    public static function clean_input(string $data): string
     {
         $data = trim($data);
         $data = stripslashes($data);
@@ -61,7 +61,7 @@ class AppHelper
     /**
      * to prevent xss
      */
-    public static function xss_clean($string)
+    public static function xss_clean(?string $string): string
     {
         return htmlspecialchars($string ?? '', ENT_QUOTES);
     }
@@ -78,11 +78,14 @@ class AppHelper
      *                       truncating can occur.
      * @param string $break The breakpoint string for truncating.
      * @param string $pad The padding string.
+     * @param string|null $string The string to truncate. Returns '' on null.
      * @return string
      * @see strlen()
      *
+     * @see strlen()
+     *
      */
-    public static function truncate($string, $threshold, $break = '.', $pad = '...')
+    public static function truncate(?string $string, int $threshold, string $break = '.', string $pad = '...'): string
     {
         if ($string === null) {
             return '';
@@ -102,11 +105,11 @@ class AppHelper
     /**
      * Returns a date formatted.
      *
-     * @param string $str The date to format.
+     * @param string|null $str The date to format. -- Returns '' on null or failure
      * @param string $fmt The format expected for the date.
      * @return string
      */
-    public static function format_date($str, $fmt)
+    public static function format_date(?string $str, string $fmt): string
     {
         $date = ($str === null) ? false : date_create(
             $str
@@ -114,13 +117,20 @@ class AppHelper
         return ($date === false) ? '' : date_format($date, $fmt);
     }
 
+    static function renderException(Exception|Throwable|Error $e, int $responseStatus = null): string
+    {
+        ob_start();
+        self::showException($e, $responseStatus);
+        return ob_get_clean();
+    }
+
     /**
      * Displays an Exception on CLI or HTML output.
      *
-     * @param Exception $e
+     * @param Exception|Throwable|Error $e
      * @param int|null $responseStatus -- HTTP response status, default is 500=HTTP_INTERNAL_SERVER_ERROR
      */
-    static function showException($e, $responseStatus = null)
+    static function showException(Exception|Throwable|Error $e, int $responseStatus = null): void
     {
         defined('ENV_DEV') || define('ENV_DEV', 'production');
         $responseStatus = $responseStatus ?: HTTP::HTTP_INTERNAL_SERVER_ERROR;
@@ -159,7 +169,7 @@ class AppHelper
         }
         $errorMessage = (ENV_DEV || $e instanceof UserException) ? $e->getMessage() : 'Something went wrong';
         if (!headers_sent()) {
-            http_response_code((int)$responseStatus ?? 500);
+            http_response_code((int)$responseStatus ?? HTTP::HTTP_INTERNAL_SERVER_ERROR);
         }
         echo '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">';
         echo '<html lang="en">';
@@ -173,15 +183,17 @@ class AppHelper
 
         if (ENV_DEV) {
             $basePath = dirname(__DIR__, 4);
+            /** @noinspection RegExpRedundantEscape */
+            $s = '\\' . DIRECTORY_SEPARATOR;
             echo '<pre>';
             echo preg_replace(
                 [
                     '~' . str_replace(['\\', '~'], ['\\\\', '\~'], $basePath) . '~',
-                    '/^(#\\d+ [^(]+)(\\\\vendor\\\\uhi67\\\\)(umvc)(\\\\[^(]+)(.*)$/m',
-                    '/^(#\\d+ [^(]+)(\\\\views\\\\[^(]+)(.*)$/m',
-                    '/^(#\\d+ [^(]+)(\\\\controllers\\\\[^(]+)(.*)$/m',
-                    '/^(#\\d+ [^(]+)(\\\\models\\\\[^(]+)(.*)$/m',
-                    '/^(#\\d+ [^(]+)(\\\\lib\\\\[^(]+)(.*)$/m',
+                    '/^(#\\d+ [^(]+)(' . $s . 'vendor' . $s . 'uhi67' . $s . ')(umvc)(' . $s . '[^(]+)(.*)$/m',
+                    '/^(#\\d+ [^(]+)(' . $s . 'views' . $s . '[^(]+)(.*)$/m',
+                    '/^(#\\d+ [^(]+)(' . $s . 'controllers' . $s . '[^(]+)(.*)$/m',
+                    '/^(#\\d+ [^(]+)(' . $s . 'models' . $s . '[^(]+)(.*)$/m',
+                    '/^(#\\d+ [^(]+)(' . $s . 'lib' . $s . '[^(]+)(.*)$/m',
                 ],
                 [
                     '...',
@@ -211,7 +223,7 @@ class AppHelper
         echo '</body>';
     }
 
-    public static function debug()
+    public static function debug(): string
     {
         $content = '';
         if (ENV_DEV) {
@@ -238,12 +250,12 @@ class AppHelper
     /**
      * Camelizes a string.
      *
-     * All world will begin with uppercase character.
-     * World delimiters are: ' ', '_', '-', '.', '\'
+     * All words will begin with uppercase character.
+     * Word delimiters are: ' ', '_', '-', '.', '\'
      *
      * @return string|null The camelized string
      */
-    public static function camelize($id): ?string
+    public static function camelize(?string $id): ?string
     {
         if (is_null($id)) {
             return null;
@@ -254,11 +266,11 @@ class AppHelper
     /**
      * Converts a string to human-readable form, e.g. for an auto-generated field label
      *
-     * Redundant '_id' or 'Id' postfix will be eliminated.
+     * Redundant '_id' or 'ID' postfix will be eliminated.
      *
      * @return string|null The camelized string
      */
-    public static function humanize($id): ?string
+    public static function humanize(?string $id): ?string
     {
         if (is_null($id)) {
             return null;
@@ -271,7 +283,7 @@ class AppHelper
     /**
      * Converts a (camelized) string to underscore format.
      * Existing underscore ($separator) will be converted to '.'.
-     * Replaces all non-name character to _.
+     * Replaces all non-name characters to _.
      *
      * The result string should be appropriate for a filename or a Model attribute name (using _)
      *
@@ -297,14 +309,13 @@ class AppHelper
     }
 
     /**
-     * unicode-safe capitalize first letter of all words
+     * unicode-safe capitalize the first letter of all words
      *
      * @param string $string
      * @return string
      */
-    public static function mb_ucwords($string)
+    public static function mb_ucwords(string $string): string
     {
-        $string = (string)$string;
         if (empty($string)) {
             return $string;
         }
@@ -322,7 +333,7 @@ class AppHelper
      * @param string $string the string to be proceeded
      * @return string
      */
-    public static function mb_ucfirst($string)
+    public static function mb_ucfirst(string $string): string
     {
         return mb_strtoupper(mb_substr($string, 0, 1)) . mb_substr($string, 1, null);
     }
@@ -332,10 +343,10 @@ class AppHelper
      *
      * @param string $s -- string
      * @param string $d -- delimiter
-     * @param bool $full -- returns full string if pattern not found
+     * @param bool $full -- returns full string if the pattern is not found
      * @return string -- substring to delimiter or empty string if not found
      */
-    static function substring_before($s, $d, $full = false)
+    static function substring_before(string $s, string $d, bool $full = false): string
     {
         $p = strpos($s, $d);
         if ($full && $p === false) {
@@ -347,27 +358,28 @@ class AppHelper
     /**
      * Returns substring after delimiter
      *
-     * @param string $s -- string
-     * @param string $d -- delimiter
-     * @param bool $full -- returns full string if pattern not found
+     * @param string $haystack -- the string to search in
+     * @param string $delimiter -- delimiter
+     * @param bool $full -- returns the full string if the delimiter was not found
+     * @param bool $last -- returns the last occurrence of delimiter
      *
      * @return string -- substring to delimiter or empty string if not found
-     * @throws Exception -- if delimiter is empty
+     * @throws Exception -- if the haystack is empty
      */
-    static function substring_after($s, $d, $full = false)
+    static function substring_after(string $haystack, string $delimiter, bool $full = false, bool $last = false): string
     {
-        if (empty($s)) {
-            throw new Exception('Empty needle');
+        if (empty($haystack)) {
+            throw new Exception('Empty haystack');
         }
-        $p = strpos($s, $d);
+        $p = $last ? strrpos($haystack, $delimiter) : strpos($haystack, $delimiter);
         if ($p === false) {
-            return $full ? $s : '';
+            return $full ? $haystack : '';
         }
-        return substr($s, $p + strlen($d));
+        return substr($haystack, $p + strlen($delimiter));
     }
 
     /**
-     * Generates a valid XML name-id based on given string
+     * Generates a valid XML name-id based on the given string
      *
      * Replaces invalid characters to valid ones. Replaces accented letters to ASCII letters.
      *
@@ -375,19 +387,18 @@ class AppHelper
      * - Element names can contain letters, digits, underscores, and the specified enabled characters
      * - Element names cannot contain spaces
      *
-     * @param string $str
+     * @param string|null $str
      * @param string $def -- replace invalid characters to, default is '_'. A single character only
      * @param string $ena -- more enabled characters, e.g. '-' (specify - last, escape ] chars.)
      * @param int $maxlen -- maximum length or 0 if no limit. Default is 64.
      *
      * @return string -- the correct output, or empty if input was empty or null
      */
-    public static function toNameID($str, $def = '_', $ena = '.-', $maxlen = 64)
+    public static function toNameID(?string $str, string $def = '_', string $ena = '.-', int $maxlen = 64): string
     {
-        if ($str == '') {
-            return $str;
+        if ($str == '' || $str == null) {
+            return '';
         }
-        #if(strtolower(substr($str,0,3))=='xml') $str = '_'.$str; // xml prefix is valid!
         if ($maxlen > 0 && strlen($str) > $maxlen) {
             $str = substr($str, 0, $maxlen);
         }
@@ -426,14 +437,14 @@ class AppHelper
     }
 
     /**
-     * Converts JSON string into array.
-     * Useful when dealing with JSON data stored in database as string.
+     * Converts JSON string into an array.
+     * Useful when dealing with JSON data stored in the database as string.
      *
      * @param string $data
-     * @return array
+     * @return array -- returns an empty array if $data was not an array.
      * @author arlogy
      */
-    public static function arrayFromJsonString($data)
+    public static function arrayFromJsonString(string $data): array
     {
         $data = json_decode($data, true);
         return is_array($data) ? $data : [];
@@ -447,7 +458,7 @@ class AppHelper
      * @return string
      * @author arlogy
      */
-    public static function jsonStringFrom($data)
+    public static function jsonStringFrom(mixed $data): string
     {
         $data = json_encode($data);
         return is_string($data) ? $data : '';
@@ -464,11 +475,11 @@ class AppHelper
      *    - values of DateTime will be substituted as SHORT date of the application's language.
      *
      * @param string $text
-     * @param array $data
+     * @param scalar[] $data
      *
      * @return string
      */
-    public static function substitute($text, $data)
+    public static function substitute(string $text, array $data): string
     {
         return preg_replace_callback(
         /* @lang */ '#{(DMY|MDY)?(\\$[a-zA-Z_]+[\\\\/a-zA-Z0-9_-]*)}#',
@@ -476,7 +487,7 @@ class AppHelper
                 if ($mm[2] == '{') {
                     return '{';
                 }
-                if (substr($mm[2], 0, 1) == '$') {
+                if (str_starts_with($mm[2], '$')) {
                     // a keyname
                     $subvars = explode('/', substr($mm[2], 1));
                     $d = $data;
@@ -488,7 +499,7 @@ class AppHelper
                         }
                     }
                 } else {
-                    // Other expression (not implemented)
+                    // Other expressions (not implemented)
                     return $mm[0];
                 }
                 if ($d instanceof DateTime) {
@@ -507,16 +518,20 @@ class AppHelper
     }
 
     /**
-     * formats a DateTime value using given locale
+     * formats a DateTime value using the given locale
      *
      * @param DateTime $datetime
      * @param int $datetype -- date format as IntlDateFormatter::NONE, type values are 'NONE', 'SHORT', 'MEDIUM', 'LONG', 'FULL'
      * @param int $timetype -- time format as IntlDateFormatter::NONE, type values are 'NONE', 'SHORT', 'MEDIUM', 'LONG', 'FULL'
-     * @param string $locale -- locale in ll-cc format (ISO 639-1 && ISO 3166-1), null to use default
+     * @param string|null $locale -- locale in ll-cc format (ISO 639-1 && ISO 3166-1), null to use default
      * @return string
      */
-    public static function formatDateTime($datetime, $datetype, $timetype, $locale = null)
-    {
+    public static function formatDateTime(
+        DateTime $datetime,
+        int $datetype = IntlDateFormatter::SHORT,
+        int $timetype = IntlDateFormatter::SHORT,
+        string $locale = null
+    ): string {
         if (!$locale) {
             $locale = App::$app->locale;
         }
@@ -524,7 +539,7 @@ class AppHelper
             $locale = "en-GB";
         }
         $pattern = null;
-        if (substr($locale, 0, 2) == 'hu') {
+        if (str_starts_with($locale, 'hu')) {
             if ($datetype == IntlDateFormatter::SHORT && $timetype == IntlDateFormatter::SHORT) {
                 $pattern = 'yyyy.MM.dd. H:mm';
             }
@@ -544,9 +559,9 @@ class AppHelper
      * @param Closure $test -- test to run. Must return truthy value on success
      * @param int $timeout -- seconds to giving up waiting, the minimum allowed value is 1
      * @param int $interval -- seconds between retry attempts, the minimum allowed value is 1
-     * @return bool -- true if test succeeded within timeout, false otherwise
+     * @return bool -- true if the test succeeded within timeout, false otherwise
      */
-    public static function waitFor($test, $timeout = 60, $interval = 1)
+    public static function waitFor(Closure $test, int $timeout = 60, int $interval = 1): bool
     {
         $startTime = time();
         $interval = max(1, $interval);
@@ -563,18 +578,19 @@ class AppHelper
     }
 
     /**
-     * Returns true if path is absolute, false if not (relative).
-     * Empty string considered as relative.
+     * Returns true if the path is absolute, false if not (relative).
+     * Empty string is considered as relative.
      * Can be used for file system and URL paths as well.
      * Both Windows and Linux file system paths are detected.
      * The path itself is not validated, malformed paths can be either absolute or relative.
-     * Note: Paths beginning with drive letter on Windows but not \\ still considered as absolute.
+     * Note: Paths beginning with a drive letter on Windows but not '\\' are still considered as absolute.
      *
      * @param string $path
      * @return bool
      */
-    public static function pathIsAbsolute(string $path): bool
-    {
+    public static function pathIsAbsolute(
+        string $path
+    ): bool {
         return preg_match('~^(/|\\\\|[\w]+:)~', $path);
     }
 
@@ -585,15 +601,20 @@ class AppHelper
     public static function baseUrl(): string
     {
         $baseurl = getenv('APP_BASEURL');
-        if($baseurl) return trim($baseurl, '/');
-        $https = getenv('HTTPS') ?? 'off';
+        if ($baseurl) {
+            if(str_starts_with($baseurl, 'https://')) {
+                $_SERVER['HTTPS'] = 'on'; // SimpleSAMLphp will apply a wrong RelayState URL after login/logout if it's missing
+            }
+            return trim($baseurl, '/');
+        }
+        $https = getenv('HTTPS') ?: 'off';
         $protocol = ($https == 'on' || ($_SERVER['SERVER_PORT'] ?? 80) == 443) ? "https" : "http";
         if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) || $https == 'on') {
             $protocol = $_SERVER['HTTP_X_FORWARDED_PROTO'] ?? $protocol;
             if ($https == "on") {
                 $protocol = 'https';
                 $_SERVER['SERVER_PORT'] = 443;
-                $_SERVER['HTTPS'] = 'on'; // SimpleSAMLphp will apply wrong RelayState URL after login/logout if it's missing
+                $_SERVER['HTTPS'] = 'on'; // SimpleSAMLphp will apply a wrong RelayState URL after login/logout if it's missing
             }
         }
         return $protocol . '://' . $_SERVER["HTTP_HOST"];

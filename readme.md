@@ -1,7 +1,7 @@
 UMVC framework
 ==============
 
-Version 2.2 -- 2025-03-16
+Version 3.0.0 -- 2026-02-05
 
 A simple web-application framework implementing model-view-controller (MVC) architectural pattern.
 
@@ -28,8 +28,11 @@ Globally installed codeception must be compatible with required (currently v3.1.
 UMVC supports CLI. You may create your own commands. The built-in commands are:
 
 - migrate
+- cache
+- create
 
-Run commands as `php app $command $action $parameters`
+Run commands as `php app $command/$action $parameters`.
+Run `php app` to get the list of available commands, including the built-in and the application-defined ones.
 
 Installation
 ------------
@@ -184,6 +187,21 @@ A built-in dockerized testing environment can be used to test with different php
 
 Change log
 ----------
+
+### version 3.0 -- "2025-04-29"
+
+- add BaseController
+- add App::login()
+- AuthManager::login() with attributes and creation
+- AuthManager::actionLogin() and logout() parameters
+- migrate/update command with path and namespace
+- Controller action exit status
+- add Controller::$classPath, $actionPath
+- Model::validateUnique() for multiple fields
+- BaseModel::addError() with multiple fields
+- add Column::$format property (raw or not)
+- add FileCache::$permission property
+- using php 8.2 types
 
 ### version 2.2 -- "2025-03-16"
 

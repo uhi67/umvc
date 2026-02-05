@@ -1,16 +1,18 @@
 <?php
+/** @noinspection PhpIllegalPsrClassPathInspection */
 /** @noinspection PhpUnused */
 
 namespace uhi67\umvc;
 
 use Exception;
+use Throwable;
 
 /**
  * SQL type migration
  *
  * ## Usage
  *
- * A plain text file containing a single SQL command. The command may be terminated by ;
+ * A plain text file containing a single SQL command. The command may be terminated by ';'
  * Lines beginning with -- and sections between /* and _*_/ are comments
  * The SQL command is executed via `PDO::query()`
  *
@@ -19,15 +21,16 @@ use Exception;
  */
 class SqlMigration extends Migration
 {
-    public $filename;
+    public string $filename;
 
     /**
      * This method must do the migration up job in the migration class.
      *
      * @return bool -- must return true on success, false on failure
      * @throws Exception -- may throw an Exception on failure
+     * @throws Throwable
      */
-    public function up()
+    public function up(): bool
     {
         return $this->executeSqlFile($this->filename);
     }

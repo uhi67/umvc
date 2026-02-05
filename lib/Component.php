@@ -1,7 +1,9 @@
 <?php
+/** @noinspection PhpIllegalPsrClassPathInspection */
 
 namespace uhi67\umvc;
 
+use Closure;
 use Exception;
 use ReflectionClass;
 use ReflectionException;
@@ -11,12 +13,12 @@ use ReflectionException;
  *
  * A base class for most of the others.
  *
- * - Implements **property** features: magic getter and setter uses getProperty and setProperty methods
+ * - Implements **property** features: magic getter and setter use getProperty and setProperty methods
  * - **Configurable**: constructor accepts a configuration array containing values for public properties
  *
- * All descendant of Component can be created using a *"configuration array"* (AKA options).
+ * All descendants of Component can be created using a *"configuration array"* (AKA options).
  * The configuration array is simply an associative array with values of public properties.
- * The writable virtual properties (accessed via setters) also configurable.
+ * The writable virtual properties (accessed via setters) are also configurable.
  *
  * **Example**
  * ```php
@@ -34,8 +36,10 @@ use ReflectionException;
 abstract class Component
 {
 
-    /** @var Component|App $parent -- the parent component which created this object (The App itself for the config-defined components) */
-    public $parent;
+    /** @var Component|App|null $parent -- the parent component which created this object (The App itself for the config-defined components) */
+    public App|Component|null $parent = null;
+    public array $_require = [];   // list of required component names in the App
+    public ?Closure $_prepare = null;
 
     /**
      * # Component constructor
@@ -46,24 +50,30 @@ abstract class Component
      *
      * If this method is overridden in a child class, it is recommended that
      *
-     * - the last parameter of the constructor is a configuration array, like `$config` here.
-     * - call the parent implementation in the constructor.
+     * - The last parameter of the constructor is a configuration array, like `$config` here.
+     * - Call the parent implementation in the constructor.
      *
-     * @param array|mixed $config name-value pairs that will be used to initialize the object properties
+     * @param array|null $config name-value pairs that will be used to initialize the object properties
      * @throws Exception -- when the config is not an array (or null)
      */
-    public function __construct($config = [])
+    public function __construct(?array $config = [])
     {
+        $config = $this->beforeConfig($config);
         if (!empty($config)) {
             static::configure($this, $config);
         }
         $this->init();
     }
 
+    public function beforeConfig(array|null $config): ?array
+    {
+        return $config;
+    }
+
     /**
      * Initializes the object.
      * This method is invoked at the end of the constructor after the object is initialized with the
-     * given configuration. The default implementation does nothing, override it if you want to use.
+     * given configuration. The default implementation does nothing, override it if you want to use it.
      * @return void
      */
     public function init()
@@ -73,8 +83,10 @@ abstract class Component
 
     /**
      * Prepares the object.
-     * This method is invoked during App creation after all components are initialized.
+     * This method is invoked during App creation after all configured components are initialized.
+     * Not implicitly called on other components not in App's components list.
      * Default implementation does nothing, override it if you want to use.
+     *
      * @return void
      */
     public function prepare()
@@ -91,9 +103,9 @@ abstract class Component
      * @throws Exception
      * @see __set()
      */
-    public function __get($name)
+    public function __get(string $name): mixed
     {
-        if (strpos($name, '-') !== false) {
+        if (str_contains($name, '-')) {
             $name = AppHelper::camelize($name);
         }
 
@@ -118,7 +130,7 @@ abstract class Component
      * @throws Exception if the property is not defined or the property is read-only.
      * @see __get()
      */
-    public function __set($name, $value)
+    public function __set(string $name, mixed $value)
     {
         $setter = 'set' . $name;
         if (method_exists($this, $setter)) {
@@ -137,7 +149,7 @@ abstract class Component
      * @return bool whether the named property is set
      * @see http://php.net/manual/en/function.isset.php
      */
-    public function __isset($name)
+    public function __isset(string $name): bool
     {
         $getter = 'get' . $name;
         if (method_exists($this, $getter)) {
@@ -151,10 +163,10 @@ abstract class Component
      *
      * @param string $name the property name
      *
-     * @throws Exception if the property is read only.
+     * @throws Exception if the property is read-only.
      * @see http://php.net/manual/en/function.unset.php
      */
-    public function __unset($name)
+    public function __unset(string $name)
     {
         $setter = 'set' . $name;
         if (method_exists($this, $setter)) {
@@ -172,7 +184,7 @@ abstract class Component
      * @see canGetProperty()
      * @see canSetProperty()
      */
-    public function hasProperty($name, $checkVars = true)
+    public function hasProperty(string $name, bool $checkVars = true): bool
     {
         return $this->canGetProperty($name, $checkVars) || $this->canSetProperty($name, false);
     }
@@ -184,7 +196,7 @@ abstract class Component
      * @return bool whether the property can be read
      * @see canSetProperty()
      */
-    public function canGetProperty($name, $checkVars = true)
+    public function canGetProperty(string $name, bool $checkVars = true): bool
     {
         if (method_exists($this, 'get' . $name) || $checkVars && property_exists($this, $name)) {
             return true;
@@ -199,7 +211,7 @@ abstract class Component
      * @return bool whether the property can be written
      * @see canGetProperty()
      */
-    public function canSetProperty($name, $checkVars = true)
+    public function canSetProperty(string $name, bool $checkVars = true): bool
     {
         if (method_exists($this, 'set' . $name) || $checkVars && property_exists($this, $name)) {
             return true;
@@ -213,10 +225,10 @@ abstract class Component
      * @param Component $object the object to be configured
      * @param array|null $config the property initial values given in terms of name-value pairs.
      *
-     * @return object the object itself
+     * @return static the object itself
      * @throws Exception -- when the $config is not an array or null
      */
-    public static function configure($object, $config = null)
+    public static function configure(Component $object, array|null $config = null): static
     {
         if ($config === null) {
             return $object;
@@ -237,7 +249,7 @@ abstract class Component
      * Creates a new Component using the given configuration.
      *
      * You may view this method as an enhanced version of the `new` operator.
-     * The method supports creating an object based on a class name, a configuration array or
+     * The method supports creating an object based on a class name, a configuration array, or
      * an anonymous function.
      *
      * Below are some usage examples:
@@ -258,12 +270,12 @@ abstract class Component
      *
      * @param string|array|callable $type the object type. This can be specified in one of the following forms:
      *
-     * - a string: representing the class name of the object to be created
-     * - a configuration array: the array must contain a `class` element which is treated as the object class,
-     *   and the rest of the name-value pairs will be used to initialize the corresponding object properties
-     * - a configuration array: the array must contain a `0` element which is treated as the object class,
-     *   and the rest of the name-value pairs will be used to initialize the corresponding object properties
-     * - a PHP callable: either an anonymous function or an array representing a class method (`[$class or $object, $method]`).
+     * - A string: representing the class name of the object to be created.
+     * - A configuration array: the array must contain a `class` element which is treated as the object class,
+     *   and the rest of the name-value pairs will be used to initialize the corresponding object properties.
+     * - A configuration array: the array must contain a `0` element which is treated as the object class,
+     *   and the rest of the name-value pairs will be used to initialize the corresponding object properties.
+     * - A PHP callable: either an anonymous function or an array representing a class method (`[$class or $object, $method]`).
      *   The callable should return a new instance of the object being created.
      *
      * @param array $params the constructor parameters
@@ -272,7 +284,7 @@ abstract class Component
      * @throws Exception if the configuration is invalid.
      * @throws ReflectionException
      */
-    public static function create($type, array $params = array())
+    public static function create(string|array|callable $type, array $params = array()): object
     {
         if (is_string($type)) {
             return static::createClass($type, $params);
@@ -299,34 +311,26 @@ abstract class Component
     }
 
     /**
-     * @param $class
-     * @param $config
+     * @param string $class
+     * @param array $config
      *
      * @return object
      * @throws ReflectionException
      */
-    private static function createClass($class, $config)
+    private static function createClass(string $class, array $config): object
     {
         $reflection = new ReflectionClass($class);
         return $reflection->newInstanceArgs(array($config));
     }
 
-    public function getNode()
-    {
-        return null;
-    }
-
     /**
-     * Returns class name without namespace of the caller class.
-     * Callable dynamically and statically as well.
+     * Returns the class name without the namespace of the caller class.
+     * The proper static call is static::shortName()
      *
      * @return string
      */
-    public function getShortName()
+    public function getShortName(): string
     {
-        if (!isset($this)) {
-            return static::shortName(get_class());
-        }
         $reflect = new ReflectionClass($this);
         return $reflect->getShortName();
     }
@@ -335,7 +339,7 @@ abstract class Component
      * @param array $data -- name->value pairs to set
      * @param array|null $fields -- if given, a list of properties to set (filter/map: [field, field=>mapped, ...])
      */
-    public function populate($data, $fields = null)
+    public function populate(array $data, array $fields = null): void
     {
         if ($fields) {
             foreach ($fields as $field => $remote) {
@@ -356,14 +360,13 @@ abstract class Component
     }
 
     /**
-     * Returns class name without namespace.
-     * If class or object is not specified, uses the name of the current late binding static class.
+     * Returns the class name without the namespace.
+     * If the class or object is not specified, uses the name of the current late binding static class.
      *
-     * @param string|object $class -- FQN class name or an object
-     *
+     * @param string|object|null $class -- FQN class name or an object
      * @return string
      */
-    public static function shortName($class = null)
+    public static function shortName(string|object $class = null): string
     {
         if (!$class) {
             $class = get_called_class();

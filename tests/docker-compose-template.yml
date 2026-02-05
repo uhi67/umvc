@@ -1,9 +1,8 @@
-version: "3.3"
+version: "3.6"
 # This stack is for codecept-testing the UMVC library in different environments.
-# 1. configure the needed database version here or php version in docker/Dockerfile
+# 1. configure the necessary database version here or php version in docker/Dockerfile
 # 2. edit .env (ports, urls)
-# 3. build the stack using `docker composer up --build -d`
-# 4. run unit tests with `docker exec -it umvc-php-1 php vendor/bin/codecept run unit`
+# 3. build and run the stack using `docker compose up --build`
 name: umvc
 services:
   php:
@@ -31,7 +30,7 @@ services:
       DB_PASSWORD: umvc-test123
 
       SIMPLESAMLPHP_CONFIG_DIR: /app/tests/_data/testapp/config/saml/config
-      SAML_ADMIN_PASSWORD: kalap
+      SAML_ADMIN_PASSWORD: "JGFyZ29uMmlkJHY9MTkkbT02NCx0PTQscD0xJFRuUXZaRzR4Wmk5RFlVSTNUR2gzZWckLzVmbERGeDN5RWtrUjhnWjgraXgrdEdMcTlRV3ZtYVdpeW4vclduN3ZFZw==" #kalap
       SAML_SECRET_SALT: reitn23li4v
       SAML_TECHNICALCONTACT_NAME: umvc.test
       SAML_TECHNICALCONTACT_EMAIL: umvc.test@umvc.test

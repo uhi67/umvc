@@ -1,4 +1,5 @@
 <?php
+/** @noinspection PhpIllegalPsrClassPathInspection */
 
 namespace uhi67\umvc;
 
@@ -8,33 +9,35 @@ use Exception;
  * # File cache
  *
  * ### config: cache
- *        path    -- absolute path to save files. Default is datapath/cache
- *        ttl        -- default ttl (def 900 = 15 min)
+ *        path -- absolute path to save files. Default is datapath/cache
+ *        ttl -- default ttl (def 900 = 15 min)
+ *        permissions -- permissions for the cache files. Default is null (no change)
  *
  * Data will be saved to the file with give name,
- * the ttl value into file `_ttl_name` which content is "created,expires" in unix timestamp format.
+ * the ttl value into file `_ttl_name` which content is "created, expires" in unix timestamp format.
  *
  * ### Usage
- * see {@see \uhi67\umvc\CacheInterface}
+ * see {@see CacheInterface}
  * @package UMVC Simple Application Framework
  */
 class FileCache extends Component implements CacheInterface
 {
-    /** @var string $path -- directory to store cached data (path name without trailing '/') */
-    public $path;
-    /** @var int $ttl -- default time-to-live value of the cache entries in sec. Default is 900, 15 minutes */
-    public $ttl;
+    public ?int $permissions = null;
+    /** @var string|null $path -- directory to store cached data (path name without trailing '/'). Default is $runtime/cache */
+    public ?string $path = null;
+    /** @var int|null $ttl -- default time-to-live value of the cache entries in sec. Default is 900, 15 minutes */
+    public ?int $ttl = null;
 
     /**
      * @throws Exception
      */
-    public function init()
+    public function init(): void
     {
         if (!$this->path) {
             $this->path = App::$app->runtimePath . '/cache';
         }
         if (!file_exists($this->path)) {
-            if (!mkdir($this->path)) {
+            if (!is_writable(dirname($this->path)) || !mkdir($this->path)) {
                 throw new Exception("Cannot create cache directory " . $this->path);
             }
         }
@@ -47,12 +50,12 @@ class FileCache extends Component implements CacheInterface
      * Returns data from cache or null if not found or expired.
      *
      * @param string $key
-     * @param null $default
-     * @param null $ttl -- if given, overrides expiration (only for this query)
+     * @param mixed|null $default
+     * @param bool|int|null $ttl -- if given, overrides expiration (only for this query)
      *
      * @return mixed
      */
-    public function get($key, $default = null, $ttl = null)
+    public function get(string $key, mixed $default = null, bool|int $ttl = null): mixed
     {
         $filename = static::fileName($key);
         if (!file_exists($filename)) {
@@ -63,9 +66,13 @@ class FileCache extends Component implements CacheInterface
             unlink($filename);
             return $default;
         }
-        list($created, $expires) = explode(',', file_get_contents($ttlname));
+        $item = explode(',', file_get_contents($ttlname));
+        if (!is_array($item) || count($item) !== 2) {
+            return $default;
+        }
+        list($created, $expires) = $item;
         if ($ttl) {
-            $expires = $created + $ttl;
+            $expires = (int)$created + (int)$ttl;
         }
         if (time() > $expires) {
             unlink($filename);
@@ -75,7 +82,7 @@ class FileCache extends Component implements CacheInterface
         return unserialize(file_get_contents($filename));
     }
 
-    public function has($key)
+    public function has(string $key): bool
     {
         $filename = static::fileName($key);
         if (!file_exists($filename)) {
@@ -99,14 +106,14 @@ class FileCache extends Component implements CacheInterface
     /**
      * Removes a cache item by key or key pattern.
      * If the exact key is found in the cache, only that item will be removed.
-     * Any other case all items containing the pattern is removed.
+     * Any other case all items containing the pattern are removed.
      * Pattern should be a partial key or a valid regEx. Invalid regEx fails silently.
      *
      * @param string $key -- key or pattern
      *
      * @return int -- number of deleted items, false on error
      */
-    public function delete($key)
+    public function delete(string $key): int
     {
         $filename = static::fileName($key);
         if (file_exists($filename)) {
@@ -127,17 +134,17 @@ class FileCache extends Component implements CacheInterface
      * @param $subdir
      * @return int
      */
-    private function deletePattern($key, $subdir)
+    private function deletePattern($key, $subdir): int
     {
         $c = 0;
         $dir = $this->path . $subdir;
         $dh = opendir($dir);
         while (($file = readdir($dh)) !== false) {
-            // Skip non-files and  _ttl_ files now
+            // Skip non-files and _ttl_ files now
             if (in_array($file, ['.', '..'])) {
                 continue;
             }
-            if (substr($file, 0, 5) == '_ttl_') {
+            if (str_starts_with($file, '_ttl_')) {
                 continue;
             }
             if (filetype($dir . '/' . $file) == 'dir') {
@@ -174,12 +181,15 @@ class FileCache extends Component implements CacheInterface
      * @param int|null $ttl -- time to live in secs, default is given at cache config
      * @return mixed -- the value itself
      */
-    public function set($key, $value, $ttl = null)
+    public function set(string $key, mixed $value, int $ttl = null): mixed
     {
         $filename = $this->fileName($key);
         $ttlname = $this->ttlName($key);
         if (!file_exists(dirname($filename))) {
-            mkdir(dirname($filename), 0774);
+            mkdir(dirname($filename), $this->permissions ?? 0777);
+            if (App::isCLI()) {
+                chown(dirname($filename), 'www-data');
+            };
         }
 
         if (file_exists($filename)) {
@@ -195,8 +205,14 @@ class FileCache extends Component implements CacheInterface
         if (!$ttl) {
             $ttl = $this->ttl;
         }
+        if ($this->permissions !== null) {
+            $old = umask(0777 & ~$this->permissions);
+        }
         file_put_contents($ttlname, time() . ',' . (time() + $ttl));
         file_put_contents($filename, serialize($value));
+        if ($this->permissions !== null) /** @noinspection PhpUndefinedVariableInspection */ {
+            umask($old);
+        }
         return $value;
     }
 
@@ -206,7 +222,7 @@ class FileCache extends Component implements CacheInterface
      * @param $name
      * @return string
      */
-    protected function fileName($name)
+    protected function fileName($name): string
     {
         $hash = crc32($name);
         $name = substr($hash, 2) . '_' . AppHelper::toNameID($name);
@@ -220,7 +236,7 @@ class FileCache extends Component implements CacheInterface
      * @param $name
      * @return string
      */
-    protected function ttlName($name)
+    protected function ttlName($name): string
     {
         $hash = crc32($name);
         $name = substr($hash, 2) . '_' . AppHelper::toNameID($name);
@@ -236,7 +252,7 @@ class FileCache extends Component implements CacheInterface
      *
      * @return int -- number of items deleted
      */
-    public function cleanup($ttl = null)
+    public function cleanup(int $ttl = null): int
     {
         return $this->cleanupInner($ttl);
     }
@@ -245,20 +261,20 @@ class FileCache extends Component implements CacheInterface
      * Clears expired items from the file cache directory, recursively
      *
      * @param int|null $ttl
-     * @param $subpath
+     * @param string $subpath
      * @return int
      */
-    private function cleanupInner($ttl, $subpath = '')
+    private function cleanupInner(?int $ttl, string $subpath = ''): int
     {
         $c = 0;
         $dir = $this->path . $subpath;
         $dh = opendir($dir);
         while (($file = readdir($dh)) !== false) {
-            // Skip non-files and  _ttl_ files now
+            // Skip non-files and _ttl_ files now
             if (in_array($file, ['.', '..'])) {
                 continue;
             }
-            if (substr($file, 0, 5) == '_ttl_') {
+            if (str_starts_with($file, '_ttl_')) {
                 continue;
             }
             if (filetype($dir . '/' . $file) == 'dir') {
@@ -287,7 +303,7 @@ class FileCache extends Component implements CacheInterface
             // echo " * $subpath/$file: $created, $expires ($remained)",PHP_EOL;
 
             if ($ttl) {
-                $expires = $created + $ttl;
+                $expires = (int)$created + $ttl;
             }
             if (time() > $expires) {
                 unlink($filename);
@@ -302,15 +318,15 @@ class FileCache extends Component implements CacheInterface
     /**
      * deletes all data from the cache
      *
-     * @param $subPath -- subdirectory name in the cache. Default the deletion is starting at the root.
+     * @param string $subPath -- subdirectory name in the cache. Default the deletion is starting at the root.
      * @return int -- number of entries deleted
      */
-    public function clear($subPath = '')
+    public function clear(string $subPath = ''): int
     {
         $c = 0;
         if ($subPath) {
             $subPath = str_replace('..', '.', $subPath);
-        } // Prevent back-step for security
+        } // Prevent a back-step for security
         $path = $this->path . $subPath;
         $dh = opendir($path);
         while (($file = readdir($dh)) !== false) {
@@ -322,13 +338,13 @@ class FileCache extends Component implements CacheInterface
                 rmdir($path . '/' . $file);
                 continue;
             }
-            // Skip non-files and  _ttl_ files now
+            // Skip non-files and _ttl_ files now
             if (filetype($path . '/' . $file) != 'file') {
                 continue;
             }
             $filename = $path . '/' . $file;
             unlink($filename);
-            if (substr($file, 0, 5) != '_ttl_') {
+            if (!str_starts_with($file, '_ttl_')) {
                 $c++;
             }
         }
@@ -338,13 +354,13 @@ class FileCache extends Component implements CacheInterface
 
     /**
      * @param string $key -- the name of the cached value
-     * @param callable $compute -- the function retrieves the original value
-     * @param int $ttl -- time to live in seconds (used in set only)
+     * @param callable():mixed $compute -- the function retrieves the original value
+     * @param int|null $ttl -- time to live in seconds (used in 'set' only)
      * @param bool $refresh -- set to true to force replace the cached value
      *
      * @return bool|int
      */
-    public function cache($key, callable $compute, $ttl = null, $refresh = false)
+    public function cache(string $key, callable $compute, int $ttl = null, bool $refresh = false): mixed
     {
         if (!$refresh && ($value = $this->get($key)) !== null) {
             return $value;
@@ -352,11 +368,11 @@ class FileCache extends Component implements CacheInterface
         return $this->set($key, $compute(), $ttl);
     }
 
-    public function finish()
+    public function finish(): void
     {
     }
 
-    private static function isEmpty($dir)
+    private static function isEmpty($dir): bool
     {
         $handle = opendir($dir);
         while (false !== ($entry = readdir($handle))) {

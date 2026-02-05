@@ -1,4 +1,7 @@
 <?php
+/** @noinspection PhpUnusedPrivateMethodInspection */
+
+/** @noinspection PhpIllegalPsrClassPathInspection */
 
 namespace uhi67\umvc;
 
@@ -15,7 +18,38 @@ use PDOStatement;
  */
 class MysqlConnection extends Connection
 {
-    public function supportsOrderNullsLast()
+    /**
+     * @var array $typeNames -- sql_type => common_type mapping
+     * common type names:
+     *  - basic php types (lowercase)
+     *  - 'xml' denotes XML valid string
+     *  - php classnames (Uppercase, e.g. DateTime)
+     *  - 'string' is default, not indicated
+     *  - date (DateTime without time)
+     *  - time (DateTime without date or integer in sec)
+     */
+    public static array $typeNames = [
+        1 => 'tinyint',
+        2 => 'smallint',
+        3 => 'int',
+        4 => 'float',
+        5 => 'double',
+        7 => 'timestamp',
+        8 => 'bigint',
+        9 => 'mediumint',
+        10 => 'date',
+        11 => 'time',
+        12 => 'DateTime',
+        13 => 'year',
+        16 => 'bit',
+        252 => 'string',
+        //252 is currently mapped to all text and blob types (MySQL 5.0.51a)
+        253 => 'string',
+        254 => 'string',
+        246 => 'double'
+    ];
+
+    public function supportsOrderNullsLast(): bool
     {
         return false;
     }
@@ -26,7 +60,7 @@ class MysqlConnection extends Connection
      *
      * @throws Exception on failure
      */
-    protected function reset()
+    protected function reset(): bool
     {
         // Note: _pdo must be used here, because reset() is used within pdo getter.
         $status = $this->_pdo->query("SET SQL_MODE='ANSI_QUOTES,NO_AUTO_VALUE_ON_ZERO'");
@@ -46,12 +80,12 @@ class MysqlConnection extends Connection
      * @return string
      * @throws Exception
      */
-    public function quoteIdentifier(string $fieldName)
+    public function quoteIdentifier(string $fieldName): string
     {
         if (!$fieldName) {
             throw new Exception('Empty field-name');
         }
-        if ($fieldName[0] == '`' && substr($fieldName, -1) == '`') {
+        if ($fieldName[0] == '`' && str_ends_with($fieldName, '`')) {
             $fieldName = substr($fieldName, 1, -1);
         }
         return '`' . str_replace('`', '_', $fieldName) . '`';
@@ -60,13 +94,13 @@ class MysqlConnection extends Connection
     /**
      * Returns all foreign keys or foreign keys of a given a table and/or schema.
      *
-     * @param string $tableName
+     * @param string|null $tableName
      * @param string|null $schema
      * @return array[] constraint data indexed by schema.table.constraint_name
      * @inheritDoc
      * @throws Exception
      */
-    public function getForeignKeys($tableName = null, $schema = null)
+    public function getForeignKeys(string $tableName = null, string $schema = null): bool|array
     {
         if (!$schema) {
             $schema = $this->name;
@@ -104,7 +138,7 @@ class MysqlConnection extends Connection
      * @return false|PDOStatement
      * @throws Exception
      */
-    public function dropForeignKey($constraintName, $tableName, $schema = null)
+    public function dropForeignKey(string $constraintName, string $tableName, string $schema = null): bool|PDOStatement
     {
         if (!$schema) {
             $schema = $this->name;
@@ -115,15 +149,15 @@ class MysqlConnection extends Connection
     }
 
     /**
-     * @param $tableName
-     * @param $schema
+     * @param string|null $tableName
+     * @param string|null $schema
      * @return array[] constraint data indexed by constraint_name as schema.table.constraint
      * @inheritDoc
      * @throws Exception
      */
-    public function getReferrerKeys($tableName = null, $schema = false)
+    public function getReferrerKeys(string $tableName = null, string|null $schema = null): bool|array
     {
-        if ($schema === false) {
+        if ($schema === null) {
             $schema = $this->name;
         }
         $sql = /** @lang */
@@ -149,13 +183,13 @@ class MysqlConnection extends Connection
 
     /**
      * @param string $viewName
-     * @param bool $schema
+     * @param string|null $schema
      * @return false|PDOStatement
      * @throws Exception
      */
-    public function dropView($viewName, $schema = false)
+    public function dropView(string $viewName, string|null $schema = null): false|PDOStatement
     {
-        if ($schema === false) {
+        if ($schema === null) {
             $schema = $this->name;
         }
         $viewName = $this->quoteIdentifier($schema) . '.' . $this->quoteIdentifier($viewName);
@@ -163,13 +197,13 @@ class MysqlConnection extends Connection
     }
 
     /**
-     * Returns sequence names as table.field
-     * @param $schema
+     * Returns sequence names as 'table.field'
+     * @param string|null $schema
      * @return string[]
      */
-    public function getSequences($schema = false)
+    public function getSequences(string|null $schema = null): array
     {
-        if ($schema === false) {
+        if ($schema === null) {
             $schema = $this->name;
         }
         $sql = "select TABLE_SCHEMA, TABLE_NAME, COLUMN_NAME from information_schema.columns where extra like '%auto_increment%' and TABLE_SCHEMA=:schema";
@@ -181,7 +215,7 @@ class MysqlConnection extends Connection
         }, $result);
     }
 
-    public function dropSequence($sequenceName, $schema = false)
+    public function dropSequence(string $sequenceName, string|null $schema = null): bool|PDOStatement
     {
         return true;
     }
@@ -189,13 +223,13 @@ class MysqlConnection extends Connection
     /**
      * Returns routine names as "type schema.name"
      *
-     * @param $schema -- default is false (= current schema). Specify null for all schemas
+     * @param string|null $schema -- default is false (= current schema). Specify null for all schemas
      * @return string[]
      * @throws Exception
      */
-    public function getRoutines($schema = false)
+    public function getRoutines(string|null $schema = null): array
     {
-        if ($schema === false) {
+        if ($schema === null) {
             $schema = $this->name;
         }
         // SELECT routine_name, routine_type, routine_schema FROM information_schema.routines WHERE routine_schema = 'umvc_test';
@@ -209,16 +243,19 @@ class MysqlConnection extends Connection
     /**
      * @param string $routineName -- without quotes and schema name, and optional type prefix
      * @param string $routineType -- routine type, default is FUNCTION, name prefix overrides
-     * @param bool $schema
+     * @param string|null $schema
      * @return false|PDOStatement
      * @throws Exception
      */
-    public function dropRoutine($routineName, $routineType = 'FUNCTION', $schema = false)
-    {
-        if ($schema === false) {
+    public function dropRoutine(
+        string $routineName,
+        string $routineType = 'FUNCTION',
+        string|null $schema = null
+    ): bool|PDOStatement {
+        if ($schema === null) {
             $schema = $this->name;
         }
-        //	'DROP '||routine_type||' IF EXISTS '||routine_name'
+        //	`'DROP '||routine_type||' IF EXISTS '||routine_name'`
         if (strpos($routineName, ' ')) {
             [$routineType, $routineName] = explode(' ', $routineName, 2);
         }
@@ -232,14 +269,17 @@ class MysqlConnection extends Connection
     }
 
     /**
+     *
+     * Drops a table, return the result as a PDOStatement
+     *
      * @param string $tableName -- without quotes and schema name
-     * @param string $schema
-     * @return false|PDOStatement
+     * @param string|null $schema
+     * @return false|PDOStatement -- false on failure
      * @throws Exception
      */
-    public function dropTable($tableName, $schema = false)
+    public function dropTable(string $tableName, null|string $schema = null): false|PDOStatement
     {
-        if ($schema === false) {
+        if ($schema === null) {
             $schema = $this->name;
         }
         $tableName = $this->quoteIdentifier($schema) . '.' . $this->quoteIdentifier($tableName);
@@ -247,11 +287,11 @@ class MysqlConnection extends Connection
     }
 
     /**
-     * @param $schema
+     * @param string|null $schema
      * @return string[] -- trigger names as schema.name
      * @throws Exception
      */
-    public function getTriggers($schema = false)
+    public function getTriggers(string $schema = null): array
     {
         if ($schema === false) {
             $schema = $this->name;
@@ -269,9 +309,14 @@ class MysqlConnection extends Connection
     /**
      * Prepares, binds and executes a query and fetches all rows
      *
+     * @param string $sql
+     * @param array $params
+     * @param int $mode
+     * @return array
      * @throws Exception
+     * @noinspection PhpSameParameterValueInspection
      */
-    private function queryAll(string $sql, array $params = [], int $mode = PDO::FETCH_ASSOC)
+    private function queryAll(string $sql, array $params = [], int $mode = PDO::FETCH_ASSOC): array
     {
         $stmt = $this->pdo->prepare($sql);
         if (!$stmt) {
@@ -289,7 +334,7 @@ class MysqlConnection extends Connection
      * @return bool
      * @throws Exception
      */
-    private function execute(string $sql, $params = [])
+    public function execute(string $sql, array $params = []): bool
     {
         $stmt = $this->pdo->prepare($sql);
         if (!$stmt) {
@@ -297,4 +342,55 @@ class MysqlConnection extends Connection
         }
         return $stmt->execute($params);
     }
+
+    /**
+     * Returns metadata of the table
+     *
+     * (Associative to field names)
+     *
+     * @param string $table
+     * @return array|boolean -- returns false if the table does not exist
+     * @throws Exception
+     */
+    public function tableMetadata(string $table): bool|array
+    {
+        $table = $this->quoteIdentifier($table);
+        $stmt = $this->pdo->query('show fields from ' . $table);
+        if (!$stmt) {
+            return false;
+        }
+        $rows = $stmt->fetchAll();
+        $i = 1;
+        $result = array();
+        foreach ($rows as $row) {
+            $type = $row['Type'];
+            $len = -1;
+            if (preg_match('/(\w+)\((\d+)\)/', $type, $mm)) {
+                $type = $mm[1];
+                $len = (int)$mm[2];
+            }
+            $result[$row['Field']] = [
+                'num' => $i++,
+                'type' => $type,
+                'len' => $len,
+                'not null' => $row['Null'] == 'NO',
+                'has default' => $row['Default'] !== null,
+                'default' => $row['Default'],
+                'key' => $row['Key'] ?? '',
+            ];
+        }
+        return $result;
+    }
+
+    /**
+     * Returns php type for a connection-specific SQL type
+     *
+     * @param string $typename -- SQL type
+     * @return string - php type or classname
+     */
+    function mapType(string $typename): string
+    {
+        return ArrayHelper::getValue(self::$typeNames, $typename, 'string');
+    }
+
 }

@@ -8,42 +8,60 @@ use ReflectionException;
 use ReflectionMethod;
 
 /**
- * Represents a CLI function in the application.
- * The App dispatcher will run the proper action of the selected Controller class.
+ * BaseController is the common part of the **Controller** and the **Command** classes.
+ * Controllers perform the application functions via named actions.
  *
- * All main function's paths in the application must be mapped to a Controller class named `<function>Controller`
- * The `action<Action>` methods are mapped to the function action, e.g. CRUD action names.
+ * - {@see Controller} serves the HTTP requests,
+ * - {@see Command} serves the CLI commands.
  *
- * @package UMVC Simple Application Framework
+ * Both have a parent App, an action to run, and optional query parameters.
  */
-class Command extends BaseController
+class BaseController extends Component
 {
-    // TODO: compare with BaseController!
-
     /** @var App $app -- the parent application object */
     public App $app;
-    /** @var string[] $path -- unused path elements after controller (or action) name */
-    public array $path;
-    /** @var array -- query parameters to use */
-    public array $query;
     /** @var string|null -- name of the currently executed action (without 'action' prefix) */
     public ?string $action;
-    /** @var string|null $classPath -- the controller id path for controller Id property (Compatibility with Controller) */
-    public ?string $classPath = null;
+    /** @var array -- query parameters to use */
+    public array $query;
+    /** @var string[] $path -- unused path elements after the controller (or action) name */
+    public array $path;
+
+    /**
+     * beforeAction is executed before each action and cancels the action if returns false.
+     * The default behavior is true (enable the action).
+     * Called only if the action method exists.
+     */
+    public function beforeAction(): bool
+    {
+        return true;
+    }
+
+    /**
+     * The default action will run if no other match is found on the path elements.
+     * The default behavior throws an Exception.
+     * Override in your controller, if a default action is needed.
+     * @throws Exception
+     */
+    public function actionDefault()
+    {
+        throw new Exception('No default action is defined in ' . call_user_func([get_called_class(), 'shortName']));
+    }
 
     /**
      * Execute the request by this controller
      *
-     * @return int -- output or exit status
+     * @return int|string -- HTTP response status
      * @throws ReflectionException
      * @throws Exception
      */
-    public function go(): int
+    public function go(): int|string
     {
-        // Search for action method to call
+        // Search for an action method to call
         $methodName = null;
         $this->action = null;
-        if (isset($this->path[0]) && is_callable([$this, $func = 'action' . AppHelper::camelize($this->path[0])])) {
+        $func = 'action' . AppHelper::camelize($this->path[0] ?? 'default');
+        if (isset($this->path[0]) && is_callable([$this, $func])) {
             $this->action = array_shift($this->path);
             $methodName = $func;
         } else {
@@ -56,7 +74,7 @@ class Command extends BaseController
         // Call the action method with the required parameters from the request
         if ($methodName) {
             if (!$this->beforeAction()) {
-                return App::EXIT_STATUS_OK;
+                return 0;
             }
             $args = [];
             $ref = new ReflectionMethod($this, $methodName);
@@ -76,36 +94,11 @@ class Command extends BaseController
                 }
             }
             $status = call_user_func_array([$this, $methodName], $args);
-            if(is_string($status)) {
-                echo $status;
-                $status = App::EXIT_STATUS_OK;
-            }
             return $status ?: ($this->app->responseStatus ?: 200);
         }
 
         // We are here if no action method was found for the request
         $pathInfo = implode('/', $this->path);
         throw new Exception('Unknown action at ' . $pathInfo, HTTP::HTTP_NOT_FOUND);
-    }
-
-    /**
-     * beforeAction is executed before each action, and cancels the action if returns false.
-     * The default behavior is true (enable the action).
-     * Called only if the action method exists.
-     */
-    public function beforeAction(): bool
-    {
-        return true;
-    }
-
-    /**
-     * The default action will run if no other match is found on the path elements.
-     * The default behavior throws an Exception.
-     * Override in your controller, if a default action is needed.
-     * @throws Exception
-     */
-    public function actionDefault()
-    {
-        throw new Exception('No default action is defined');
     }
 }

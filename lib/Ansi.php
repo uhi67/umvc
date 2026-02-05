@@ -1,4 +1,6 @@
 <?php
+/** @noinspection PhpIllegalPsrClassPathInspection */
+
 /** @noinspection PhpUnused */
 
 namespace uhi67\umvc;
@@ -16,7 +18,7 @@ namespace uhi67\umvc;
  */
 class Ansi
 {
-    public static $commands = [
+    public static array $commands = [
         'blink' => '\033[5m',
         'bold' => '\033[1m',
         'dim' => '\033[2m',
@@ -32,25 +34,26 @@ class Ansi
         'sgr0' => '\033(B\033[m',        //	reset text attributes
         // Cursor movement
         'sc' => '\0337',                //	save cursor position
-        'rc' => '\0338',                //	restore saved cursor position
-        'clear' => '\033[H\033[2J',    //	clear screen and move cursor to top left
+        'rc' => '\0338',                //	restore the saved cursor position
+        'clear' => '\033[H\033[2J',    //	clear screen and move cursor to the top left
         'cuu #1' => '\033[#1A',        //	move cursor up #1 rows
         'cud #1' => '\033[#1B',        //	move cursor down #1 rows
         'cuf #1' => '\033[#1C',        //	move cursor right #1 columns
         'cub #1' => '\033[#1D',        //	move cursor left #1 columns
-        'home' => '\033[H',            //	move cursor to top left
+        'home' => '\033[H',            //	move the cursor to the top left
         'hpa #1' => '\033[#1G',        //	move cursor to column #1
         'vpa #1' => '\033[#1d',        //	move cursor to row #1, first column
         'cup #1 #2' => '\033[#1;#2H', //	move cursor to row #1, column #2
         // Removing characters
         'dch #1' => '\033#1P',        //	remove #1 characters (like backspacing)
         'dl #1' => '\033#1M',            //	remove #1 lines
-        'ech #1' => '\033#1X',        //	clear #1 characters (without moving cursor)
+        'ech #1' => '\033#1X',        //	clear #1 characters (without moving the cursor)
         'ed' => '\033[J',            //	clear to bottom of screen
-        'el' => '\033[K',            //	clear to end of line
-        'el1' => '\033[1K',            //	clear to beginning of line
+        'el' => '\033[K',            //	clear to the end of the line
+        'el1' => '\033[1K',            //	clear to the beginning of the line
     ];
-    public static $colors = [
+
+    public static array $colors = [
         'black' => '0;30',
         'red' => '0;31',
         'green' => '0;32',
@@ -69,7 +72,7 @@ class Ansi
         'white' => '1;37',
     ];
 
-    private static $backgrounds = [
+    private static array $backgrounds = [
         'black' => '40',
         'red' => '41',
         'green' => '42',
@@ -84,22 +87,19 @@ class Ansi
     /**
      * Returns ANSI colored text
      *
-     * if close is true (default) the colors will be rested at the end of the string
+     * if close is true (default), the colors will be rested at the end of the string
      *
      * @param string $string -- the message to color
-     * @param string $fg -- foreground color name
+     * @param string|null $fg -- foreground color name
      * @param string|null $bg -- background color name (default is unchanged)
      * @param bool $close -- restore color after the message
      * @return string -- string with pre- and appended ansi color commands
      */
-    public static function color($string, $fg, $bg = 'null', $close = true)
+    public static function color(string $string, ?string $fg, ?string $bg = 'null', bool $close = true): string
     {
         if (!$fg) {
             $fg = $bg == 'white' ? 'black' : 'white';
         }
-        if (!is_string($fg)) {
-            return $string . '*';
-        } //throw new InternalException('fg must be string');
         $color = self::$colors[trim(strtolower($fg))] ?? '0';
         $bg = $bg ? (self::$backgrounds[trim(strtolower($bg))] ?? '0') : '';
         $bgx = $bg ? "\033[{$bg}m" : '';
@@ -113,9 +113,9 @@ class Ansi
      * `echo Ansi::color($message, Ansi::htmltoansi($color))`
      *
      * @param string $color -- the HTML color code in form '#12C' or '#1122CC'
-     * @return string -- the ANSI color name
+     * @return false|string -- the ANSI color name, false if color is invalid
      */
-    public static function htmltoansi($color)
+    public static function htmltoansi(string $color): false|string
     {
         if (preg_match('/^#?([0-9a-fA-F])([0-9a-fA-F])([0-9a-fA-F])$/', $color, $m)) {
             $rgb = [hexdec($m[1] . $m[1]), hexdec($m[2] . $m[2]), hexdec($m[3] . $m[3])];
@@ -176,14 +176,14 @@ class Ansi
     /** @noinspection PhpMethodNamingConventionInspection */
 
     /**
-     * Converts RGB color to HSV model
+     * Converts RGB color to an HSV model
      *
-     * @param array|integer $r -- array of RGB Values: 0-255 or R value
+     * @param array|integer $r -- array of RGB values: 0-255 or R value
      * @param integer $g
      * @param integer $b
-     * @return array     -- HSV Results: 0-1
+     * @return array -- HSV results: 0-1
      */
-    public static function rgb_to_hsv($r, $g = 0, $b = 0)
+    public static function rgb_to_hsv(array|int $r, int $g = 0, int $b = 0): array
     {
         if (is_array($r)) {
             $b = $r[2];
