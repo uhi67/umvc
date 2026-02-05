@@ -1,7 +1,7 @@
 UMVC framework
 ==============
 
-Version 3.0-alpha.1 -- 2025-04-29
+Version 3.0.0 -- 2026-02-05
 
 A simple web-application framework implementing model-view-controller (MVC) architectural pattern.
 
