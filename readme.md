@@ -188,8 +188,17 @@ A built-in dockerized testing environment can be used to test with different php
 Change log
 ----------
 
-### version 3.0 -- "2025-04-29"
+### version 3.0 -- "2026-02-05"
 
+- moved to educalliance repository
+- added MailerPhp component
+- Form can be disabled
+- cache control
+- added ArrayHelper::updateSet()
+- added SimpleSamlAuth component
+- added Model::friendlyErrors
+- added BaseModel::unsetErrors()
+- added AppHelper::renderException()
 - add BaseController
 - add App::login()
 - AuthManager::login() with attributes and creation
@@ -201,7 +210,7 @@ Change log
 - BaseModel::addError() with multiple fields
 - add Column::$format property (raw or not)
 - add FileCache::$permission property
-- using php 8.2 types
+- using php 8.2 types, and PSR12 rules
 
 ### version 2.2 -- "2025-03-16"
 

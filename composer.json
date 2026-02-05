@@ -1,8 +1,8 @@
 {
-  "name": "uhi67/umvc",
+  "name": "educalliance/umvc",
   "description": "UMVC simple PHP framework",
   "type": "project",
-  "homepage": "https://umvc.uhisoft.hu/",
+  "homepage": "https://educalliance.eu/",
   "minimum-stability": "stable",
   "prefer-stable": true,
   "license": "MIT",
