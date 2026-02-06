@@ -14,19 +14,6 @@ if [ ! -f "/app/tests/_data/test-config.php" ]; then
   echo "'test-config.php' is created from template"
 fi
 
-NODEV=""
-if [ "$APPLICATION_ENV" = "production" ]; then
-    NODEV="--no-dev"
-fi
-
-composer update -n $NODEV || true
-# check wrong module path (simplesamlphp modules may be installed here first time)
-if [ -d "/app/modules" ]; then
-    composer install -n $NODEV || true
-    echo "Deleting wrong modules path ..."
-    rm -rf /app/modules
-fi
-
 cd $APPDIR || exit
 
 echo "Waiting for database container to be ready..."

@@ -175,6 +175,7 @@ More unit tests are coming...
 ## Testing in docker
 
 A built-in dockerized testing environment can be used to test with different php and database versions. 
+This is for local interactive testing for a developer, and not for CI/CD.
 
 **Steps:**
 
