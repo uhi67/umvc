@@ -172,7 +172,7 @@ class Column extends Component
         $fieldName = $searchModel . '[' . $this->searchField . ']';
         $searchValue = ArrayHelper::getValue($search, $this->searchField);
         if (is_array($this->filter)) {
-            $values = ['' => ''];
+            $values = ['' => '&nbsp;'];
             foreach ($this->filter as $value => $label) {
                 $values[$value] = $label;
             } // array_merge messes up indices
