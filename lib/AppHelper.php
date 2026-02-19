@@ -619,4 +619,27 @@ class AppHelper
         }
         return $protocol . '://' . $_SERVER["HTTP_HOST"];
     }
+
+    /**
+     * Retrieves a secret value from a secret directory or environment variable.
+     * Preference order:
+     * - file 'NAME' in the secret directory
+     * - file 'NAME_FILE' in the secret directory
+     * - environment variable 'NAME'
+     * - default value
+     * - null
+     *
+     * @param string $name The name of the secret.
+     * @param string $sercetDir The directory where secrets are stored. Defaults to '/run/secrets'.
+     * @param string|null $default The default value to return if the secret is not found. Defaults to null.
+     * @return string|null
+     */
+    public static function getSecret(string $name, string $sercetDir = '', string $default = null): ?string
+    {
+        if (file_exists($fileName = $sercetDir . '/' . $name) || file_exists($fileName = $sercetDir . '/' . $name . '_FILE')) {
+            return file_get_contents($fileName);
+        }
+        $value = getenv($name);
+        return $value===false ? $default : $value;
+    }
 }
