@@ -625,22 +625,21 @@ class AppHelper
      * Preference order:
      * - environment variable 'NAME'
      * - file named 'NAME_FILE' env var in the secret directory
-     * - file 'NAME' in the secret directory (if the above env var is not set)
      * - default value
      * - null
      *
      * @param string $name The name of the secret.
-     * @param string $sercetDir The directory where secrets are stored. Defaults to '/run/secrets'.
      * @param string|null $defaultValue The default value to return if the secret is not found. Defaults to null.
      * @return string|null
      */
-    public static function getSecret(string $name, string $sercetDir = '/run/secrets', string $defaultValue = null): ?string
+    public static function getSecret(string $name, string $defaultValue = null): ?string
     {
         $value = getenv($name);
         if($value !== false) {
             return $value;
         }
-        if (file_exists($fileName = $sercetDir . '/' . (getenv($name.'_FILE')?:$name))) {
+        $fileName = getenv($name.'_FILE');
+        if ($fileName && file_exists($fileName)) {
             return file_get_contents($fileName);
         }
         return $defaultValue;
