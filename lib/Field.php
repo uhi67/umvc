@@ -310,7 +310,7 @@ class Field extends Component
         $required = $this->options['required'] ?? false;
         if (!$required) {
             $emptyText = $this->options['placeholder'] ?? 'None';
-            $checked = !$this->value;
+            $checked = !$this->value ? 'checked' : '';
             $result .= "<label for='$this->id-none'>
                     <input type='radio' id='$this->id-none' name='$this->name' class='$this->class' value='' $checked $options aria-invalid='false' />
                     $emptyText
