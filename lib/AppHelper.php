@@ -28,13 +28,13 @@ class AppHelper
         $generated_string = "";
         $domain = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
         $len = strlen($domain);
-        // Loop to create random string
+        // Loop to create a random string
         for ($i = 0; $i < $n; $i++) {
             // Generate a random index to pick characters
             $index = rand(0, $len - 1);
 
             // Concatenating the character
-            // in resultant string
+            // in the resultant string
             $generated_string = $generated_string . $domain[$index];
         }
         return $generated_string;
@@ -73,17 +73,15 @@ class AppHelper
      * the input string is returned as is with the particularity that null gets
      * truncated to the empty string.
      *
-     * @param string $string The string to truncate.
+     * @param string|null $string The string to truncate. Returns '' on null.
      * @param int $threshold The minimum number of bytes in string after which
      *                       truncating can occur.
      * @param string $break The breakpoint string for truncating.
      * @param string $pad The padding string.
-     * @param string|null $string The string to truncate. Returns '' on null.
      * @return string
      * @see strlen()
      *
      * @see strlen()
-     *
      */
     public static function truncate(?string $string, int $threshold, string $break = '.', string $pad = '...'): string
     {
@@ -169,7 +167,7 @@ class AppHelper
         }
         $errorMessage = (ENV_DEV || $e instanceof UserException) ? $e->getMessage() : 'Something went wrong';
         if (!headers_sent()) {
-            http_response_code((int)$responseStatus ?? HTTP::HTTP_INTERNAL_SERVER_ERROR);
+            http_response_code($responseStatus ?? HTTP::HTTP_INTERNAL_SERVER_ERROR);
         }
         echo '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">';
         echo '<html lang="en">';
@@ -226,7 +224,7 @@ class AppHelper
     public static function debug(): string
     {
         $content = '';
-        if (ENV_DEV) {
+        if (ENV=='local') {
             $content = '<div class="debug container dismissable">';
             if (isset($_SESSION)) {
                 $content .= '<h3>SESSION</h3><table class="table">';
