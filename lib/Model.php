@@ -27,7 +27,8 @@ use Throwable;
  */
 class Model extends BaseModel
 {
-    /** @var Query|null -- the last executed Query */
+    const FILTER_HINT_DATE_RANGE = 'Date pattern, or "start -- end" range or "< date" or "> date"';
+    /** @var Query|null $lastQuery-- the last executed Query */    /** @var Query|null -- the last executed Query */
     public ?Query $lastQuery = null;
 
     /** @var array $attribute values indexed by attribute names */
