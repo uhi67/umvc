@@ -80,7 +80,7 @@ class BaseModel extends Component implements JsonSerializable
      * Attribute labels are mainly used for display purpose
      * Order of labels is the default order of fields.
      * The default implementation returns an empty array.
-     * If a label is not defined, the humanized field-name will be used (converted to uppercase words).
+     * If a label is not defined, the humanised field-name will be used (converted to uppercase words).
      *
      * For getting label for a specific attribute, see {@see attributeLabel()}
      *
@@ -626,11 +626,36 @@ class BaseModel extends Component implements JsonSerializable
             return true;
         }
         try {
-            Assertions::assertString($pattern);
             if (preg_match($pattern, $value) == 1) {
                 return true;
             }
             return $this->addError($field, $customMessage ?: 'has invalid format');
+        } catch (Exception $e) {
+            throw new Exception(sprintf('Field `%s`: %s', $field, $e->getMessage()), 0, $e);
+        }
+    }
+
+    /**
+     * Validates a field with a set of valid values
+     * Null values always pass!
+     *
+     * @param string $field
+     * @param array $values -- valid values
+     * @param string|null $customMessage
+     * @return bool
+     * @throws Exception
+     */
+    public function validateIn(string $field, array $values, string $customMessage = null): bool
+    {
+        $value = $this->$field;
+        if (is_null($value)) {
+            return true;
+        }
+        try {
+            if(in_array($value, $values)) {
+                return true;
+            }
+            return $this->addError($field, $customMessage ?: 'is invalid');
         } catch (Exception $e) {
             throw new Exception(sprintf('Field `%s`: %s', $field, $e->getMessage()), 0, $e);
         }
