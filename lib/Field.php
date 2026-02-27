@@ -264,6 +264,12 @@ class Field extends Component
         return $this->renderInputDefault();
     }
 
+    public function renderInputDateTime(): string
+    {
+        $this->type = 'datetime-local';
+        return $this->renderInputDefault();
+    }
+
     public function renderInputSelect(string $class2 = ''): string
     {
         $multiple = $this->options['multiple'] ?? false;
