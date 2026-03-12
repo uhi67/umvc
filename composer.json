@@ -45,9 +45,12 @@
     "psr-4": {
       "educalliance\\umvc\\commands\\": "commands",
       "educalliance\\umvc\\models\\": "models",
-      "educalliance\\umvc\\": "lib",
-      "Helper\\": "lib/testhelper",
-      "testapp\\": "tests/_data/testapp"
+      "educalliance\\umvc\\": "lib"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Helper\\": "lib/testhelper"
     }
   },
   "config": {

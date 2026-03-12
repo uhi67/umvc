@@ -5,8 +5,10 @@ version: "3.6"
 # 3. build and run the stack using `docker compose up --build`
 name: umvc
 services:
-  php:
-    build: ./docker
+  test-runner:
+    build:
+      context: ".."
+      dockerfile: "tests/docker/Dockerfile" #relative to the context path,
     depends_on:
       - test-db
     volumes:

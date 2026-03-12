@@ -187,7 +187,8 @@ class Controller extends BaseController
         foreach ($headers as $header) {
             $this->app->sendHeader($header);
         }
-        $this->app->sendHeader('Content-Type: application/csv; charset=UTF-8');
+        $contentType = ENV == 'local' ? 'text/plain; charset=UTF-8' : 'application/csv; charset=UTF-8';
+        $this->app->sendHeader("Content-Type: $contentType");
         $this->app->sendHeader("Cache-Control: no-cache, must-revalidate");  // HTTP/1.1
 
         if (empty($models)) {
