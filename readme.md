@@ -1,7 +1,7 @@
 UMVC framework
 ==============
 
-Version 3.0.0 -- 2026-02-05
+Version 3.0.1 -- 2026-03-12
 
 A simple web-application framework implementing model-view-controller (MVC) architectural pattern.
 
@@ -188,6 +188,14 @@ This is for local interactive testing for a developer, and not for CI/CD.
 
 Change log
 ----------
+
+### version 3.0.1 -- "2026-03-12"
+
+- BaseModel::validateIn() is added
+- fix datetime input
+- fix radiolist empty value
+- fix AppHelper::getSecret()
+- fix selection filter empty value
 
 ### version 3.0 -- "2026-02-05"
 
