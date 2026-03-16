@@ -175,15 +175,14 @@ More unit tests are coming...
 ## Testing in docker
 
 A built-in dockerized testing environment can be used to test with different php and database versions. 
+This is for local interactive testing for a developer, and not for CI/CD.
 
-**Steps:**
+Simply run `./run-tests.sh` or `./run-tests.sh --build` if the image must be rebuilt.
 
-1. configure the needed database version in `tests/docker-compose.yml` (make clones of this template file)  
-2. configure the php version in `tests/docker/Dockerfile` (extension installation steps may change)
-3. configure the used ports and base-url in `tests/.env`
-4. build the stack using `docker compose up --build -d` (in the `tests` dir)
-5. your php container should now be 'umvc-php-1'
-6. run unit tests with `docker exec -it umvc-php-1 php vendor/bin/codecept run unit`
+You can customize for local testing:
+
+- `tests/docker-compose.yml`
+- `tests/.env`
 
 Change log
 ----------

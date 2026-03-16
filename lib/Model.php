@@ -1,5 +1,6 @@
 <?php
 /** @noinspection PhpIllegalPsrClassPathInspection */
+
 /** @noinspection PhpUnused */
 
 namespace uhi67\umvc;
@@ -27,6 +28,10 @@ use Throwable;
  */
 class Model extends BaseModel
 {
+    // 'Example filter patterns: "< 2020-12-31", "> 2025-01-01", "2021-05-01 -- 2021-05-31", "2024-05", RegEx'
+    const FILTER_HINT_DATE_RANGE = 'Date pattern, or "start -- end" range or "< date" or "> date"';
+
+    /** @var Query|null $lastQuery -- the last executed Query */
     /** @var Query|null -- the last executed Query */
     public ?Query $lastQuery = null;
 

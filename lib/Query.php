@@ -120,7 +120,7 @@ class Query extends Component
     private ?PDOStatement $stmt = null;
     /** @var array|null $_fields - select part of SELECT, or field list of INSERT, if not given, * or the indices of the passed values are used. Ignored on UPDATE or DELETE. Array of literal field-names or other expressions */
     private array|null $_fields = null;
-    /** @var string|array|null|Model $_from - model list (optionally indexed with aliases) of FROM part of SELECT or UPDATE or a single model name. A Query with an alias is also can be used as a FROM part. */
+    /** @var string|array|null|Model $_from - model list (optionally indexed with aliases) of FROM part of SELECT or UPDATE or a single model name. A Query with an alias also can be used as a FROM part. */
     private string|array|Model|null $_from = null;
     /** @var array $_joins -- -- list of JOINS as [alias=>[model, join-type, conditions], ...] condition is a `mainField=>foreignField` associative pair, or any numeric-indexed other expression */
     private array $_joins = [];
@@ -299,7 +299,7 @@ class Query extends Component
      * Overwrites the previous conditions!
      *
      * $tableNameList can be a model list (optionally indexed with aliases) of FROM part of SELECT or UPDATE or a single model name.
-     * A Query with a mandatory alias is also can be used as a FROM part.
+     * A Query with a mandatory alias also can be used as a FROM part.
      *
      * @param array|string $tableNameList
      * @return $this
@@ -465,7 +465,7 @@ class Query extends Component
     }
 
     /**
-     * Sets the SET part of an UPDATE Query in chained mode. Changes query type to UPDATE
+     * Sets the SET part of an UPDATE Query in chained mode. Changes the query type to UPDATE
      * Example: Model::createQuery()->set(['name'=>'Foo'])->where(['id'=>$bar]);
      *
      * @param $values
@@ -1401,7 +1401,7 @@ class Query extends Component
      * Also returns the alias name of the main model table if it exists, or null.
      *
      * @param array|null $aliases -- (output only) returns the generated alis names
-     * @return string|null -- alias name of main model table or null
+     * @return string|null -- alias name of the main model table or null
      */
     public function normalizeAlias(array &$aliases = null): ?string
     {
@@ -2172,7 +2172,7 @@ class Query extends Component
         if (!count($orders)) {
             return '';
         }
-        // NULLs works directly on postgresql only, mysql must generate slave item ISNULL() if LAST is requested
+        // NULLs work directly on postgresql only, mysql must generate slave item ISNULL() if LAST is requested
         $db = $this;
         try {
             return implode(', ', array_map(function ($o) use ($alias, $db) {
@@ -2494,7 +2494,7 @@ class Query extends Component
         return implode(', ', array_map(function ($f, $a, $i) use ($prefix, $fields, $aliases) {
             $db = $this;
             $output = is_integer($a) ? '' : $a;
-            // Auto output alias-prefixed field-name if similar field-name exist before it's index
+            // Auto output alias-prefixed field-name if similar field-name exists before it's index
             if (!$output && is_scalar($f) && strpos($f, '.')) {
                 $field_name = AppHelper::substring_after($f, '.', true);
                 // Search for the position of the occurrence of the field_name, where no alias is present
@@ -2603,7 +2603,7 @@ class Query extends Component
     }
 
     /**
-     * Returns last error occurred in last executed statement, if any.
+     * Returns the last error occurred in the last executed statement, if any.
      * The error message is a ';'-separated PDO errorInfo structure.
      * The ANSI-code '00000' in the first tag indicates success.
      *
@@ -2734,13 +2734,14 @@ class Query extends Component
      *
      * where datetime must be in ISO format
      *
-     * @param string $value
+     * @param string|null $value
      * @param string|Query|array $field
      * @return $this
      * @throws Exception
      */
-    public function filterDateRange(string $value, string|Query|array $field): static {
-        if ($value !== '') {
+    public function filterDateRange(?string $value, string|Query|array $field): static
+    {
+        if ($value) {
             $this->andWhere($this->dateRangeCondition($field, $value));
         }
         return $this;
@@ -2765,8 +2766,8 @@ class Query extends Component
      * @return array
      * @throws Exception
      */
-    public function dateRangeCondition(string|Query|array $field, string $value) {
-        $d = null;
+    public function dateRangeCondition(string|Query|array $field, string $value): array
+    {
         $dp = '\d{4}-\d{2}-\d{2}';
         $value = trim($value);
         $shortcuts = [
@@ -2796,21 +2797,32 @@ class Query extends Component
             $value = preg_replace($shortcut, $replacement, $value);
         }
         // "<, <=, >= date" formats.
-        if(preg_match('~^(<=?|>=)\s*('.$dp.')$~', $value, $mm)) {
+        if (preg_match('~^(<=?|>=)\s*(' . $dp . ')$~', $value, $mm)) {
             $d = trim($mm[2]);
-            if($d) return [$mm[1], $field, $this->connection->quoteValue($d)];
-        }
-        // "> date" formats
-        elseif(preg_match('~^>\s*('.$dp.')$~', $value, $mm) || preg_match('~^('.$dp.')(\s*<|\s+-|\s*--)$~', $value, $mm)) {
+            if ($d) {
+                return [$mm[1], $field, $this->connection->quoteValue($d)];
+            }
+        } // "> date" formats
+        elseif (preg_match('~^>\s*(' . $dp . ')$~', $value, $mm) || preg_match(
+                '~^(' . $dp . ')(\s*<|\s+-|\s*--)$~',
+                $value,
+                $mm
+            )) {
             $d = trim($mm[1]);
-            if($d) return ['>', $field, $this->connection->quoteValue($d)];
-        }
-        // "date -- date" formats
-        elseif(preg_match('~^('.$dp.')(\s*<\s*|\s+-\s+|\s*--\s*)('.$dp.')$~', $value, $mm)) {
+            if ($d) {
+                return ['>', $field, $this->connection->quoteValue($d)];
+            }
+        } // "date -- date" formats
+        elseif (preg_match('~^(' . $dp . ')(\s*<\s*|\s+-\s+|\s*--\s*)(' . $dp . ')$~', $value, $mm)) {
             $d1 = trim($mm[1]);
             $d2 = trim($mm[3]);
-            if($d1 && $d2)
-                return ['and', ['>', $field, $this->connection->quoteValue($d1)], ['<', $field, $this->connection->quoteValue($d2)]];
+            if ($d1 && $d2) {
+                return [
+                    'and',
+                    ['>', $field, $this->connection->quoteValue($d1)],
+                    ['<', $field, $this->connection->quoteValue($d2)]
+                ];
+            }
         }
 
         // Default: pattern ~ formatted date
@@ -2838,18 +2850,29 @@ class Query extends Component
      * - `# < #`: the column must be between the given values (excluding).
      * - If none of the above operators is detected, `=` will be used.
      *
-     * @param string $field the column name or subexpression
      * @param string $value the column value optionally prepended with the comparison operator.
+     * @param string|Query|array $field the column name or subexpression
      * @return static The query object itself
      */
     public function filterCompare(string $value, string|Query|array $field): static
     {
-        if($value === '') return $this;
+        if ($value === '') {
+            return $this;
+        }
         if (preg_match('~^\s*(\d+)\s*--?\s*(\d+)\s*$~', $value, $matches)) {
-            return $this->andWhere(['between', $field, $this->connection->quoteValue($matches[1]), $this->connection->quoteValue($matches[2])]);
+            return $this->andWhere(
+                [
+                    'between',
+                    $field,
+                    $this->connection->quoteValue($matches[1]),
+                    $this->connection->quoteValue($matches[2])
+                ]
+            );
         }
         if (preg_match('~^\s*(\d+)\s*<\s*(\d+)\s*$~', $value, $matches)) {
-            return $this->andWhere(['>', $field, $this->connection->quoteValue($matches[1])])->andWhere(['<', $field, $this->connection->quoteValue($matches[2])]);
+            return $this->andWhere(['>', $field, $this->connection->quoteValue($matches[1])])->andWhere(
+                ['<', $field, $this->connection->quoteValue($matches[2])]
+            );
         }
         if (preg_match('/^(<>|>=|>|<=|<|=)/', $value, $matches)) {
             $operator = $matches[1];
