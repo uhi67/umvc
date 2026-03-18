@@ -1,7 +1,7 @@
 {
   "name": "educalliance/umvc",
   "description": "UMVC simple PHP framework",
-  "type": "project",
+  "type": "library",
   "homepage": "https://educalliance.eu/",
   "minimum-stability": "stable",
   "prefer-stable": true,
@@ -32,12 +32,12 @@
     "codeception/module-filesystem": "^3.0.1",
     "codeception/lib-innerbrowser": "^4.0.6",
     "codeception/module-rest": "^3.4.1",
-    "simplesamlphp/simplesamlphp": "*",
-    "phpmailer/phpmailer": "*"
+    "phpmailer/phpmailer": "^6.12",
+    "simplesamlphp/simplesamlphp": "2.4.5"
   },
   "suggest": {
-    "simplesamlphp/simplesamlphp": "*",
-    "phpmailer/phpmailer": "*"
+    "phpmailer/phpmailer": "*",
+    "simplesamlphp/simplesamlphp": "*"
   },
   "scripts": {
   },
