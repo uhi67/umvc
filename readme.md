@@ -191,6 +191,14 @@ Change log
 
 - update dependencies
 
+### version 3.0.1+uhi67 -- "2026-03-12"
+
+- BaseModel::validateIn() is added
+- fix datetime input
+- fix radiolist empty value
+- fix AppHelper::getSecret()
+- fix selection filter empty value
+
 ### version 3.0.0+uhi67 -- "2026-02-05"
 
 - added MailerPhp component
