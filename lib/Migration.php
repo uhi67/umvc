@@ -122,17 +122,17 @@ abstract class Migration extends Component
         } catch (Throwable $e) {
             App::log(
                 'error',
-                sprintf(
+                $m = sprintf(
                     "Exception '%s' in file %s at line %s occurred at SQL '%s' in file %s at line %s",
                     $e->getMessage(),
                     $e->getFile(),
                     $e->getLine(),
-                    $cmd,
+                    substr($cmd, 0, 250),
                     $filename,
                     $line
                 )
             );
-            throw $e;
+            throw new Exception($m, 500, $e);
         }
         if ($result === false) {
             $error = $this->connection->lastError;
@@ -187,6 +187,9 @@ abstract class Migration extends Component
         }
         $cmd = trim($cmd);
         if ($cmd) {
+            if ($this->verbose > 1) {
+                echo "SQL command at line $i: '$cmd'", PHP_EOL;
+            }
             if (!static::execSingle($cmd, $replacements, $filename, $i)) {
                 return false;
             }
