@@ -225,7 +225,7 @@ class AppHelper
     {
         $content = '';
         if (ENV=='local') {
-            $content = '<div class="debug container dismissable">';
+            $content = '<div class="debug border border-3 border-danger dismissible p-2 mx-3"><h2>Debug information</h2><p>Note: this box appears only on the test instances.</p>';
             if (isset($_SESSION)) {
                 $content .= '<h3>SESSION</h3><table class="table">';
                 foreach ($_SESSION as $key => $value) {

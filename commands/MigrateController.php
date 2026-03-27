@@ -231,15 +231,13 @@ class MigrateController extends Command
                 if ($this->connection->pdo->inTransaction()) {
                     $this->connection->pdo->rollBack();
                 }
-                echo $m = sprintf(
+                AppHelper::showException($e);
+                $m = sprintf(
                     "Exception: %s in file %s at line %d\n",
                     $e->getMessage(),
                     $e->getFile(),
                     $e->getLine()
                 );
-//                if (ENV_DEV) {
-//                    Debug::debug($m);
-//                }
                 throw new Exception("Applying migration '" . $name . "' caused an exception: ".$m, 500, $e);
             }
         }
