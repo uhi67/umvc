@@ -593,32 +593,6 @@ class AppHelper
     }
 
     /**
-     * Determines the base URL of the application considering the reverse proxy effect
-     * @return string -- the valid base URL
-     */
-    public static function baseUrl(): string
-    {
-        $baseurl = getenv('APP_BASEURL');
-        if ($baseurl) {
-            if(str_starts_with($baseurl, 'https://')) {
-                $_SERVER['HTTPS'] = 'on'; // SimpleSAMLphp will apply a wrong RelayState URL after login/logout if it's missing
-            }
-            return trim($baseurl, '/');
-        }
-        $https = getenv('HTTPS') ?: 'off';
-        $protocol = ($https == 'on' || ($_SERVER['SERVER_PORT'] ?? 80) == 443) ? "https" : "http";
-        if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) || $https == 'on') {
-            $protocol = $_SERVER['HTTP_X_FORWARDED_PROTO'] ?? $protocol;
-            if ($https == "on") {
-                $protocol = 'https';
-                $_SERVER['SERVER_PORT'] = 443;
-                $_SERVER['HTTPS'] = 'on'; // SimpleSAMLphp will apply a wrong RelayState URL after login/logout if it's missing
-            }
-        }
-        return $protocol . '://' . $_SERVER["HTTP_HOST"];
-    }
-
-    /**
      * Retrieves a secret value from a secret directory or environment variable.
      * Preference order:
      * - environment variable 'NAME'
