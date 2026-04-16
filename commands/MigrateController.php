@@ -382,7 +382,7 @@ class %className% extends Migration {
 	/**
 	 * @return bool -- must return true on success
      */
-	public function up() {
+	public function up(): bool {
 	}
 }
 EOT;

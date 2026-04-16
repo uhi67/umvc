@@ -41,7 +41,7 @@ use Throwable;
  * @property-read Model[]|array[] $all;
  * @property-read Model|array|null $one -- {@see Query::getOne()}
  * @property-read Model|array|null $next -- {@see Query::getNext()}
- * @property-read Model|array $column;
+ * @property-read array $column;-- {@see Query::getColumn()}
  * @property-read mixed $scalar -- {@see Query::getScalar()}
  *
  * Note: reading these fetcher properties may throw an Exception
