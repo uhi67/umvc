@@ -27,7 +27,7 @@ use uhi67\umvc\Model;
 <?php foreach ($columns as $name => $column) {
     $ref = $references[$name] ?? null;
     $reference = $ref ? " references {$ref['foreign_table']}" : '';
-    $len = $column['len'];;
+    $len = $column['len'];
     $key = match(strtoupper($column['key'])) { 'PRI' => ' PRIMARY KEY', 'UNI' => ' UNIQUE', default => '' };
     $def = strtoupper($column['type']) . ($len  > -1 ? "($len)" : '') . $key . ($column['not null'] ? ' NOT NULL' : '') . ($column['has default'] ? " DEFAULT '{$column['default']}' " : '');
     echo " * @property-read {$column['php-type']} \${$column['php-name']} -- $def$reference\n";
