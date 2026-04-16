@@ -174,7 +174,7 @@ class App extends Component
         }
 
         if ($this->baseUrl === null) {
-            $this->baseUrl = AppHelper::baseUrl();
+            $this->baseUrl = getenv('APP_BASEURL');
         }
         if (!$this->url) {
             $this->url = ArrayHelper::getValue($_SERVER, 'REQUEST_URI', '');
@@ -200,7 +200,7 @@ class App extends Component
         $components = $this->config['components'] ?? [];
         $referredComponents = $defaultComponents;
         if ($this->sapi == 'cli') {
-            $components = $this->config['cli_components'] ?? $this->config['components'];
+            $components = $this->config['cli_components'] ?? ($this->config['components'] ?? []);
             $referredComponents = array_merge($defaultComponents, $this->config['components'] ?? []);
         }
 
@@ -307,7 +307,10 @@ class App extends Component
         string $message
     ): int|string {
         $this->setHttpStatus($status);
-        return $this->render('error', ['status' => $status, 'title' =>  HTTP::$statusTexts[$status] ?? '', 'message' => $message]);
+        return $this->render(
+            'error',
+            ['status' => $status, 'title' => HTTP::$statusTexts[$status] ?? '', 'message' => $message]
+        );
     }
 
     public function setHttpStatus(int $status): void
@@ -408,7 +411,7 @@ class App extends Component
                 // Find the actual controller class for this path and let it go
                 for ($i = 1; $i <= count($this->path); $i++) {
                     $this->classPath = array_slice($this->path, 0, $i);
-                    $xpath = implode('\\', array_slice($this->path, 0, $i-1));
+                    $xpath = implode('\\', array_slice($this->path, 0, $i - 1));
                     if ($xpath) {
                         $xpath .= '\\';
                     }
@@ -442,7 +445,8 @@ class App extends Component
      * @param Throwable $e
      * @return int
      */
-    public function showException(Throwable $e): int {
+    public function showException(Throwable $e): int
+    {
         $this->responseStatus = (int)$e->getCode() ?: HTTP::HTTP_INTERNAL_SERVER_ERROR;
         AppHelper::showException($e, $this->responseStatus);
         return $this->responseStatus;
@@ -874,8 +878,12 @@ class App extends Component
     {
         if (!$this->loggedIn()) {
             if ($force && !array_key_exists('login', $_REQUEST) && $this->auth->uid != AuthManager::INVALID_USER) {
-                if(is_string($loginUrl)) $loginUrl =  [$loginUrl, 'ReturnTo' => $this->url];
-                if(!$loginUrl) $loginUrl = ['login' => true, 'ReturnTo' => $this->url];
+                if (is_string($loginUrl)) {
+                    $loginUrl = [$loginUrl, 'ReturnTo' => $this->url];
+                }
+                if (!$loginUrl) {
+                    $loginUrl = ['login' => true, 'ReturnTo' => $this->url];
+                }
                 return $this->redirect($loginUrl);
             } else {
                 throw new Exception('Must be logged in', HTTP::HTTP_FORBIDDEN);
@@ -1284,7 +1292,9 @@ class App extends Component
     {
         defined('ENV') || define('ENV', getenv('APPLICATION_ENV') ?: 'production');
         defined('ENV_DEV') || define('ENV_DEV', ENV != 'production');
-        if(!ENV_DEV) return;
+        if (!ENV_DEV) {
+            return;
+        }
         $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
         $location = $backtrace[0]['file'] . ':' . $backtrace[0]['line'];
         if (!App::isCLI()) {
@@ -1345,8 +1355,13 @@ class App extends Component
      * @return bool
      * @throws Exception
      */
-    public static function sendMail(array|string $recipients, string $subject, array|string $message, array $options = [], ?string &$error = ''): bool
-    {
+    public static function sendMail(
+        array|string $recipients,
+        string $subject,
+        array|string $message,
+        array $options = [],
+        ?string &$error = ''
+    ): bool {
         if (!is_array($recipients)) {
             $recipients = [$recipients];
         }
@@ -1374,7 +1389,9 @@ class App extends Component
         }
         App::dump($recipients);
         $ok = $mailer->send($recipients, $subject, $message, $options);
-        if(!$ok) $error = $mailer->status;
+        if (!$ok) {
+            $error = $mailer->status;
+        }
         return $ok;
     }
 }
