@@ -57,8 +57,8 @@ class Field extends Component
     public ?string $error = null;
     /** @var Form $form -- the form object this field belongs to */
     public Form $form;
-    /** @var string $template -- the partial view name for the rendering. The default is _form/_field */
-    public string $template;
+    /** @var string|null $template -- the partial view name for the rendering. The default is _form/_field */
+    public ?string $template = null;
     /** @var string $hint -- a helper text under the field input */
     public string $hint = '';
 
