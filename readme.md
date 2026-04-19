@@ -1,7 +1,7 @@
 UMVC framework
 ==============
 
-Version 3.0.2+uhi67 -- 2026-03-18
+Version 3.1.0+uhi67 -- 2026-04-19
 
 A simple web-application framework implementing model-view-controller (MVC) architectural pattern.
 
@@ -186,6 +186,11 @@ You can customize for local testing:
 
 Change log
 ----------
+
+### version 3.1.0+uhi67 -- "2026-04-19"
+
+- Move to php 8.3
+- Fix GHSA-qrr6-mg7r-m243
 
 ### version 3.0.2+uhi67 -- "2026-03-18"
 
