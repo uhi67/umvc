@@ -241,18 +241,15 @@ class MigrateController extends Command
                 throw new Exception("Applying migration '" . $name . "' caused an exception: ".$m, 500, $e);
             }
         }
-        if ($n == 0 && $this->verbose) {
-            echo "No migrations applied", PHP_EOL;
+        // If migrations were applied, the model table metadata cache must be cleared
+        if ($n !== 0 && $this->app->hasComponent('cache')) {
+            $this->app->cache->clear();
+        }
+        // Summary
+        if ($this->verbose) {
+            if($n == 0) echo "No migrations applied", PHP_EOL;
         } else {
-            // If migrations were applied, the model table metadata cache must be cleared
-            if ($this->app->hasComponent('cache')) {
-                $this->app->cache->clear();
-            }
-
-            // Summary
-            if ($this->verbose) {
-                echo PHP_EOL, $n, $n > 1 ? " migrations were" : " migration was", " applied.", PHP_EOL;
-            }
+            echo PHP_EOL, $n, $n > 1 ? " migrations were" : " migration was", " applied.", PHP_EOL;
         }
         return App::EXIT_STATUS_OK;
     }
