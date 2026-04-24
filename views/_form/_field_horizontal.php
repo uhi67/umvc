@@ -16,17 +16,17 @@ $hasErrors = $field->error ? 'has-error' : '';
      class="form-group row field-<?= $field->type ?> <?= $field->divClass ?><?= $hasErrors ?>" <?= $field->renderOptions(
     $field->divOptions
 ) ?>>
-    <label for="<?= $field->id ?>" <?= $field->labelClass() ?>>
-        <?= $field->type != 'submit' ? $field->label : '' ?>
-        <?= $field->requiredMark ?>
-    </label>
-    <?php
-    if ($field->notice): ?>
+    <?php if ($field->label !== false): ?>
+        <label for="<?= $field->id ?>" <?= $field->labelClass() ?>>
+            <?= $field->type != 'submit' ? $field->label : '' ?>
+            <?= $field->requiredMark ?>
+        </label>
+    <?php endif; ?>
+    <?php if ($field->notice): ?>
         <div <?= $field->noticeClass() ?>>
             <?= $field->notice; ?>
         </div>
-    <?php
-    endif; ?>
+    <?php endif; ?>
     <div class="<?= $field->form->wrapperClass ?>">
         <?= $field->renderInput(); ?>
         <div class="field-error"><?= $field->error ?></div>

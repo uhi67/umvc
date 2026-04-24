@@ -12,15 +12,13 @@ use educalliance\umvc\Field;
 
 $hasErrors = $field->error ? 'has-error' : '';
 ?>
-<div class="form-group field-<?= $field->type ?> <?= $field->divClass ?><?= $hasErrors ?>" <?= $field->renderOptions(
+<div class="form-group form-field-normal field-<?= $field->type ?> <?= $field->divClass ?><?= $hasErrors ?>" <?= $field->renderOptions(
     $field->divOptions
 ) ?>>
-    <?php
-    if ($field->type != 'submit'): ?>
+    <?php if ($field->type != 'submit' && $field->label !== false): ?>
         <label for="<?= $field->id ?>" <?= $field->labelClass(
         ) ?>><?= $field->label ?><?= $field->requiredMark ?></label>
-    <?php
-    endif; ?>
+    <?php endif; ?>
     <?= $field->renderInput(); ?>
     <div class="field-error"><?= $field->error ?></div>
 </div>
