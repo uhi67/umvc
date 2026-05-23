@@ -1,8 +1,8 @@
-<?php /** @noinspection PhpUnused */
-
+<?php
+/** @noinspection PhpUnused */
 /** @noinspection PhpIllegalPsrClassPathInspection */
 
-namespace uhi67\umvc;
+namespace educalliance\umvc;
 
 use DateTime;
 use Exception;
@@ -964,16 +964,16 @@ class Query extends Component
      * Returns the number of the rows in the dataset of the query.
      * The full version creates an outer query: `SELECT count(*) FROM <original query>`
      *
-     * @var bool $full -- if true, all fields of the query are preserved; otherwise only the count(*) is returned (default).
      * @return int
      * @throws Exception
+     * @var bool $full -- if true, all fields of the query are preserved; otherwise only the count(*) is returned (default).
      */
     public function getCount(bool $full = false): int
     {
         if ($this->sql && $this->_count !== null) {
             return $this->_count;
         }
-        if($full) {
+        if ($full) {
             $query = new Query([
                 'connection' => $this->connection,
                 'modelClass' => $this->modelClass,

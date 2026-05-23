@@ -3,11 +3,11 @@
 
 namespace app\models;
 
-use uhi67\umvc\UserInterface;
+use educalliance\umvc\UserInterface;
 use ReflectionException;
-use uhi67\umvc\App;
-use uhi67\umvc\AppHelper;
-use uhi67\umvc\Model;
+use educalliance\umvc\App;
+use educalliance\umvc\AppHelper;
+use educalliance\umvc\Model;
 use Exception;
 
 /**

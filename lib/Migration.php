@@ -1,7 +1,7 @@
 <?php /** @noinspection PhpIllegalPsrClassPathInspection */
 /** @noinspection PhpUnused */
 
-namespace uhi67\umvc;
+namespace educalliance\umvc;
 
 use Exception;
 use Throwable;

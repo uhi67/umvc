@@ -3,7 +3,7 @@
 
 /** @noinspection PhpUnused */
 
-namespace uhi67\umvc;
+namespace educalliance\umvc;
 
 /**
  * Ansi is a class for print colors and cursor control characters in command-line interfaces

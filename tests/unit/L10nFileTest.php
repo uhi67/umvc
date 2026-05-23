@@ -2,8 +2,8 @@
 namespace unit;
 
 use Codeception\Test\Unit;
-use uhi67\umvc\App;
-use uhi67\umvc\L10nFile;
+use educalliance\umvc\App;
+use educalliance\umvc\L10nFile;
 
 class L10nFileTest extends Unit
 {

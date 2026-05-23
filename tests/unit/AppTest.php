@@ -3,7 +3,7 @@
 /** @noinspection PhpIllegalPsrClassPathInspection */
 
 use Codeception\Test\Unit;
-use uhi67\umvc\App;
+use educalliance\umvc\App;
 
 class AppTest extends Unit {
     protected UnitTester $tester;

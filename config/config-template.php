@@ -7,10 +7,10 @@
  */
 
 return [
-	\uhi67\umvc\App::class, // Can be an application-specific descendant
+	\educalliance\umvc\App::class, // Can be an application-specific descendant
 	// Can be set to "development" or "local" on a development site
     'application_env' => 'production',
-	'mainControllerClass' => '\app\controllers\MainController', // A user class derived from \uhi67\umvc\Controller
+	'mainControllerClass' => '\app\controllers\MainController', // A user class derived from \educalliance\umvc\Controller
 	'layout'=>'layouts/main',
 
     // Must be set to 'on' if the site is behind a reverse proxy terminating the HTTPS connection and forwarding HTTP.
@@ -19,7 +19,7 @@ return [
     'components' => [
         // ---- DATABASE CONFIGURATION
         'db' => [
-            \uhi67\umvc\MysqlConnection::class,
+            \educalliance\umvc\MysqlConnection::class,
             'dsn' => "mysql:host=localhost;dbname=",
 	        'name' => "",
             'user' => "",
@@ -28,7 +28,7 @@ return [
 
         //---- Authentication module
         'auth' => [
-            \uhi67\umvc\SamlAuth::class,
+            \educalliance\umvc\SamlAuth::class,
             //---- SAML related configuration values
             // Must be set to a secure random string
             'secret_salt' => '',
@@ -38,13 +38,13 @@ return [
             'disco' => null,
             // Refers to the proper SAML auth-source config element in the `config/saml/config/authsource.php` file
             'authSource' => '',
-	        'userModel' => '', // Must be set to your `\uhi67\umvc\Model` class of users, implementing `\uhi67\umvc\UserInterface`
+	        'userModel' => '', // Must be set to your `\educalliance\umvc\Model` class of users, implementing `\educalliance\umvc\UserInterface`
         ],
 
         // The cache used (for accelerating database operations). May be omitted in development environment.
         'cache' => [
             // A component definition array must contain a classname and optional initialization values for public properties.
-            \uhi67\umvc\FileCache::class,
+            \educalliance\umvc\FileCache::class,
         ]
     ],
 ];

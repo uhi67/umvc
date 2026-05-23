@@ -1,7 +1,7 @@
 <?php
 /** @noinspection PhpIllegalPsrClassPathInspection */
 
-namespace uhi67\umvc;
+namespace educalliance\umvc;
 
 use Exception;
 use ReflectionException;
@@ -212,15 +212,17 @@ class Controller extends BaseController
      * @return string
      * @throws Exception
      */
-    public function jsonErrorResponse(mixed $message, int $status = HTTP::HTTP_INTERNAL_SERVER_ERROR): string
+    public function jsonErrorResponse(mixed $message, int $status = HTTP::HTTP_INTERNAL_SERVER_ERROR, array $info = null): string
     {
         $protocol = ($_SERVER['SERVER_PROTOCOL'] ?? 'HTTP/1.0');
         $title = HTTP::$statusTexts[$status] ?? '';
         $this->app->sendHeader($protocol . ' ' . $status . ' ' . $title);
-        return $this->jsonResponse([
+        $response = [
             'status' => $status,
             'error' => $message,
-        ]);
+        ];
+        if($info) $response['info'] = $info;
+        return $this->jsonResponse($response);
     }
 
     /**

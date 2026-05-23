@@ -1,12 +1,12 @@
 <?php
 
-namespace uhi67\umvc\commands;
+namespace educalliance\umvc\commands;
 
 use Exception;
-use uhi67\umvc\App;
-use uhi67\umvc\AppHelper;
-use uhi67\umvc\ArrayHelper;
-use uhi67\umvc\Command;
+use educalliance\umvc\App;
+use educalliance\umvc\AppHelper;
+use educalliance\umvc\ArrayHelper;
+use educalliance\umvc\Command;
 
 class CreateController extends Command
 {

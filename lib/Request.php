@@ -1,13 +1,13 @@
 <?php
 
-namespace uhi67\umvc;
+namespace educalliance\umvc;
 
 use Exception;
 
 /**
  * Class Request
  *
- * @package uhi67\umvc
+ * @package educalliance\umvc
  * @property-read boolean $isGet
  */
 class Request extends Component

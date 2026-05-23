@@ -1,7 +1,7 @@
 <?php /** @noinspection PhpUnhandledExceptionInspection */
 
-use uhi67\umvc\App;
-use uhi67\umvc\Html;
+use educalliance\umvc\App;
+use educalliance\umvc\Html;
 
 /** @var $content string */
 
@@ -47,7 +47,7 @@ $versionMsg = 'UMVC Version ' . ($versionStr ?: 'failed to read');
 <footer class="footer">
 	<div class="container">
 		<div class="float-end"><?= $versionMsg ?></div>
-		<strong>&copy; uhi67 <?= date('Y') ?></strong>
+		<strong>&copy; Educ Alliance <?= date('Y') ?></strong>
 	</div>
 </footer>
 

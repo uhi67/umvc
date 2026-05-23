@@ -3,9 +3,9 @@ namespace unit;
 
 use Codeception\Test\Unit;
 use Exception;
-use uhi67\umvc\App;
-use uhi67\umvc\commands\MigrateController;
-use uhi67\umvc\Connection;
+use educalliance\umvc\App;
+use educalliance\umvc\commands\MigrateController;
+use educalliance\umvc\Connection;
 use UnitTester;
 
 class MysqlConnectionTest extends Unit

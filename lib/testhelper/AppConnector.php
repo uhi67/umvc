@@ -7,8 +7,8 @@
 
 namespace Helper;
 
-use uhi67\umvc\App;
-use uhi67\umvc\AppHelper;
+use educalliance\umvc\App;
+use educalliance\umvc\AppHelper;
 use Codeception\Lib\Connector\Shared\PhpSuperGlobalsConverter;
 use Codeception\Util\Debug;
 use Exception;

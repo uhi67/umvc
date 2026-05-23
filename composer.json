@@ -1,15 +1,15 @@
 {
-  "name": "uhi67/umvc",
+  "name": "educalliance/umvc",
   "description": "UMVC simple PHP framework",
   "type": "library",
-  "homepage": "https://umvc.uhisoft.hu/",
+  "homepage": "https://educalliance.eu/",
   "minimum-stability": "stable",
   "prefer-stable": true,
   "license": "MIT",
   "authors": [
     {
-      "name": "uhi67",
-      "email": "uherkovich.peter@gmail.com"
+      "name": "Uherkovich Péter",
+      "email": "uherkovich.peter@pte.hu"
     }
   ],
   "require": {
@@ -43,9 +43,9 @@
   },
   "autoload": {
     "psr-4": {
-      "uhi67\\umvc\\commands\\": "commands",
-      "uhi67\\umvc\\models\\": "models",
-      "uhi67\\umvc\\": "lib"
+      "educalliance\\umvc\\commands\\": "commands",
+      "educalliance\\umvc\\models\\": "models",
+      "educalliance\\umvc\\": "lib"
     }
   },
   "autoload-dev": {

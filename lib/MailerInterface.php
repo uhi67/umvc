@@ -1,6 +1,6 @@
 <?php /** @noinspection PhpIllegalPsrClassPathInspection */
 
-namespace uhi67\umvc;
+namespace educalliance\umvc;
 
 /**
  * MailerInterface is implemented by mailer components, which can send an e-mail to the addressee.

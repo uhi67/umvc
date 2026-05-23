@@ -2,7 +2,7 @@
 /** @noinspection PhpIllegalPsrClassPathInspection */
 /** @noinspection PhpUnused */
 
-namespace uhi67\umvc;
+namespace educalliance\umvc;
 
 use DateTime;
 use Exception;
@@ -25,8 +25,8 @@ class Field extends Component
     public string $modelName = '';
     /** @var string $divClass -- the additional classnames for the enclosing div */
     public string $divClass = '';
-    /** @var string|null $label -- the label text, default is the attribute label defined in the Model class */
-    public ?string $label = null;
+    /** @var string|bool|null $label -- the label text, default is the attribute label defined in the Model class */
+    public string|bool|null $label = null;
     /** @var string|array $labelClass -- the additional classnames for the field label */
     public string|array $labelClass = '';
     /** @var string $notice -- a notice text between the label and the input */
@@ -73,7 +73,7 @@ class Field extends Component
             if (!$this->modelName && $this->model instanceof Model) {
                 $this->modelName = $this->model->tableName();
             }
-            if ($this->label == null) {
+            if ($this->label === null) {
                 $this->label = $this->model->attributeLabel($this->fieldName);
             }
             if ($this->fieldName) {

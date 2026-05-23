@@ -3,18 +3,18 @@
 
 /** @noinspection PhpUnused */
 
-namespace uhi67\umvc\commands;
+namespace educalliance\umvc\commands;
 
 use Exception;
 use Throwable;
-use uhi67\umvc\App;
-use uhi67\umvc\AppHelper;
-use uhi67\umvc\ArrayHelper;
-use uhi67\umvc\CliHelper;
-use uhi67\umvc\Command;
-use uhi67\umvc\Connection;
-use uhi67\umvc\Migration;
-use uhi67\umvc\SqlMigration;
+use educalliance\umvc\App;
+use educalliance\umvc\AppHelper;
+use educalliance\umvc\ArrayHelper;
+use educalliance\umvc\CliHelper;
+use educalliance\umvc\Command;
+use educalliance\umvc\Connection;
+use educalliance\umvc\Migration;
+use educalliance\umvc\SqlMigration;
 
 /**
  * Migration command
@@ -108,7 +108,7 @@ class MigrateController extends Command
                 )) {
                 // Check in the database
                 $name = pathinfo($file, PATHINFO_FILENAME);
-                $applied = \uhi67\umvc\models\Migration::getOne(['name' => $name]);
+                $applied = \educalliance\umvc\models\Migration::getOne(['name' => $name]);
                 if (!$applied) {
                     $new[] = $file;
                 }
@@ -174,7 +174,7 @@ class MigrateController extends Command
                     }
                     if ($success) {
                         // Insert into database
-                        $migrationDone = new \uhi67\umvc\models\Migration([
+                        $migrationDone = new \educalliance\umvc\models\Migration([
                             'name' => $name,
                             'applied' => time(),
                         ]);
@@ -204,7 +204,7 @@ class MigrateController extends Command
                         }
 
                         // Insert into database
-                        $migrationDone = new \uhi67\umvc\models\Migration([
+                        $migrationDone = new \educalliance\umvc\models\Migration([
                             'name' => $name,
                             'applied' => time(),
                         ]);
@@ -241,18 +241,15 @@ class MigrateController extends Command
                 throw new Exception("Applying migration '" . $name . "' caused an exception: ".$m, 500, $e);
             }
         }
-        if ($n == 0 && $this->verbose) {
-            echo "No migrations applied", PHP_EOL;
+        // If migrations were applied, the model table metadata cache must be cleared
+        if ($n !== 0 && $this->app->hasComponent('cache')) {
+            $this->app->cache->clear();
+        }
+        // Summary
+        if ($this->verbose) {
+            if($n == 0) echo "No migrations applied", PHP_EOL;
         } else {
-            // If migrations were applied, the model table metadata cache must be cleared
-            if ($this->app->hasComponent('cache')) {
-                $this->app->cache->clear();
-            }
-
-            // Summary
-            if ($this->verbose) {
-                echo PHP_EOL, $n, $n > 1 ? " migrations were" : " migration was", " applied.", PHP_EOL;
-            }
+            echo PHP_EOL, $n, $n > 1 ? " migrations were" : " migration was", " applied.", PHP_EOL;
         }
         return App::EXIT_STATUS_OK;
     }
@@ -376,7 +373,7 @@ class MigrateController extends Command
         $content = <<<EOT
 <?php
 namespace app\migrations;
-use uhi67\umvc\Migration;
+use educalliance\umvc\Migration;
 
 class %className% extends Migration {
 	/**

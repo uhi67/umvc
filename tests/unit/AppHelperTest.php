@@ -7,7 +7,7 @@ namespace unit;
 
 use Exception;
 use PHPUnit\Framework\Attributes\DataProvider;
-use uhi67\umvc\AppHelper;
+use educalliance\umvc\AppHelper;
 
 class AppHelperTest extends \Codeception\Test\Unit
 {

@@ -1,6 +1,6 @@
 <?php
 
-namespace uhi67\umvc;
+namespace educalliance\umvc;
 
 /**
  * CLI-related static helper methods

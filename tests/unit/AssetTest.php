@@ -2,9 +2,9 @@
 
 namespace unit;
 
-use uhi67\umvc\App;
-use uhi67\umvc\Controller;
-use uhi67\umvc\Asset;
+use educalliance\umvc\App;
+use educalliance\umvc\Controller;
+use educalliance\umvc\Asset;
 
 class AssetTest extends \Codeception\Test\Unit
 {

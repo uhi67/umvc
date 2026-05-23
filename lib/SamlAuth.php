@@ -1,7 +1,7 @@
 <?php
 /** @noinspection PhpIllegalPsrClassPathInspection */
 
-namespace uhi67\umvc;
+namespace educalliance\umvc;
 
 use Exception;
 use SimpleSAML\Auth\Simple;

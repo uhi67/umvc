@@ -2,11 +2,11 @@
 
 /** @noinspection PhpUnused */
 
-namespace uhi67\umvc\commands;
+namespace educalliance\umvc\commands;
 
 use Exception;
-use uhi67\umvc\App;
-use uhi67\umvc\Command;
+use educalliance\umvc\App;
+use educalliance\umvc\Command;
 
 /**
  * @property-read App $parent
@@ -20,8 +20,8 @@ class CacheController extends Command {
     {
         if(!$this->app->hasComponent('cache')) {
             echo 'No cache is defined. Cache can be defined in the `config/config.php` file, at `components/cache` key if needed. Example:', PHP_EOL;
-            echo "\t'cache' => [\n\t\t'class' => \uhi67\umvc\FileCache::class,\n\t]", PHP_EOL;
-            echo "Note: the cache class must implement the \uhi67\umvc\CacheInterface", PHP_EOL;
+            echo "\t'cache' => [\n\t\t'class' => \educalliance\umvc\FileCache::class,\n\t]", PHP_EOL;
+            echo "Note: the cache class must implement the \educalliance\umvc\CacheInterface", PHP_EOL;
             return false;
         }
         return true;

@@ -9,7 +9,7 @@
  * @license MIT
  */
 
-namespace uhi67\umvc;
+namespace educalliance\umvc;
 
 /**
  * Fake mailer which saves sent mails into files
